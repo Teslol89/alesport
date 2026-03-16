@@ -1,3 +1,5 @@
+-- Desarrollado por J.Marcos C.V. aka Teslol
+
 -- USERS
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,

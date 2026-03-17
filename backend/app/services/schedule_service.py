@@ -11,7 +11,7 @@ def get_weekly_schedule(db: Session):
     return db.query(WeeklySchedule).all()
 
 
-def create_weakly_schedule(db: Session, schedule_data):
+def create_weekly_schedule(db: Session, schedule_data):
     """Creates a new weekly schedule entry."""
     trainer = (
         db.query(User)

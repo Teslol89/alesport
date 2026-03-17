@@ -9,9 +9,9 @@ from sqlalchemy import text
 # ── Local ─────────────────────────────────────────────────────────────────────
 from app.database.db import engine
 from app.routers.user_router import router as user_router
+from app.routers.schedule_router import router as schedule_router
 
 # ── App setup ─────────────────────────────────────────────────────────────────
-
 app = FastAPI(title="Alesport API")
 logger = logging.getLogger(__name__)
 
@@ -28,10 +28,11 @@ app.add_middleware(
 )
 
 # ── Routers ───────────────────────────────────────────────────────────────────
-
 app.include_router(user_router)
+app.include_router(schedule_router)
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
+
 
 @app.get("/")
 def root():

@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS weekly_schedule (
         CHECK (day_of_week BETWEEN 0 AND 6),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    capacity INTEGER NOT NULL CHECK (capacity > 0),
+    capacity INTEGER NOT NULL CHECK (capacity > 0 AND capacity <= 10),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CHECK (end_time > start_time),

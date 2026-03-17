@@ -16,13 +16,10 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-
     role VARCHAR(20) NOT NULL DEFAULT 'client'
         CHECK (role IN ('admin','trainer','client')),
-
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     membership_active BOOLEAN NOT NULL DEFAULT TRUE,
-
     last_login TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -34,25 +31,17 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS weekly_schedule (
     id SERIAL PRIMARY KEY,
-
     trainer_id INTEGER NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
-
     day_of_week INTEGER NOT NULL
         CHECK (day_of_week BETWEEN 0 AND 6),
-
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-
     capacity INTEGER NOT NULL CHECK (capacity > 0),
-
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
     CHECK (end_time > start_time),
-
     -- Prevent overlapping schedules per trainer and day
     CONSTRAINT no_overlap_schedule
         EXCLUDE USING gist (
@@ -67,15 +56,12 @@ CREATE TABLE IF NOT EXISTS weekly_schedule (
         WHERE (is_active)
 );
 
-
-
 -- ===============================
 -- SESSIONS
 -- ===============================
 
 CREATE TABLE IF NOT EXISTS sessions (
     id SERIAL PRIMARY KEY,
-
     trainer_id INTEGER NOT NULL
         REFERENCES users(id)
         ON DELETE RESTRICT,

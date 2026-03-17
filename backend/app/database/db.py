@@ -14,20 +14,16 @@ if DATABASE_URL is None:
     raise RuntimeError("DATABASE_URL is not set")
 
 # Force SQLAlchemy to use psycopg (v3) instead of psycopg2.
-SQLALCHEMY_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    pool_pre_ping=True
+SQLALCHEMY_DATABASE_URL = DATABASE_URL.replace(
+    "postgresql://", "postgresql+psycopg://", 1
 )
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
 
 def get_db():
     db = SessionLocal()

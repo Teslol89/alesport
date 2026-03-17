@@ -16,9 +16,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def root():
     return {"message": "Alesport backend running"}
+
 
 @app.get("/db-test")
 def test_database_connection():
@@ -28,4 +30,7 @@ def test_database_connection():
             return {"database_connection": "successful", "result": result.scalar()}
     except Exception as e:
         logger.error(f"Database connection failed: {e}")
-        return {"database_connection": "failed", "error": "Unable to connect to database"} 
+        return {
+            "database_connection": "failed",
+            "error": "Unable to connect to database",
+        }

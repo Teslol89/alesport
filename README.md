@@ -65,5 +65,5 @@ npx ionic serve --external --host=0.0.0.0 --port=8100  # Vista en móvil por WiF
 ## Base de datos
 
 El esquema SQL está en `backend/database/schema.sql`.  
-Tablas: `users`, `trainers`, `weekly_schedule`, `sessions`, `bookings`.
+Tablas: `users`, `weekly_schedule`, `sessions`, `bookings`.
 

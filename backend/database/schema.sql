@@ -1,8 +1,11 @@
 -- =========================================
--- Alesport Database Schema (Simplified MVP)
+-- Alesport Database Schema
 -- =========================================
+-- This is the single source of truth for schema.
+-- Migrations are consolidated here during development phase.
+-- Apply this entire file for fresh database setup.
 
--- Required for EXCLUDE USING gist
+-- Required for EXCLUDE USING gist (overlap prevention)
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 
@@ -12,7 +15,6 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
@@ -24,10 +26,18 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+
 
 -- ===============================
 -- WEEKLY SCHEDULE
 -- ===============================
+-- Represents recurring weekly time slots that trainers offer.
+-- Rules:
+--   - capacity: 1-10 attendees per slot
+--   - times: must be on hour (00) or half-hour (30) minutes
+--   - no overlaps: same trainer cannot have two active slots at same time on same day
 
 CREATE TABLE IF NOT EXISTS weekly_schedule (
     id SERIAL PRIMARY KEY,
@@ -38,10 +48,15 @@ CREATE TABLE IF NOT EXISTS weekly_schedule (
         CHECK (day_of_week BETWEEN 0 AND 6),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    capacity INTEGER NOT NULL CHECK (capacity > 0),
+    capacity INTEGER NOT NULL CHECK (capacity > 0 AND capacity <= 10),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Temporal rules
     CHECK (end_time > start_time),
+    CHECK (EXTRACT(MINUTE FROM start_time) IN (0, 30) AND EXTRACT(SECOND FROM start_time) = 0),
+    CHECK (EXTRACT(MINUTE FROM end_time)   IN (0, 30) AND EXTRACT(SECOND FROM end_time)   = 0),
+    
     -- Prevent overlapping schedules per trainer and day
     CONSTRAINT no_overlap_schedule
         EXCLUDE USING gist (
@@ -56,29 +71,36 @@ CREATE TABLE IF NOT EXISTS weekly_schedule (
         WHERE (is_active)
 );
 
+CREATE INDEX IF NOT EXISTS idx_schedule_trainer ON weekly_schedule(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_schedule_day ON weekly_schedule(day_of_week);
+CREATE INDEX IF NOT EXISTS idx_schedule_active ON weekly_schedule(is_active);
+
+
 -- ===============================
 -- SESSIONS
 -- ===============================
+-- Concrete session instances (specific date/time), based on weekly_schedule.
+-- Rules:
+--   - capacity: 1-10 attendees per session
+--   - no overlaps: same trainer cannot have two active sessions overlapping
+--   - status: can be active, cancelled, or completed
 
 CREATE TABLE IF NOT EXISTS sessions (
     id SERIAL PRIMARY KEY,
     trainer_id INTEGER NOT NULL
         REFERENCES users(id)
         ON DELETE RESTRICT,
-
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
-
-    capacity INTEGER NOT NULL CHECK (capacity > 0),
-
+    capacity INTEGER NOT NULL CHECK (capacity > 0 AND capacity <= 10),
     status VARCHAR(20) NOT NULL DEFAULT 'active'
         CHECK (status IN ('active','cancelled','completed')),
-
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
+    
+    -- Temporal rules
     CHECK (end_time > start_time),
-
-    -- Prevent overlapping sessions
+    
+    -- Prevent overlapping active sessions per trainer
     CONSTRAINT no_overlap_sessions
         EXCLUDE USING gist (
             trainer_id WITH =,
@@ -87,67 +109,40 @@ CREATE TABLE IF NOT EXISTS sessions (
         WHERE (status = 'active')
 );
 
+CREATE INDEX IF NOT EXISTS idx_sessions_trainer ON sessions(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
+CREATE INDEX IF NOT EXISTS idx_sessions_start_time ON sessions(start_time);
+CREATE INDEX IF NOT EXISTS idx_sessions_active_trainer ON sessions(trainer_id, status);
 
 
 -- ===============================
 -- BOOKINGS
 -- ===============================
+-- Links users to sessions (reservations).
+-- Rules:
+--   - one user can only have one active booking per session
+--   - status: can be active or cancelled
+--   - cascade delete: if session is deleted, all its bookings are deleted
 
 CREATE TABLE IF NOT EXISTS bookings (
     id SERIAL PRIMARY KEY,
-
     user_id INTEGER NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
-
     session_id INTEGER NOT NULL
         REFERENCES sessions(id)
         ON DELETE CASCADE,
-
     status VARCHAR(20) NOT NULL DEFAULT 'active'
         CHECK (status IN ('active','cancelled')),
-
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Prevent duplicate active bookings (user can only reserve each session once)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_booking_active 
+    ON bookings(user_id, session_id) 
+    WHERE (status = 'active');
 
-
--- ===============================
--- INDEXES
--- ===============================
-
--- WEEKLY SCHEDULE
-CREATE INDEX IF NOT EXISTS idx_schedule_trainer
-ON weekly_schedule(trainer_id);
-
-CREATE INDEX IF NOT EXISTS idx_schedule_day
-ON weekly_schedule(day_of_week);
-
-
--- SESSIONS
-CREATE INDEX IF NOT EXISTS idx_sessions_start_time
-ON sessions(start_time);
-
-CREATE INDEX IF NOT EXISTS idx_sessions_trainer
-ON sessions(trainer_id);
-
-CREATE INDEX IF NOT EXISTS idx_sessions_status
-ON sessions(status);
-
-
--- BOOKINGS
-CREATE INDEX IF NOT EXISTS idx_bookings_session
-ON bookings(session_id);
-
-CREATE INDEX IF NOT EXISTS idx_bookings_user
-ON bookings(user_id);
-
-CREATE INDEX IF NOT EXISTS idx_bookings_active_session
-ON bookings(session_id)
-WHERE status = 'active';
-
-
--- Prevent duplicate active bookings
-CREATE UNIQUE INDEX IF NOT EXISTS unique_booking_active
-ON bookings(user_id, session_id)
-WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_session ON bookings(session_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_user_active ON bookings(user_id, status);

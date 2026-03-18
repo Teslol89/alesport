@@ -1,5 +1,5 @@
 -- =========================================
--- Alesport Database Schema (Simplified MVP)
+-- Alesport Database Schema
 -- =========================================
 -- This is the single source of truth for schema.
 -- Migrations are consolidated here during development phase.
@@ -81,7 +81,7 @@ CREATE INDEX IF NOT EXISTS idx_schedule_active ON weekly_schedule(is_active);
 -- ===============================
 -- Concrete session instances (specific date/time), based on weekly_schedule.
 -- Rules:
---   - capacity: must be >= 1
+--   - capacity: 1-10 attendees per session
 --   - no overlaps: same trainer cannot have two active sessions overlapping
 --   - status: can be active, cancelled, or completed
 
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS sessions (
         ON DELETE RESTRICT,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
-    capacity INTEGER NOT NULL CHECK (capacity > 0),
+    capacity INTEGER NOT NULL CHECK (capacity > 0 AND capacity <= 10),
     status VARCHAR(20) NOT NULL DEFAULT 'active'
         CHECK (status IN ('active','cancelled','completed')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -134,11 +134,13 @@ CREATE TABLE IF NOT EXISTS bookings (
         ON DELETE CASCADE,
     status VARCHAR(20) NOT NULL DEFAULT 'active'
         CHECK (status IN ('active','cancelled')),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Prevent duplicate active bookings (user can only reserve each session once)
-    CONSTRAINT unique_booking_active UNIQUE (user_id, session_id) WHERE (status = 'active')
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Prevent duplicate active bookings (user can only reserve each session once)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_booking_active 
+    ON bookings(user_id, session_id) 
+    WHERE (status = 'active');
 
 CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_session ON bookings(session_id);

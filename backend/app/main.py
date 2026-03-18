@@ -1,7 +1,7 @@
-# ── Standard library ─────────────────────────────────────────────────────────
+# ── Librería estándar ─────────────────────────────────────────────────────────
 import logging
 
-# ── Third-party ───────────────────────────────────────────────────────────────
+# ── Terceros ──────────────────────────────────────────────────────────────────
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -10,15 +10,15 @@ from sqlalchemy import text
 from app.database.db import engine
 from app.routers.user_router import router as user_router
 from app.routers.schedule_router import router as schedule_router
+from app.routers.session_router import router as session_router
 
-# ── App setup ─────────────────────────────────────────────────────────────────
+# ── Configuración de la aplicación ────────────────────────────────────────────
 app = FastAPI(title="Alesport API")
 logger = logging.getLogger(__name__)
 
-# ── Middleware ────────────────────────────────────────────────────────────────
-# Must be registered before routers so it intercepts every request.
-# In production, replace "*" with the exact frontend origin.
-
+# ── Middleware CORS ───────────────────────────────────────────────────────────
+# Debe registrarse antes de los routers para interceptar todas las peticiones.
+# En producción, reemplazar "*" por el origen exacto del frontend.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,20 +30,19 @@ app.add_middleware(
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(user_router)
 app.include_router(schedule_router)
+app.include_router(session_router)
 
-# ── Endpoints ─────────────────────────────────────────────────────────────────
-
-
+# ── Endpoints de sistema ──────────────────────────────────────────────────────
 @app.get("/")
 def root():
-    """Health check."""
+    """Health check: verifica que la API esta en funcionamiento."""
     return {"message": "Alesport backend running"}
 
 
-# TODO: remove or protect this endpoint before going to production.
+# TODO: eliminar o proteger este endpoint antes de pasar a producción.
 @app.get("/db-test")
 def test_database_connection():
-    """Verifies that the app can reach the database."""
+    """Verifica que la API puede conectarse correctamente a la base de datos."""
     try:
         with engine.connect() as connection:
             result = connection.execute(text("SELECT 1"))

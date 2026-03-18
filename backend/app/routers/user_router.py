@@ -10,5 +10,5 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/", response_model=list[UserResponse])
 def get_users(db: Session = Depends(get_db)):
-    """Returns all registered users."""
+    """Devuelve todos los usuarios registrados."""
     return get_all_users(db)

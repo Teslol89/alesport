@@ -1,4 +1,5 @@
-from datetime import timezone
+from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -7,15 +8,58 @@ from sqlalchemy.orm import Session
 from app.models.session import SessionModel
 
 
+LOCAL_TIMEZONE = ZoneInfo("Europe/Madrid")
+
+
+def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
+    """Convierte patch de time->datetime y valida coherencia start/end para una sesión."""
+    prepared_patch = dict(patch)
+    session_timezone = session.start_time.tzinfo or LOCAL_TIMEZONE
+
+    if "start_time" in prepared_patch and hasattr(prepared_patch["start_time"], "hour") and not hasattr(prepared_patch["start_time"], "date"):
+        session_date = session.start_time.date()
+        prepared_patch["start_time"] = datetime.combine(
+            session_date,
+            prepared_patch["start_time"],
+            tzinfo=session_timezone,
+        )
+
+    if "end_time" in prepared_patch and hasattr(prepared_patch["end_time"], "hour") and not hasattr(prepared_patch["end_time"], "date"):
+        session_date = session.start_time.date()
+        prepared_patch["end_time"] = datetime.combine(
+            session_date,
+            prepared_patch["end_time"],
+            tzinfo=session_timezone,
+        )
+
+    if "start_time" in prepared_patch or "end_time" in prepared_patch:
+        start = prepared_patch.get("start_time", session.start_time)
+        end = prepared_patch.get("end_time", session.end_time)
+
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=session_timezone)
+        if end.tzinfo is None:
+            end = end.replace(tzinfo=session_timezone)
+
+        if start >= end:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="start_time debe ser anterior a end_time",
+            )
+
+    return prepared_patch
+
+
 def get_sessions(db: Session) -> list[SessionModel]:
     """Devuelve todas las sesiones registradas en la base de datos."""
     return db.query(SessionModel).all()
 
 
-def update_session(db: Session, session_id: int, update_data) -> SessionModel:
+def update_session(db: Session, session_id: int, update_data, trainer_id: int) -> SessionModel:
     """Permite al entrenador ajustar manualmente una sesion concreta.
 
     Solo se actualizan los campos enviados (PATCH parcial).
+    Solo el entrenador propietario de la sesión puede modificarla.
     """
     # Verificar que la sesion existe
     session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
@@ -25,25 +69,16 @@ def update_session(db: Session, session_id: int, update_data) -> SessionModel:
             detail="Sesion no encontrada",
         )
 
+    # Validar que solo el trainer propietario puede modificar
+    if session.trainer_id != trainer_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permisos para modificar esta sesion",
+        )
+
     # Obtener solo los campos que se quieren modificar
-    patch = update_data.model_dump(exclude_unset=True)
-
-    # Validar coherencia temporal si se modifican los horarios
-    if "start_time" in patch or "end_time" in patch:
-        start = patch.get("start_time", session.start_time)
-        end = patch.get("end_time", session.end_time)
-
-        # Normalizar a UTC para comparación segura entre datetimes con y sin zona horaria
-        if start.tzinfo is None:
-            start = start.replace(tzinfo=timezone.utc)
-        if end.tzinfo is None:
-            end = end.replace(tzinfo=timezone.utc)
-
-        if start >= end:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="start_time debe ser anterior a end_time",
-            )
+    patch = update_data.model_dump(exclude_unset=True, exclude_none=True)
+    patch = _prepare_patch_for_session(session, patch)
 
     # Aplicar los cambios al objeto ORM
     for field, value in patch.items():
@@ -65,3 +100,61 @@ def update_session(db: Session, session_id: int, update_data) -> SessionModel:
 
     db.refresh(session)
     return session
+
+
+def update_sessions_in_week(
+    db: Session,
+    trainer_id: int,
+    week_start_date: date,
+    update_data,
+) -> list[SessionModel]:
+    """Actualiza en bloque las sesiones de un entrenador dentro de una ventana de 7 días."""
+    patch = update_data.model_dump(exclude_unset=True, exclude_none=True)
+    patch.pop("week_start_date", None)
+
+    if not patch:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Debes enviar al menos un campo para actualizar",
+        )
+
+    week_start = datetime.combine(week_start_date, time.min, tzinfo=LOCAL_TIMEZONE)
+    week_end = week_start + timedelta(days=7)
+
+    sessions = (
+        db.query(SessionModel)
+        .filter(SessionModel.trainer_id == trainer_id)
+        .filter(SessionModel.start_time >= week_start)
+        .filter(SessionModel.start_time < week_end)
+        .all()
+    )
+
+    if not sessions:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No hay sesiones para ese entrenador en la semana indicada",
+        )
+
+    for session in sessions:
+        prepared_patch = _prepare_patch_for_session(session, patch)
+        for field, value in prepared_patch.items():
+            setattr(session, field, value)
+
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if "no_overlap_sessions" in str(exc.orig):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="La actualización semanal provoca solape con otras sesiones activas del mismo entrenador",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Datos de sesion inválidos",
+        )
+
+    for session in sessions:
+        db.refresh(session)
+
+    return sessions

@@ -1,4 +1,5 @@
 from datetime import date, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -9,6 +10,9 @@ from app.models.user import User
 from app.models.weekly_schedule import WeeklySchedule
 
 from app.schemas.weekly_schedule import SessionGenerationRequest
+
+
+LOCAL_TIMEZONE = ZoneInfo("Europe/Madrid")
 
 
 # ── Horario semanal ───────────────────────────────────────────────────────────
@@ -70,13 +74,13 @@ def _generate_for_new_schedule(db: Session, weeks_ahead: int) -> None:
 def _to_utc(dt: datetime) -> datetime:
     """Normaliza un datetime a UTC para comparaciones consistentes."""
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=LOCAL_TIMEZONE).astimezone(timezone.utc)
     return dt.astimezone(timezone.utc)
 
 
-def _utc_datetime(d: date, t: time) -> datetime:
-    """Combina una fecha y una hora en un datetime UTC."""
-    return datetime.combine(d, t, tzinfo=timezone.utc)
+def _local_datetime(d: date, t: time) -> datetime:
+    """Combina una fecha y una hora en un datetime aware de la zona local del negocio."""
+    return datetime.combine(d, t, tzinfo=LOCAL_TIMEZONE)
 
 
 def generate_sessions_from_schedule(
@@ -119,8 +123,8 @@ def generate_sessions_from_schedule(
         schedules_by_day[int(schedule.day_of_week)].append(schedule)
 
     # Cargar todas las sesiones existentes en la ventana en una sola consulta
-    min_start = _utc_datetime(window_start, time(0, 0, 0))
-    max_start = _utc_datetime(window_end_exclusive, time(0, 0, 0))
+    min_start = _local_datetime(window_start, time(0, 0, 0))
+    max_start = _local_datetime(window_end_exclusive, time(0, 0, 0))
     existing_keys: set[tuple[int, datetime]] = {
         (trainer_id, _to_utc(start_time))
         for trainer_id, start_time in (
@@ -142,7 +146,7 @@ def generate_sessions_from_schedule(
     while current_date < window_end_exclusive:
         for schedule in schedules_by_day[current_date.weekday()]:
             total_slots_considered += 1
-            start_dt = _utc_datetime(current_date, schedule.start_time)
+            start_dt = _local_datetime(current_date, schedule.start_time)
             session_key = (schedule.trainer_id, start_dt)
 
             if session_key in existing_keys:
@@ -154,7 +158,7 @@ def generate_sessions_from_schedule(
                 SessionModel(
                     trainer_id=schedule.trainer_id,
                     start_time=start_dt,
-                    end_time=_utc_datetime(current_date, schedule.end_time),
+                    end_time=_local_datetime(current_date, schedule.end_time),
                     capacity=schedule.capacity,
                     status="active",
                 )

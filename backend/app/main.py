@@ -11,6 +11,7 @@ from app.database.db import engine
 from app.routers.user_router import router as user_router
 from app.routers.schedule_router import router as schedule_router
 from app.routers.session_router import router as session_router
+from app.routers.booking_router import router as booking_router
 
 # ── Configuración de la aplicación ────────────────────────────────────────────
 app = FastAPI(title="Alesport API")
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(user_router)
 app.include_router(schedule_router)
 app.include_router(session_router)
+app.include_router(booking_router)
 
 # ── Endpoints de sistema ──────────────────────────────────────────────────────
 @app.get("/")

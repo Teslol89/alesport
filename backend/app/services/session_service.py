@@ -55,11 +55,12 @@ def get_sessions(db: Session) -> list[SessionModel]:
     return db.query(SessionModel).all()
 
 
-def update_session(db: Session, session_id: int, update_data, trainer_id: int) -> SessionModel:
-    """Permite al entrenador ajustar manualmente una sesion concreta.
+def update_session(db: Session, session_id: int, update_data, current_user) -> SessionModel:
+    """Permite al entrenador o admin ajustar manualmente una sesion concreta.
 
     Solo se actualizan los campos enviados (PATCH parcial).
-    Solo el entrenador propietario de la sesión puede modificarla.
+    Los trainers solo pueden modificar sus propias sesiones.
+    Los admins pueden modificar cualquier sesión.
     """
     # Verificar que la sesion existe
     session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
@@ -69,8 +70,8 @@ def update_session(db: Session, session_id: int, update_data, trainer_id: int) -
             detail="Sesion no encontrada",
         )
 
-    # Validar que solo el trainer propietario puede modificar
-    if session.trainer_id != trainer_id:
+    # Admin puede modificar cualquier sesión; trainer solo las suyas
+    if current_user.role != "admin" and session.trainer_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para modificar esta sesion",

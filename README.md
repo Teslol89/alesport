@@ -1,68 +1,155 @@
 # Alesport
 
-Booking app for Alesport gym.
+Booking and schedule management app for the Alesport gym.
 
-## Estructura del proyecto
+## Overview
 
-```
+This repository contains:
+
+- A FastAPI backend with PostgreSQL
+- A mobile app (Ionic React + Capacitor)
+
+The backend now includes JWT authentication and role-based authorization across critical endpoints.
+
+## Roles and Access Model
+
+The API works with three roles:
+
+- `admin`: full operational control (users, weekly schedule creation, manual session generation, all bookings)
+- `trainer`: session management for owned sessions and trainer-scoped booking cancellation
+- `client`: booking creation/cancellation for own reservations
+
+## Project Structure
+
+```text
 alesport/
-├── backend/              # API REST con FastAPI + PostgreSQL
-│   ├── app/
-│   │   ├── main.py       # Punto de entrada de la API
-│   │   ├── database/     # Conexión a la base de datos
-│   │   ├── models/       # Modelos SQLAlchemy
-│   │   ├── routers/      # Endpoints por recurso
-│   │   ├── schemas/      # Esquemas Pydantic
-│   │   └── services/     # Lógica de negocio
-│   ├── database/
-│   │   └── schema.sql    # Esquema SQL de la base de datos
-│   ├── venv/             # Entorno virtual Python (no versionado)
-│   └── requirements.txt  # Dependencias Python
-└── mobile/
-    └── alesport-app/     # App móvil con Ionic React + Capacitor
+|-- backend/
+|   |-- app/
+|   |   |-- auth/          # JWT security (token creation + current_user dependency)
+|   |   |-- database/      # SQLAlchemy setup
+|   |   |-- models/        # ORM models
+|   |   |-- routers/       # FastAPI endpoints
+|   |   |-- schemas/       # Pydantic models
+|   |   `-- services/      # Business logic
+|   |-- database/
+|   |   `-- schema.sql     # SQL schema
+|   `-- requirements.txt
+`-- mobile/
+      `-- alesport-app/
 ```
 
-## Requisitos previos
+## Prerequisites
 
 - Python 3.10+
-- Node.js 18+
 - PostgreSQL
-- Ionic CLI (`npm install -g @ionic/cli`)
+- Node.js 18+ (for mobile)
+- Ionic CLI (optional): `npm install -g @ionic/cli`
 
-## Backend (FastAPI)
+## Backend Setup (Windows)
 
-### Setup inicial
+1. Create database:
 
-1. **Base de datos:**
-   - Crea una BD en PostgreSQL: `CREATE DATABASE alesportAPP;`
-   - Importa el esquema: `psql -U postgres -d alesportAPP -f backend/database/schema.sql`
+```sql
+CREATE DATABASE alesport;
+```
 
-2. **Variables de entorno:**
-   - Copia `.env.example` a `.env` en la **raíz del proyecto**
-   - Edita `.env` con tus credenciales de PostgreSQL
+2. Load schema:
 
-3. **Backend:**
+```bash
+psql -U postgres -d alesport -f backend/database/schema.sql
+```
+
+3. Create `.env` at repository root and define at least:
+
+```env
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/alesport
+JWT_SECRET_KEY=change_me_in_production
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=60
+```
+
+4. Install dependencies and run API:
 
 ```bash
 cd backend
-venv\Scripts\activate        # Windows
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-La API estará disponible en `http://localhost:8000`.  
-Documentación automática en `http://localhost:8000/docs`.
+API docs:
 
-## Mobile (Ionic React)
+- Swagger: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+## Authentication
+
+- Login endpoint: `POST /auth/login`
+- User profile endpoint: `GET /auth/me`
+- Auth scheme: Bearer token (JWT)
+
+Login request body:
+
+```json
+{
+   "email": "user@example.com",
+   "password": "your_password"
+}
+```
+
+Use returned token as:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+## Authorization Matrix (Current)
+
+- `GET /users/`: admin only
+- `GET /sessions/`: authenticated user
+- `PATCH /sessions/{session_id}`: trainer (own session) or admin (any)
+- `PATCH /sessions/week`: trainer (own week) or admin (requires `trainer_id` in body)
+- `GET /schedule/`: authenticated user
+- `POST /schedule/`: admin only
+- `POST /schedule/generate-sessions`: admin only
+- `GET /bookings/`: admin only
+- `GET /bookings/user/{user_id}`: admin or same user
+- `POST /bookings/`: client only
+- `PATCH /bookings/{booking_id}/cancel`: admin, owner client, or owning trainer
+
+## Important Booking Rule
+
+`POST /bookings/` no longer accepts `user_id` from request body.
+The backend always uses `current_user.id` from JWT to prevent impersonation.
+
+Request example:
+
+```json
+{
+   "session_id": 1
+}
+```
+
+## Manual Smoke Test (Quick)
+
+1. Login as client -> `POST /auth/login`
+2. Create booking with `POST /bookings/` -> expected `201` if first time
+3. Repeat same booking -> expected `409`
+4. Login as trainer and try `POST /bookings/` -> expected `403`
+5. Login as admin and run `POST /schedule/generate-sessions` -> expected `200`
+
+## Mobile App
 
 ```bash
 cd mobile/alesport-app
 npm install
-npx ionic serve                           # Vista en navegador (localhost)
-npx ionic serve --external --host=0.0.0.0 --port=8100  # Vista en móvil por WiFi
+npx ionic serve
 ```
 
-## Base de datos
+## Notes for Production
 
-El esquema SQL está en `backend/database/schema.sql`.  
-Tablas: `users`, `weekly_schedule`, `sessions`, `bookings`.
+- Restrict CORS origins (do not keep `*`)
+- Use a long random `JWT_SECRET_KEY`
+- Rotate secrets and use environment-specific config
+- Protect or remove maintenance/debug endpoints before release

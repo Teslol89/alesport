@@ -24,7 +24,7 @@ def get_bookings_by_user(db: Session, user_id: int) -> list[Booking]:
     return db.query(Booking).filter(Booking.user_id == user_id).all()
 
 
-def create_booking(db: Session, booking_data) -> Booking:
+def create_booking(db: Session, current_user: User, booking_data) -> Booking:
     """Crea una nueva reserva para un cliente en una sesión concreta.
     Valida:
     - Que la sesión existe y está activa
@@ -33,7 +33,7 @@ def create_booking(db: Session, booking_data) -> Booking:
     - Que solo usuarios con rol 'client' puedan reservar
     """
     # Verificar que el usuario existe y es cliente activo
-    user = db.query(User).filter(User.id == booking_data.user_id).first()
+    user = db.query(User).filter(User.id == current_user.id).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -53,7 +53,11 @@ def create_booking(db: Session, booking_data) -> Booking:
         )
 
     # Verificar que la sesión existe
-    session = db.query(SessionModel).filter(SessionModel.id == booking_data.session_id).first()
+    session = (
+        db.query(SessionModel)
+        .filter(SessionModel.id == booking_data.session_id)
+        .first()
+    )
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -84,7 +88,7 @@ def create_booking(db: Session, booking_data) -> Booking:
 
     # Crear la reserva
     booking = Booking(
-        user_id=booking_data.user_id,
+        user_id=current_user.id,
         session_id=booking_data.session_id,
         status="active",
     )
@@ -108,10 +112,12 @@ def create_booking(db: Session, booking_data) -> Booking:
     return booking
 
 
-def cancel_booking(db: Session, booking_id: int, user_id: int) -> Booking:
+def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
     """Cancela una reserva cambiando su estado a 'cancelled'.
-    No elimina el registro: mantiene el historial de reservas.
-    Solo puede cancelar el propio usuario (o un admin cuando haya autenticación).
+    Reglas:
+    - client: solo puede cancelar sus propias reservas
+    - trainer: solo puede cancelar reservas de sesiones donde él es el entrenador
+    - admin: puede cancelar cualquier reserva
     """
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if booking is None:
@@ -120,11 +126,33 @@ def cancel_booking(db: Session, booking_id: int, user_id: int) -> Booking:
             detail="Reserva no encontrada",
         )
 
-    # Verificar que la reserva pertenece al usuario
-    if booking.user_id != user_id:
+    # Autorización por rol
+    if current_user.role == "admin":
+        pass
+    elif current_user.role == "client":
+        if booking.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permiso para cancelar esta reserva",
+            )
+    elif current_user.role == "trainer":
+        session = (
+            db.query(SessionModel).filter(SessionModel.id == booking.session_id).first()
+        )
+        if session is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Sesión no encontrada",
+            )
+        if session.trainer_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No puedes cancelar reservas de sesiones de otro entrenador",
+            )
+    else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permiso para cancelar esta reserva",
+            detail="Rol no autorizado para cancelar reservas",
         )
 
     # Solo se puede cancelar una reserva activa

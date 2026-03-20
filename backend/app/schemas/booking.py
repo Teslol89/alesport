@@ -9,8 +9,6 @@ class BookingCreate(BaseModel):
     El user_id se obtendrá del token de autenticación (cuando se implemente JWT).
     """
 
-    # ID del usuario que reserva (temporal hasta implementar JWT)
-    user_id: int = Field(gt=0)
     # ID de la sesión que se quiere reservar
     session_id: int = Field(gt=0)
 

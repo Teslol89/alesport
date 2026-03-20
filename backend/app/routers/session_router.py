@@ -15,7 +15,10 @@ router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 
 @router.get("/", response_model=list[SessionResponse])
-def read_sessions(db: Session = Depends(get_db)):
+def read_sessions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Devuelve todas las sesiones registradas."""
     return get_sessions(db)
 
@@ -26,14 +29,25 @@ def patch_week_sessions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Permite al entrenador ajustar en bloque una semana concreta de sesiones."""
+    """Permite al entrenador ajustar en bloque una semana concreta de sesiones.
+    Los admins deben incluir trainer_id en el body para indicar de qué entrenador.
+    """
     if current_user.role not in ("trainer", "admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo entrenadores o administradores pueden modificar sesiones",
         )
+    if current_user.role == "admin":
+        if update_data.trainer_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Los administradores deben especificar trainer_id en el body",
+            )
+        trainer_id = update_data.trainer_id
+    else:
+        trainer_id = current_user.id
     return update_sessions_in_week(
-        db, current_user.id, update_data.week_start_date, update_data
+        db, trainer_id, update_data.week_start_date, update_data
     )
 
 
@@ -44,12 +58,13 @@ def patch_session(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Permite al entrenador ajustar manualmente una sesion concreta (PATCH parcial).
-    Solo el entrenador propietario (trainer_id) puede modificar su sesión.
+    """Permite al entrenador o admin ajustar manualmente una sesion concreta (PATCH parcial).
+    Los trainers solo pueden modificar sus propias sesiones.
+    Los admins pueden modificar cualquiera.
     """
     if current_user.role not in ("trainer", "admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo entrenadores o administradores pueden modificar sesiones",
         )
-    return update_session(db, session_id, update_data, current_user.id)
+    return update_session(db, session_id, update_data, current_user)

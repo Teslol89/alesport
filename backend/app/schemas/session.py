@@ -55,9 +55,14 @@ class SessionUpdate(BaseModel):
 
 
 class SessionWeekUpdate(BaseModel):
-    """Actualización masiva de sesiones de una semana concreta para un entrenador."""
+    """Actualización masiva de sesiones de una semana concreta para un entrenador.
+    Los admins deben incluir trainer_id para indicar de qué entrenador modifican la semana.
+    Los trainers no necesitan incluirlo; se usa su propio id del token.
+    """
 
     week_start_date: date
+    # Solo necesario cuando lo llama un admin
+    trainer_id: int | None = Field(default=None, gt=0)
     start_time: time | None = None
     end_time: time | None = None
     capacity: int | None = Field(default=None, gt=0, le=10)
@@ -65,7 +70,7 @@ class SessionWeekUpdate(BaseModel):
 
     @model_validator(mode="after")
     def validate_at_least_one_field(self):
-        """Exige al menos un campo de cambio para evitar PATCH vacíos."""
+        """Exige al menos un campo de cambio (sin contar trainer_id/week_start_date)."""
         if (
             self.start_time is None
             and self.end_time is None

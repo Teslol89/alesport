@@ -27,26 +27,13 @@ def get_bookings_by_user(db: Session, user_id: int) -> list[Booking]:
 def create_booking(db: Session, current_user: User, booking_data) -> Booking:
     """Crea una nueva reserva para un cliente en una sesión concreta.
     Valida:
+    - Que solo usuarios con rol 'client' puedan reservar
     - Que la sesión existe y está activa
     - Que hay plazas disponibles (capacidad - reservas activas > 0)
     - Que el usuario no tiene ya una reserva activa en esa sesión
-    - Que solo usuarios con rol 'client' puedan reservar
     """
-    # Verificar que el usuario existe y es cliente activo
-    user = db.query(User).filter(User.id == current_user.id).first()
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuario no encontrado",
-        )
-
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario inactivo: no puede realizar reservas",
-        )
-
-    if user.role != "client":
+    # get_current_user ya garantiza que el usuario existe y está activo
+    if current_user.role != "client":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo los clientes pueden reservar sesiones",

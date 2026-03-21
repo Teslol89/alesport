@@ -1,11 +1,16 @@
 import os
+import sys
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+# Add backend directory to path so 'app' module can be imported
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 os.environ.setdefault("DATABASE_URL", "sqlite:///./tests_bootstrap.db")
 os.environ.setdefault("JWT_SECRET_KEY", "tests-secret-key")

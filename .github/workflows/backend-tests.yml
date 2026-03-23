@@ -50,7 +50,7 @@ jobs:
         working-directory: backend/app
       - name: Start backend (Uvicorn)
         run: |
-          uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload &
+          uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload --log-level debug > /tmp/uvicorn.log 2>&1 &
         working-directory: backend
       - name: Wait for backend to be ready
         run: |

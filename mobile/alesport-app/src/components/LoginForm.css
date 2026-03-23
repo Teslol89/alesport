@@ -1,0 +1,196 @@
+.login-container {
+    max-width: 350px;
+    margin: 60px auto 0 auto; /* Menos espacio arriba, casi nada abajo */
+    background: #fff;
+    border-radius: 24px;
+    /*box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);*/
+    padding: 24px 0 18px 0; /* Menos padding arriba y abajo */
+    text-align: center;
+}
+
+.login-title {
+    color: #007d94;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.login-subtitle {
+    color: #888;
+    font-size: 1rem;
+    margin-bottom: 24px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    /* Eliminamos el gap para inputs más compactos */
+}
+
+.login-input {
+    width: 100%;
+    border: none;
+    background: #f5f7fa;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 1rem;
+    color: #222;
+    outline: none;
+    margin-bottom: 0;
+    box-sizing: border-box;
+}
+
+.login-input:first-child {
+    margin-bottom: 14px;
+    /* Agrega espacio debajo del input enfocado */
+}
+
+.login-btn {
+    width: 100%;
+    background: #007d94;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.2s;
+}
+
+.login-btn:hover {
+    background: #6eb64a;
+}
+
+.login-options {
+    display: flex;
+    justify-content: flex-end; /* Cambia de flex-end a center */
+    font-size: 0.85rem;
+    color: #007d94;
+    margin-top: 6px; /* Opcional: separa un poco del input */
+}
+
+.forgot-password {    
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #007d94;
+}
+
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper .login-input {
+    padding-right: 44px; /* Espacio para el icono */
+    height: 48px;
+    line-height: 1.2;
+    box-sizing: border-box;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    user-select: none;
+    z-index: 2;
+    display: flex;
+    align-items: top;
+    justify-content: center;
+    height: 32px;
+    width: 32px;
+    padding: 0;
+    background: transparent;
+    pointer-events: auto;
+}
+
+.toggle-password img {
+    display: block;
+    margin: 0 auto;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.login-footer {
+    margin-top: 6px;
+    font-size: 1rem;
+    color: #222;
+}
+
+.signup-link {
+    color: #6eb64a;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
+.login-error {
+    color: #e74c3c;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.login-socials {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+    justify-content: center;
+}
+
+.social-btn {
+    flex: 1;
+    background: #f5f7fa;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 0;
+    font-size: 1rem;
+    color: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.social-btn.facebook .social-icon {
+    color: #1877f3;
+    font-size: 1.2em;
+}
+
+.social-btn.google .social-icon {
+    color: #ea4335;
+    font-size: 1.2em;
+}
+
+.social-btn:hover {
+    background: #e6f7f7;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    margin: 18px 0 18px 0;
+    color: #bbb;
+    font-size: 1rem;
+}
+
+.divider-line {
+    flex: 1;
+    height: 1px;
+    background: #eee;
+    margin: 0 8px;
+}
+
+.divider-text {
+    font-size: 1rem;
+    color: #bbb;
+}

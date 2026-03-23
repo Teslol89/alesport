@@ -42,6 +42,20 @@ jobs:
       - name: Seed de datos (opcional)
         run: |
           python backend/seed.py || echo "No seed.py o no necesario"
+      - name: Start backend (Uvicorn)
+        run: |
+          uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload &
+        working-directory: backend/app
+      - name: Wait for backend to be ready
+        run: |
+          for i in {1..15}; do
+            if nc -z 127.0.0.1 8000; then
+              echo "Backend is up!"
+              break
+            fi
+            echo "Waiting for backend..."
+            sleep 2
+          done
       - name: Run backend tests
         run: python test_manual.py
         working-directory: backend

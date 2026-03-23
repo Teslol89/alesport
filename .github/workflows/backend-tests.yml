@@ -24,6 +24,15 @@ jobs:
       DATABASE_URL: postgresql://alesport:alesport@localhost:5432/alesport_test
     steps:
       - uses: actions/checkout@v4
+      - name: Crear .env dummy para CI (raíz y backend)
+        run: |
+          echo "JWT_SECRET_KEY=devsecret" > .env
+          echo "JWT_ALGORITHM=HS256" >> .env
+          echo "JWT_EXPIRE_MINUTES=30" >> .env
+          echo "DATABASE_URL=postgresql://alesport:alesport@localhost:5432/alesport_test" >> .env
+          mkdir -p backend
+          cp .env backend/.env
+        working-directory: ${{ github.workspace }}
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

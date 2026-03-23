@@ -163,9 +163,5 @@ dist/
 # Windows
 Thumbs.db
 
-# Archivos de pruebas backend (mantener solo local)
-backend/seed.py
-backend/test_manual.py
-
 # Personal notes
 APUNTES_MARCOS.md

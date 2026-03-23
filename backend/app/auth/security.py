@@ -5,18 +5,16 @@ from passlib.exc import UnknownHashError
 from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-import os
+
 from app.database.db import get_db
 from app.models.user import User
+from app.config import settings
 
-# Cargar configuración de JWT desde variables de entorno
-jwt_secret_key = os.getenv("JWT_SECRET_KEY")
-if not jwt_secret_key:
-    raise ValueError("JWT_SECRET_KEY no está configurada en las variables de entorno")
 
-JWT_SECRET_KEY: str = jwt_secret_key
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
+# Cargar configuración de JWT desde settings centralizado
+JWT_SECRET_KEY: str = settings.SECRET_KEY
+JWT_ALGORITHM = settings.ALGORITHM
+JWT_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

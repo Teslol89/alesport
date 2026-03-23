@@ -1,15 +1,9 @@
-import os
-from pathlib import Path
 
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from app.config import settings
 
-# Carga el .env desde la raíz del proyecto, independientemente del directorio de trabajo
-env_path = Path(__file__).resolve().parents[3] / ".env"
-load_dotenv(env_path)
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = settings.DATABASE_URL
 
 if DATABASE_URL is None:
     raise RuntimeError("DATABASE_URL no está definida en el archivo .env")

@@ -20,9 +20,9 @@ from fastapi.openapi.models import APIKey, APIKeyIn, SecuritySchemeType
 from fastapi.security import HTTPBearer
 
 
-
 # Esquema de seguridad para OpenAPI (Swagger UI) - solo documentación
 from fastapi.openapi.utils import get_openapi
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 app = FastAPI(
@@ -34,10 +34,9 @@ app = FastAPI(
         {"name": "bookings", "description": "Reservas de sesiones"},
         {"name": "schedule", "description": "Horarios semanales"},
     ],
-    swagger_ui_parameters={
-        "persistAuthorization": True
-    },
+    swagger_ui_parameters={"persistAuthorization": True},
 )
+
 
 # Personalizar el esquema OpenAPI para que Swagger UI muestre el botón Authorize
 def custom_openapi():
@@ -60,6 +59,7 @@ def custom_openapi():
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
+
 app.openapi = custom_openapi
 logger = logging.getLogger(__name__)
 
@@ -80,6 +80,7 @@ app.include_router(schedule_router)
 app.include_router(session_router)
 app.include_router(booking_router)
 app.include_router(auth_router)
+
 
 # ── Endpoints de sistema ──────────────────────────────────────────────────────
 @app.get("/")

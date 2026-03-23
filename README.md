@@ -139,7 +139,35 @@ Request example:
 4. Login as trainer and try `POST /bookings/` -> expected `403`
 5. Login as admin and run `POST /schedule/generate-sessions` -> expected `200`
 
-## Mobile App
+
+## Mobile App (Ionic React)
+
+### Autenticación y Seguridad (Frontend)
+
+- El login se realiza vía `/auth/login` y el token JWT se almacena en memoria (contexto) y localStorage.
+- El contexto global (`AuthContext`) gestiona el estado de sesión y el token.
+- Logout seguro: elimina el token y limpia el estado de usuario.
+- Rutas privadas protegidas con `PrivateRoute`: solo accesibles si hay token válido.
+- Todas las peticiones autenticadas usan el helper `fetchWithAuth`, que agrega el header `Authorization: Bearer <token>` automáticamente.
+- Si el backend responde 401 (token expirado/inválido), la app cierra sesión y redirige a login.
+- El botón de logout solo aparece si el usuario está autenticado.
+- Ejemplo de consumo seguro de API:
+
+```ts
+import { getUserProfile } from './api/user';
+const { logout } = useAuth();
+useEffect(() => {
+   getUserProfile(logout)
+      .then(user => setUser(user))
+      .catch(err => {/* manejar error */});
+}, []);
+```
+
+**Recomendaciones:**
+- Usa tokens de corta duración y refresh tokens en backend para máxima seguridad.
+- No expongas datos sensibles en el frontend si el usuario no está autenticado.
+- Documenta el flujo de autenticación para nuevos desarrolladores.
+
 
 ```bash
 cd mobile/alesport-app

@@ -43,5 +43,5 @@ jobs:
         run: |
           python backend/seed.py || echo "No seed.py o no necesario"
       - name: Run backend tests
-        run: |
-          python backend/test_manual.py
+        run: python test_manual.py
+        working-directory: backend

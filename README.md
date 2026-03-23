@@ -150,6 +150,9 @@ npx ionic serve
 ## Notes for Production
 
 - Restrict CORS origins (do not keep `*`)
-- Use a long random `JWT_SECRET_KEY`
+- Use a long random `JWT_SECR3. Documentación
+README completo: Explica cómo instalar, correr, testear y desplegar el proyecto. Incluye ejemplos de uso de la API.
+CONTRIBUTING.md: Guía para colaboradores sobre ramas, PRs, convenciones de código, etc.
+OpenAPI/Swagger: Aprovecha la autogeneración de docs de FastAPI y añade descripciones detalladas a los endpoints.ET_KEY`
 - Rotate secrets and use environment-specific config
 - Protect or remove maintenance/debug endpoints before release

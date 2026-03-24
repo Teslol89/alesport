@@ -192,7 +192,15 @@
     transition: background 0.2s;
 }
 
-/* Icono Facebook */
+/* Iconos de los botones sociales */
+.social-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    object-fit: contain;
+}
+
+/* Icono Apple */
 .social-btn.facebook .social-icon {
     color: #1877f3;
     font-size: 1.2em;

@@ -4,8 +4,10 @@ import { useAuth } from "./AuthContext";
 import { useHistory } from "react-router-dom";
 import { IonToast } from "@ionic/react";
 
-import EyeOpen from "../icons/ojoAbierto.svg";
-import EyeClosed from "../icons/ojoCerrado.svg";
+import ojoAbierto from "../icons/ojoAbierto.svg";
+import ojoCerrado from "../icons/ojoCerrado.svg";
+import appleLogo from '../icons/appleLogo.svg';
+import googleLogo from '../icons/googleLogo.svg';
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {
@@ -37,10 +39,10 @@ const LoginForm: React.FC = () => {
             <p className="login-description">Introduce tu correo electrónico y contraseña para acceder a tu cuenta.</p>
             <div className="login-socials">
                 <button className="social-btn facebook">
-                    <span className="social-icon">📘</span> Facebook
+                    <img src={appleLogo} alt="Apple" className="social-icon" /> Apple
                 </button>
                 <button className="social-btn google">
-                    <span className="social-icon">🟠</span> Google
+                    <img src={googleLogo} alt="Google" className="social-icon" /> Google
                 </button>
             </div>
             <div className="login-divider">
@@ -74,7 +76,7 @@ const LoginForm: React.FC = () => {
                         aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                     >
                         <img
-                          src={showPassword ? EyeClosed : EyeOpen}
+                          src={showPassword ? ojoCerrado : ojoAbierto}
                           alt={showPassword ? "Ojo cerrado" : "Ojo abierto"}
                           style={{ width: 24, height: 24 }}
                         />

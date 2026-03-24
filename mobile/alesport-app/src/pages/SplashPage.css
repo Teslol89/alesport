@@ -7,8 +7,8 @@
     background: #fff;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    height: 100dvh;
+    min-height: 0;
+    height: 100%;
     padding: 0;
     box-sizing: border-box;
 }
@@ -91,7 +91,7 @@
     position: static;
     width: 100%;
     margin-top: auto;
-    margin-bottom: 24px;
+    margin-bottom: 0;
     text-align: center;
     color: #aaa;
     font-size: 1rem;
@@ -103,8 +103,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     gap: 2px;
+    height: 100%;
 }
 
 .splash-footer-img-container {
@@ -116,14 +117,14 @@
     width: 140px;
     max-width: 60vw;
     display: block;
-    margin: 0 auto;
+    margin: 0 auto 0 -26px; /* mueve la imagen 12px a la izquierda, ajusta el valor si quieres más/menos */
 }
 
 /* 'from' arriba del logo de marca en el footer */
 .splash-footer-from {
     position: absolute;
     left: 50%;
-    top: 16%;
+    top: 25%;
     /* Ajusta este valor para mover el 'from' sobre la imagen */
     transform: translate(-50%, -50%);
     font-size: 1rem;

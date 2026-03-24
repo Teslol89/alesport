@@ -1,0 +1,7 @@
+html, body, #root, .ion-app, .ion-page, .splash-page, .splash-content {
+  height: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}

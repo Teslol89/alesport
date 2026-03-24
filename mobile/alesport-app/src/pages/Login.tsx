@@ -4,9 +4,6 @@ import LoginForm from '../components/LoginForm';
 const Login: React.FC = () => (
     <IonPage>
         <IonHeader>
-            <IonToolbar>
-                <IonTitle>Iniciar Sesión</IonTitle>
-            </IonToolbar>
         </IonHeader>
         <IonContent fullscreen>
             <LoginForm />

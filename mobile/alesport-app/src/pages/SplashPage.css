@@ -1,0 +1,75 @@
+.splash-footer-from {
+    font-size: 1rem;
+    color: #aaa;
+    margin-bottom: 0;
+    font-style: normal;
+}
+
+.splash-footer-brand {
+    font-size: 1.15rem;
+    color: #888;
+    font-style: italic;
+    font-family: 'Georgia', 'Times New Roman', Times, serif;
+    letter-spacing: 1px;
+}
+/* Footer discreto y centrado en la splash */
+.splash-footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 24px;
+    text-align: center;
+    color: #aaa;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    pointer-events: none;
+}
+/* SplashPage styles: fondo blanco, logo centrado y loader animado */
+.splash-page,
+.splash-content {
+    --background: #fff;
+    background: #fff;
+}
+
+.splash-logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    height: 100dvh;
+}
+
+.splash-logo {
+    width: 220px;
+    max-width: 80vw;
+    margin-bottom: 32px;
+    display: block;
+}
+
+.splash-title {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #007d94;
+    margin-bottom: 32px;
+    letter-spacing: 2px;
+}
+
+.splash-loader {
+    border: 4px solid #eee;
+    border-top: 4px solid #007d94;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

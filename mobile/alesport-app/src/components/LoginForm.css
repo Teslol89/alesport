@@ -170,7 +170,7 @@
     margin: 0;
 }
 
-/* Botones sociales (Google, Facebook, etc) */
+/* Botones sociales (Google, Apple, etc) */
 .login-socials {
     display: flex;
     gap: 12px;
@@ -204,7 +204,7 @@
 }
 
 /* Icono Apple */
-.social-btn.facebook .social-icon {
+.social-btn.apple .social-icon {
     color: #1877f3;
     font-size: 1.2em;
 }

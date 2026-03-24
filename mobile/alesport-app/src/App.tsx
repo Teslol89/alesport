@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import {
   IonApp,
@@ -11,11 +12,14 @@ import {
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { ellipse, square, triangle } from 'ionicons/icons';
+
+
 import Login from './pages/Login';
 import Tab1 from './pages/Tab1';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
-import { AuthProvider } from './components/AuthContext';
+import SplashPage from './pages/SplashPage';
+import { AuthProvider, useAuth } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 
 /* Core CSS required for Ionic components to work properly */
@@ -51,47 +55,66 @@ import './App.css';
 
 setupIonicReact();
 
+// Componente auxiliar para redirigir según autenticación
+// Si el usuario está autenticado, va a /tab1; si no, va a /login
+const RedirectToHome: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  return <Redirect to={isAuthenticated ? "/tab1" : "/login"} />;
+};
 
-const App: React.FC = () => (
-  <AuthProvider>
-    <IonApp>
-      <IonReactRouter>
-        <IonTabs>
-          <IonRouterOutlet>
-            <Route exact path="/login">
-              <Login />
-            </Route>
-            <PrivateRoute exact path="/tab1" component={Tab1}>
-              <Tab1 />
-            </PrivateRoute>
-            <PrivateRoute exact path="/tab2" component={Tab2}>
-              <Tab2 />
-            </PrivateRoute>
-            <PrivateRoute path="/tab3">
-              <Tab3 />
-            </PrivateRoute>
-            <Route exact path="/">
-              <Redirect to="/tab1" />
-            </Route>
-          </IonRouterOutlet>
-          <IonTabBar slot="bottom">
-            <IonTabButton tab="tab1" href="/tab1">
-              <IonIcon aria-hidden="true" icon={triangle} />
-              <IonLabel>Tab 1</IonLabel>
-            </IonTabButton>
-            <IonTabButton tab="tab2" href="/tab2">
-              <IonIcon aria-hidden="true" icon={ellipse} />
-              <IonLabel>Tab 2</IonLabel>
-            </IonTabButton>
-            <IonTabButton tab="tab3" href="/tab3">
-              <IonIcon aria-hidden="true" icon={square} />
-              <IonLabel>Tab 3</IonLabel>
-            </IonTabButton>
-          </IonTabBar>
-        </IonTabs>
-      </IonReactRouter>
-    </IonApp>
-  </AuthProvider>
-);
+// App principal con SplashPage integrado
+const App: React.FC = () => {
+  // Estado para controlar si el splash ya terminó
+  const [splashDone, setSplashDone] = useState(false);
+
+  // Cuando splashDone es false, mostramos el SplashPage
+  if (!splashDone) {
+    return <SplashPage onFinish={() => setSplashDone(true)} />;
+  }
+
+  // Cuando termina el splash, mostramos la app normal
+  return (
+    <AuthProvider>
+      <IonApp>
+        <IonReactRouter>
+          <IonTabs>
+            <IonRouterOutlet>
+              {/* Página pública: login (no requiere sesión) */}
+              <Route exact path="/login">
+                <Login />
+              </Route>
+
+              {/* Páginas privadas: requieren sesión iniciada */}
+              <PrivateRoute exact path="/tab1" component={Tab1} />
+              <PrivateRoute exact path="/tab2" component={Tab2} />
+              <PrivateRoute path="/tab3" component={Tab3} />
+
+              {/* Redirección condicional en la raíz */}
+              <Route exact path="/">
+                <RedirectToHome />
+              </Route>
+            </IonRouterOutlet>
+
+            {/* Barra de pestañas inferior */}
+            <IonTabBar slot="bottom">
+              <IonTabButton tab="tab1" href="/tab1">
+                <IonIcon aria-hidden="true" icon={triangle} />
+                <IonLabel>Tab 1</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="tab2" href="/tab2">
+                <IonIcon aria-hidden="true" icon={ellipse} />
+                <IonLabel>Tab 2</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="tab3" href="/tab3">
+                <IonIcon aria-hidden="true" icon={square} />
+                <IonLabel>Tab 3</IonLabel>
+              </IonTabButton>
+            </IonTabBar>
+          </IonTabs>
+        </IonReactRouter>
+      </IonApp>
+    </AuthProvider>
+  );
+};
 
 export default App;

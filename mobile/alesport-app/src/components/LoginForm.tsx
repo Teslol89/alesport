@@ -38,7 +38,7 @@ const LoginForm: React.FC = () => {
             <h2 className="login-title">Iniciar sesión</h2>
             <p className="login-description">Introduce tu correo electrónico y contraseña para acceder a tu cuenta.</p>
             <div className="login-socials">
-                <button className="social-btn facebook">
+                <button className="social-btn apple">
                     <img src={appleLogo} alt="Apple" className="social-icon" /> Apple
                 </button>
                 <button className="social-btn google">
@@ -76,9 +76,9 @@ const LoginForm: React.FC = () => {
                         aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                     >
                         <img
-                          src={showPassword ? ojoCerrado : ojoAbierto}
-                          alt={showPassword ? "Ojo cerrado" : "Ojo abierto"}
-                          style={{ width: 24, height: 24 }}
+                            src={showPassword ? ojoCerrado : ojoAbierto}
+                            alt={showPassword ? "Ojo cerrado" : "Ojo abierto"}
+                            style={{ width: 24, height: 24 }}
                         />
                     </span>
                 </div>

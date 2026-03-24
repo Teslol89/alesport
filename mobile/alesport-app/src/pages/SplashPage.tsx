@@ -18,8 +18,10 @@ const SplashPage: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
             <IonContent fullscreen className="splash-content">
                 <div className="splash-logo-container">
                     {/* Aquí pon tu logo real o un SVG */}
-                    <img src={alesportLogo1} alt="Alesport Logo" className="splash-logo" />
-                    <div className="splash-loader"></div>
+                    <div className="splash-logo">
+                        <img className="splash-logo-img" src={alesportLogo1} alt="Alesport Logo" />
+                        <div className="splash-loader"></div>
+                    </div>
                 </div>
                 <footer className="splash-footer">
                     <div className="splash-footer-from">from</div>

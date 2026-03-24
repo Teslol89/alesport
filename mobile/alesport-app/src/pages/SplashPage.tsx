@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { IonPage, IonContent } from '@ionic/react';
 import alesportLogo1 from '../assets/img/alesportLogo1.jpg';
+import verdeLabsHori from '../assets/img/verdeLabsHori.png';
 import './SplashPage.css';
 
 // SplashPage: muestra el logo y un loader mientras se cargan datos o se decide a dónde redirigir
@@ -9,7 +10,7 @@ const SplashPage: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
         // Simula carga de datos o comprobaciones (puedes reemplazar el timeout por tu lógica real)
         const timer = setTimeout(() => {
             onFinish();
-        }, 4500); // 4.5 segundos
+        }, 10500); // 4.5 segundos
         return () => clearTimeout(timer);
     }, [onFinish]);
 
@@ -23,9 +24,13 @@ const SplashPage: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
                         <div className="splash-loader"></div>
                     </div>
                 </div>
-                <footer className="splash-footer">
-                    <div className="splash-footer-from">from</div>
-                    <div className="splash-footer-brand">Verdeguer Labs</div>
+                <footer className="splash-footer">                    
+                    <div className="splash-footer-logo">
+                        <div className="splash-footer-img-container">
+                            <img className="splash-footer-img" src={verdeLabsHori} alt="Verde Labs Logo" />
+                            <div className="splash-footer-from">from</div>
+                        </div>
+                    </div>
                 </footer>
             </IonContent>
         </IonPage>

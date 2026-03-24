@@ -1,10 +1,3 @@
-.splash-footer-from {
-    font-size: 1rem;
-    color: #aaa;
-    margin-bottom: 0;
-    font-style: normal;
-}
-
 /* ============================= */
 /* 1. Fondo blanco global splash */
 /* ============================= */
@@ -12,6 +5,12 @@
 .splash-content {
     --background: #fff;
     background: #fff;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    height: 100dvh;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 /* ============================= */
@@ -22,8 +21,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
-    height: 100dvh;
+    flex: 1 0 auto;
     margin-top: 0;
     padding-bottom: 0;
 }
@@ -38,6 +36,7 @@
     position: relative;
     display: inline-block;
 }
+
 .splash-logo-img {
     display: block;
     margin: 0 auto;
@@ -68,6 +67,7 @@
     0% {
         transform: rotate(0deg);
     }
+
     100% {
         transform: rotate(360deg);
     }
@@ -88,26 +88,49 @@
 /* 6. Footer discreto y centrado */
 /* ============================= */
 .splash-footer {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 24px;
+    position: static;
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: 24px;
     text-align: center;
     color: #aaa;
     font-size: 1rem;
     letter-spacing: 1px;
     pointer-events: none;
 }
+
+.splash-footer-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.splash-footer-img-container {
+    position: relative;
+    display: inline-block;
+}
+
+.splash-footer-img {
+    width: 140px;
+    max-width: 60vw;
+    display: block;
+    margin: 0 auto;
+}
+
+/* 'from' arriba del logo de marca en el footer */
 .splash-footer-from {
+    position: absolute;
+    left: 50%;
+    top: 16%;
+    /* Ajusta este valor para mover el 'from' sobre la imagen */
+    transform: translate(-50%, -50%);
     font-size: 1rem;
     color: #aaa;
-    margin-bottom: 0;
     font-style: normal;
-}
-.splash-footer-brand {
-    font-size: 1.15rem;
-    color: #888;
-    font-style: italic;
-    font-family: 'Georgia', 'Times New Roman', Times, serif;
-    letter-spacing: 1px;
+    text-align: center;
+    pointer-events: none;
+    width: 100%;
+    z-index: 2;
 }

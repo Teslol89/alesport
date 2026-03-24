@@ -16,7 +16,7 @@ const SplashPage: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
 
     return (
         <IonPage className="splash-page">
-            <IonContent fullscreen className="splash-content">
+            <div className="splash-content">
                 <div className="splash-logo-container">
                     {/* Aquí pon tu logo real o un SVG */}
                     <div className="splash-logo">
@@ -32,7 +32,7 @@ const SplashPage: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
                         </div>
                     </div>
                 </footer>
-            </IonContent>
+            </div>
         </IonPage>
     );
 };

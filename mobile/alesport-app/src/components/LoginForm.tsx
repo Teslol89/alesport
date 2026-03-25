@@ -61,21 +61,21 @@ const LoginForm: React.FC = () => {
                     className="login-input"
                 />
                 <div className="password-wrapper">
-                                        <input
-                                                type={showPassword ? "text" : "password"}
-                                                placeholder="Contraseña"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                className="login-input"
-                                                autoComplete="current-password"
-                                                ref={passwordInputRef}
-                                                onFocus={() => {
-                                                    // Forzar scroll al enfocar
-                                                    setTimeout(() => {
-                                                        passwordInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                                                    }, 300);
-                                                }}
-                                        />
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Contraseña"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="login-input"
+                        autoComplete="current-password"
+                        ref={passwordInputRef}
+                        onFocus={() => {
+                            // Forzar scroll al enfocar
+                            setTimeout(() => {
+                                passwordInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            }, 300);
+                        }}
+                    />
                     <span
                         className="toggle-password"
                         onClick={() => setShowPassword((v) => !v)}

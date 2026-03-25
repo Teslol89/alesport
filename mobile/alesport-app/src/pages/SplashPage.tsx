@@ -21,7 +21,11 @@ const SplashPage: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
                     {/* Aquí pon tu logo real o un SVG */}
                     <div className="splash-logo">
                         <img className="splash-logo-img" src={alesportLogo1} alt="Alesport Logo" />
-                        <div className="splash-loader"></div>
+                        <div className="splash-loader-dots">
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                        </div>
                     </div>
                 </div>
             </IonContent>

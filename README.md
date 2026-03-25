@@ -1,5 +1,192 @@
 # Alesport
 
+
+## Guía de despliegue y configuración completa (VPS, PostgreSQL, Backend, App Móvil y Producción)
+---
+
+## Despliegue profesional en producción (backend FastAPI/Uvicorn)
+
+### 0. Objetivo
+
+El backend debe funcionar 24/7 en el VPS, sin depender de tu PC, iniciarse automáticamente al arrancar el servidor, reiniciarse si falla y estar protegido tras un proxy seguro (nginx). Este es el estándar profesional para aplicaciones web modernas.
+
+### 1. Crear un servicio systemd para el backend
+
+1.1. Crea el archivo `/etc/systemd/system/alesport-backend.service` con el siguiente contenido (ajusta rutas según tu entorno):
+
+```ini
+[Unit]
+Description=Alesport FastAPI backend (Uvicorn)
+After=network.target
+
+[Service]
+User=ubuntu  # o el usuario que corresponda
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/alesport/backend
+Environment="PATH=/home/ubuntu/alesport/backend/venv/bin"
+ExecStart=/home/ubuntu/alesport/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+1.2. Recarga systemd y habilita el servicio:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable alesport-backend
+sudo systemctl start alesport-backend
+sudo systemctl status alesport-backend
+```
+
+El backend quedará corriendo en segundo plano, se reiniciará si falla y arrancará automáticamente con el VPS.
+
+### 2. Configuración de nginx como proxy inverso
+
+1. Instala nginx:
+   ```bash
+   sudo apt install nginx
+   ```
+2. Edita `/etc/nginx/sites-available/default` para añadir:
+   ```nginx
+   location / {
+      proxy_pass http://127.0.0.1:8000;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+   }
+   location /docs {
+      proxy_pass http://127.0.0.1:8000/docs;
+   }
+   location /openapi.json {
+      proxy_pass http://127.0.0.1:8000/openapi.json;
+   }
+   ```
+3. Recarga nginx:
+   ```bash
+   sudo systemctl reload nginx
+   ```
+
+### 3. Seguridad y buenas prácticas
+
+- Usa HTTPS (puedes instalar Certbot para obtener SSL gratis de Let's Encrypt).
+- Limita el acceso a la base de datos solo a IPs necesarias.
+- Mantén el firewall activo (ufw) y solo abre los puertos requeridos (80, 443, 5432 si necesitas acceso remoto).
+- No uses `--reload` en producción.
+- El backend ya no depende de tu PC: el VPS lo ejecuta siempre, aunque apagues tu ordenador.
+
+---
+
+### 1. Despliegue del backend FastAPI en VPS
+
+- Crear un VPS (IONOS en este caso) con Ubuntu.
+- Instalar Python 3, pip y git.
+- Clonar el repositorio en el VPS.
+- Crear y activar un entorno virtual:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+- Instalar dependencias:
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+
+### 2. Configuración y acceso remoto a PostgreSQL
+
+- Instalar PostgreSQL en el VPS:
+   ```bash
+   sudo apt update && sudo apt install postgresql postgresql-contrib
+   ```
+- Crear base de datos y usuario:
+   ```bash
+   sudo -u postgres psql
+   CREATE DATABASE alesportAPP;
+   CREATE USER postgres WITH PASSWORD 'TU_PASSWORD';
+   GRANT ALL PRIVILEGES ON DATABASE alesportAPP TO postgres;
+   \q
+   ```
+- Editar `/etc/postgresql/16/main/postgresql.conf`:
+   - Cambiar `listen_addresses = '*'`
+- Editar `/etc/postgresql/16/main/pg_hba.conf`:
+   - Añadir:
+      ```
+      host    all    all    0.0.0.0/0    md5
+      ```
+- Reiniciar PostgreSQL:
+   ```bash
+   sudo systemctl restart postgresql
+   ```
+
+### 3. Abrir el puerto 5432 en el firewall y en IONOS
+
+- En el VPS, abrir el puerto (si usas UFW):
+   ```bash
+   sudo ufw allow 5432/tcp
+   ```
+- En el panel de IONOS, añadir regla para permitir el puerto 5432 TCP para todas las IPs o solo tu IP pública.
+
+### 4. Probar acceso remoto con pgAdmin
+
+- Conectar desde tu PC usando pgAdmin:
+   - Host: IP pública del VPS
+   - Puerto: 5432
+   - Usuario: postgres
+   - Contraseña: TU_PASSWORD
+   - Base de datos: alesportAPP
+
+### 5. Poblar la base de datos con usuarios y datos de prueba
+
+- Editar `backend/seed.py` para que la cadena de conexión apunte a la IP pública del VPS:
+   ```python
+   DB_URL = "postgresql+psycopg://postgres:TU_PASSWORD@IP_VPS:5432/alesportAPP"
+   ```
+- Subir el archivo al VPS (por ejemplo, con FileZilla).
+- En el VPS, activar el entorno virtual y ejecutar:
+   ```bash
+   source venv/bin/activate
+   python backend/seed.py
+   ```
+- Esto crea 3 usuarios de prueba:
+   - admin@demo.com / admin123 (rol: admin)
+   - trainer@demo.com / trainer123 (rol: trainer)
+   - cliente@demo.com / cliente123 (rol: client)
+
+### 6. Lanzar el backend en modo producción/desarrollo
+
+- Desde la carpeta backend:
+   ```bash
+   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+- El backend queda accesible desde la IP pública del VPS en el puerto 8000.
+
+### 7. Configuración de la app móvil
+
+- Editar el archivo `.env` de la app móvil para que apunte a la URL del backend en producción:
+   ```env
+   VITE_API_BASE_URL=https://TU_DOMINIO_O_IP:8000
+   ```
+- Compilar y probar la app móvil. Ya puedes loguear con los usuarios de prueba y operar normalmente.
+
+---
+
+
+**Resumen actualizado:**
+
+1. VPS con Ubuntu, Python, PostgreSQL y puertos abiertos.
+2. PostgreSQL configurado para acceso remoto y seguro.
+3. Backend desplegado y conectado a la base remota.
+4. Usuarios de prueba y datos insertados con seed.py.
+5. App móvil conectada y funcional.
+6. Backend corriendo como servicio profesional (systemd), gestionado por nginx, seguro y persistente.
+
+Si necesitas restaurar datos de prueba, vuelve a ejecutar `seed.py`.
+
+---
+
 Booking and schedule management app for the Alesport gym.
 
 ## Overview

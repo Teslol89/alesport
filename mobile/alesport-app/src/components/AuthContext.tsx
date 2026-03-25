@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setToken(null);
-    // La redirección la maneja el router según isAuthenticated
+    history.replace("/login");
   };
 
   return (

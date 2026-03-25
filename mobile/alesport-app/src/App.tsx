@@ -78,40 +78,48 @@ const App: React.FC = () => {
     <IonApp>
       <IonReactRouter>
         <AuthProvider>
-          <IonTabs>
-            <IonRouterOutlet>
-              {/* Página pública: login (no requiere sesión) */}
-              <Route exact path="/login" component={Login} />
-
-              {/* Páginas privadas: requieren sesión iniciada */}
-              <PrivateRoute exact path="/tab1" component={Tab1} />
-              <PrivateRoute exact path="/tab2" component={Tab2} />
-              <PrivateRoute path="/tab3" component={Tab3} />
-
-              {/* Redirección condicional en la raíz */}
-              <Route exact path="/" component={RootRedirect} />
-            </IonRouterOutlet>
-
-            {/* Barra de pestañas inferior */}
-            <IonTabBar slot="bottom">
-              <IonTabButton tab="tab1" href="/tab1">
-                <IonIcon aria-hidden="true" icon={triangle} />
-                <IonLabel>Tab 1</IonLabel>
-              </IonTabButton>
-              <IonTabButton tab="tab2" href="/tab2">
-                <IonIcon aria-hidden="true" icon={ellipse} />
-                <IonLabel>Tab 2</IonLabel>
-              </IonTabButton>
-              <IonTabButton tab="tab3" href="/tab3">
-                <IonIcon aria-hidden="true" icon={square} />
-                <IonLabel>Tab 3</IonLabel>
-              </IonTabButton>
-            </IonTabBar>
-          </IonTabs>
+          <MainRoutes />
         </AuthProvider>
       </IonReactRouter>
     </IonApp>
   );
+
+// Componente que separa rutas públicas y privadas
+function MainRoutes() {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) {
+    return (
+      <IonRouterOutlet>
+        <Route exact path="/login" component={Login} />
+        <Route exact path="/" component={RootRedirect} />
+      </IonRouterOutlet>
+    );
+  }
+  return (
+    <IonTabs>
+      <IonRouterOutlet>
+        <PrivateRoute exact path="/tab1" component={Tab1} />
+        <PrivateRoute exact path="/tab2" component={Tab2} />
+        <PrivateRoute path="/tab3" component={Tab3} />
+        <Route exact path="/" component={RootRedirect} />
+      </IonRouterOutlet>
+      <IonTabBar slot="bottom">
+        <IonTabButton tab="tab1" href="/tab1">
+          <IonIcon aria-hidden="true" icon={triangle} />
+          <IonLabel>Tab 1</IonLabel>
+        </IonTabButton>
+        <IonTabButton tab="tab2" href="/tab2">
+          <IonIcon aria-hidden="true" icon={ellipse} />
+          <IonLabel>Tab 2</IonLabel>
+        </IonTabButton>
+        <IonTabButton tab="tab3" href="/tab3">
+          <IonIcon aria-hidden="true" icon={square} />
+          <IonLabel>Tab 3</IonLabel>
+        </IonTabButton>
+      </IonTabBar>
+    </IonTabs>
+  );
+}
 };
 
 export default App;

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useHistory } from "react-router-dom";
 
 interface AuthContextType {
   token: string | null;
@@ -11,6 +12,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+  const history = useHistory();
 
   useEffect(() => {
     if (token) {
@@ -22,6 +24,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setToken(null);
+    // La redirección la maneja el router según isAuthenticated
   };
 
   return (

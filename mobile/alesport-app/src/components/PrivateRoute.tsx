@@ -4,25 +4,12 @@ import { useAuth } from "../components/AuthContext";
 
 const PrivateRoute: React.FC<RouteProps> = ({ component: Component, ...rest }) => {
   const { isAuthenticated } = useAuth();
-  return (
-    <Route
-      {...rest}
-      render={props =>
-        isAuthenticated
-          ? Component
-            ? <Component {...props} />
-            : null
-          : (
-            <Redirect
-              to={{
-                pathname: "/login",
-                state: { from: props.location }
-              }}
-            />
-          )
-      }
-    />
-  );
+  if (!isAuthenticated) {
+    return <Redirect to="/login" />;
+  }
+  // Si no hay componente, no renderiza nada
+  if (!Component) return null;
+  return <Route {...rest} component={Component} />;
 };
 
 export default PrivateRoute;

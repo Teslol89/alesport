@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Redirect, Route } from 'react-router-dom';
+import { Route, Redirect } from 'react-router-dom';
 import {
   IonApp,
   IonIcon,
@@ -55,14 +55,15 @@ import './App.css';
 
 setupIonicReact();
 
-// Componente auxiliar para redirigir según autenticación
-// Si el usuario está autenticado, va a /tab1; si no, va a /login
-const RedirectToHome: React.FC = () => {
-  const { isAuthenticated } = useAuth();
-  return <Redirect to={isAuthenticated ? "/tab1" : "/login"} />;
-};
+
 
 // App principal con SplashPage integrado
+// Componente dedicado para la redirección de la ruta raíz
+function RootRedirect() {
+  const { isAuthenticated } = useAuth();
+  return <Redirect to={isAuthenticated ? "/tab1" : "/login"} />;
+}
+
 const App: React.FC = () => {
   // Estado para controlar si el splash ya terminó
   const [splashDone, setSplashDone] = useState(false);
@@ -74,15 +75,13 @@ const App: React.FC = () => {
 
   // Cuando termina el splash, mostramos la app normal
   return (
-    <AuthProvider>
-      <IonApp>
-        <IonReactRouter>
+    <IonApp>
+      <IonReactRouter>
+        <AuthProvider>
           <IonTabs>
             <IonRouterOutlet>
               {/* Página pública: login (no requiere sesión) */}
-              <Route exact path="/login">
-                <Login />
-              </Route>
+              <Route exact path="/login" component={Login} />
 
               {/* Páginas privadas: requieren sesión iniciada */}
               <PrivateRoute exact path="/tab1" component={Tab1} />
@@ -90,9 +89,7 @@ const App: React.FC = () => {
               <PrivateRoute path="/tab3" component={Tab3} />
 
               {/* Redirección condicional en la raíz */}
-              <Route exact path="/">
-                <RedirectToHome />
-              </Route>
+              <Route exact path="/" component={RootRedirect} />
             </IonRouterOutlet>
 
             {/* Barra de pestañas inferior */}
@@ -111,9 +108,9 @@ const App: React.FC = () => {
               </IonTabButton>
             </IonTabBar>
           </IonTabs>
-        </IonReactRouter>
-      </IonApp>
-    </AuthProvider>
+        </AuthProvider>
+      </IonReactRouter>
+    </IonApp>
   );
 };
 

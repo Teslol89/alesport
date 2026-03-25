@@ -3,3 +3,11 @@
   --background: #fff !important;
   background: #fff !important;
 }
+
+/* Centrado vertical y horizontal del LoginForm en la pantalla de login */
+.login-center-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

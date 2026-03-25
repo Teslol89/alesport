@@ -1,13 +1,11 @@
-/* Contenedor principal del login */
+/* Contenedor principal del login (centrado horizontalmente, vertical lo gestiona el wrapper de la página) */
 .login-container {
     max-width: 350px;
-    margin: 60px auto 0 auto;
-    /* Menos espacio arriba, casi nada abajo */
+    margin: 0 auto;
     background: #fff;
     border-radius: 24px;
     box-shadow: 0 2px 16px rgba(0, 0, 0, 1.04);
     padding: 24px 16px 18px 16px;
-    /* Menos padding arriba y abajo */
     text-align: center;
 }
 

@@ -17,7 +17,10 @@ const Login: React.FC = () => {
         <IonPage className="login-page">
             <IonHeader />
             <IonContent fullscreen>
-                <LoginForm />
+                {/* Wrapper para centrar vertical y horizontalmente */}
+                <div className="login-center-wrapper">
+                    <LoginForm />
+                </div>
             </IonContent>
         </IonPage>
     );

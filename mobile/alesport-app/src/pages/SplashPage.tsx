@@ -10,7 +10,7 @@ const SplashPage: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
         // Simula carga de datos o comprobaciones (puedes reemplazar el timeout por tu lógica real)
         const timer = setTimeout(() => {
             onFinish();
-        }, 10500); // 4.5 segundos
+        }, 2500); // 2.5 segundos
         return () => clearTimeout(timer);
     }, [onFinish]);
 

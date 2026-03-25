@@ -6,7 +6,7 @@
 
 /* Centrado vertical y horizontal del LoginForm en la pantalla de login */
 .login-center-wrapper {
-  min-height: 100vh;
+  min-height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;

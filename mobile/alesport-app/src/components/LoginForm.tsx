@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { loginUser } from "../api/auth";
 import { useAuth } from "./AuthContext";
 import { useHistory } from "react-router-dom";
@@ -16,6 +16,7 @@ const LoginForm: React.FC = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const passwordInputRef = useRef<HTMLInputElement>(null);
 
     const { setToken } = useAuth();
     const history = useHistory();
@@ -60,14 +61,21 @@ const LoginForm: React.FC = () => {
                     className="login-input"
                 />
                 <div className="password-wrapper">
-                    <input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Contraseña"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="login-input"
-                        autoComplete="current-password"
-                    />
+                                        <input
+                                                type={showPassword ? "text" : "password"}
+                                                placeholder="Contraseña"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="login-input"
+                                                autoComplete="current-password"
+                                                ref={passwordInputRef}
+                                                onFocus={() => {
+                                                    // Forzar scroll al enfocar
+                                                    setTimeout(() => {
+                                                        passwordInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                                    }, 300);
+                                                }}
+                                        />
                     <span
                         className="toggle-password"
                         onClick={() => setShowPassword((v) => !v)}

@@ -16,7 +16,7 @@ const Login: React.FC = () => {
     return (
         <IonPage className="login-page">
             <IonHeader />
-            <IonContent fullscreen>
+            <IonContent fullscreen scrollY={true} scrollEvents={true} forceOverscroll={true}>
                 {/* Wrapper para centrar vertical y horizontalmente */}
                 <div className="login-center-wrapper">
                     <LoginForm />

@@ -128,7 +128,7 @@
     /* Ajusta este valor para mover el 'from' sobre la imagen */
     transform: translate(-50%, -50%);
     font-size: 1rem;
-    color: #aaa;
+    color: #000000;
     font-style: normal;
     text-align: center;
     pointer-events: none;

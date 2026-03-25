@@ -24,15 +24,15 @@ const SplashPage: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
                         <div className="splash-loader"></div>
                     </div>
                 </div>
-                <footer className="splash-footer">                    
-                    <div className="splash-footer-logo">
-                        <div className="splash-footer-img-container">
-                            <img className="splash-footer-img" src={verdeLabsHori} alt="Verde Labs Logo" />
-                            <div className="splash-footer-from">from</div>
-                        </div>
-                    </div>
-                </footer>
             </IonContent>
+            <footer className="splash-footer">
+                <div className="splash-footer-logo">
+                    <div className="splash-footer-img-container">
+                        <img className="splash-footer-img" src={verdeLabsHori} alt="Verde Labs Logo" />
+                        <div className="splash-footer-from">from</div>
+                    </div>
+                </div>
+            </footer>
         </IonPage>
     );
 };

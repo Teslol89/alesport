@@ -154,11 +154,24 @@
 }
 
 /* Enlace para registrarse */
+/* Botón/enlace para registrarse */
 .signup-link {
-    color: #6eb64a;
+    color: #2563eb;
     font-weight: 600;
     cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
     margin-left: 4px;
+    font-size: 1rem;
+    transition: color 0.2s;
+    outline: none;
+    display: inline;
+}
+
+.signup-link:active {
+    color: #0d265c;
+    transform: scale(0.90);
 }
 
 /* Mensaje de error de login */

@@ -5,6 +5,8 @@ import { loginWithGoogle } from "../api/auth";
 import { useAuth } from "./AuthContext";
 import { useHistory } from "react-router-dom";
 import { IonToast } from "@ionic/react";
+// import { IonRouterLink } from "@ionic/react";
+
 
 import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
@@ -126,8 +128,10 @@ const LoginForm: React.FC = () => {
                 </div>
                 <button type="submit" className="login-btn">Iniciar sesión</button>
             </form>
-            <div className="login-footer">
-                ¿No tienes una cuenta? <span className="signup-link">Regístrate</span>
+            <div className="login-footer">¿No tienes una cuenta?
+                <button type="button" className="signup-link"
+                    onClick={() => history.push('/register')}>Regístrate
+                </button>
             </div>
             <IonToast
                 isOpen={!!error}

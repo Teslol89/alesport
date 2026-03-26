@@ -1,6 +1,5 @@
 /* Fondo blanco solo para la pantalla de login (IonPage/IonContent) */
 .ion-page.login-page, .ion-page.login-page ion-content, .ion-page.login-page .ion-content {
-  --background: #fff !important;
   background: #fff !important;
 }
 

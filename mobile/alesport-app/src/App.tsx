@@ -15,6 +15,8 @@ import { ellipse, square, triangle } from 'ionicons/icons';
 
 
 import Login from './pages/Login';
+import Register from './pages/Register';
+import RegisterForm from './components/RegisterForm';
 import Tab1 from './pages/Tab1';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
@@ -91,6 +93,7 @@ function MainRoutes() {
     return (
       <IonRouterOutlet>
         <Route exact path="/login" component={Login} />
+        <Route exact path="/register" component={Register} />
         <Route exact path="/" component={RootRedirect} />
       </IonRouterOutlet>
     );

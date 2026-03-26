@@ -24,6 +24,7 @@ const LoginForm: React.FC = () => {
     }, []);
 
     // Login con Google
+    // ...existing code...
     const handleGoogleLogin = async () => {
         setError(null);
         try {
@@ -33,10 +34,11 @@ const LoginForm: React.FC = () => {
             const data = await loginWithGoogle(idToken);
             setToken(data.access_token);
             history.replace("/tab1");
-        } catch (err) {
-            setError("Error al iniciar sesión con Google");
+        } catch (err: any) {
+            setError("Error al iniciar sesión con Google: " + (err?.message || JSON.stringify(err)));
         }
     };
+    // ...existing code...
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

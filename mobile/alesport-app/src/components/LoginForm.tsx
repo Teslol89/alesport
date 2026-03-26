@@ -17,8 +17,7 @@ const LoginForm: React.FC = () => {
     // Inicializar GoogleAuth (solo una vez)
     React.useEffect(() => {
         GoogleAuth.initialize({
-            // Reemplaza por tu client ID de Google
-            clientId: '516623761240-v5u1cfkcngu1bu0aroenhdblgcch76hn.apps.googleusercontent.com',
+            clientId: '516623761240-o7mo7hvef1lej6474cjsutrqdpo688om.apps.googleusercontent.com', // <-- Web Client ID
             scopes: ['profile', 'email'],
             grantOfflineAccess: true,
         });

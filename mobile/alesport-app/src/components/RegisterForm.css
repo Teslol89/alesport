@@ -1,52 +1,143 @@
+/* Contenedor principal del registro (igual que login) */
 .register-container {
-  max-width: 400px;
-  margin: 40px auto;
-  padding: 32px 24px;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto;
+    min-height: 60vh;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 1.04);
+    padding: 24px 16px 18px 16px;
+    text-align: center;
+}
+
+@media (max-width: 400px) {
+    .register-container {
+        padding: 12px 4px 12px 4px;
+        max-width: 98vw;
+    }
+    .register-title {
+        font-size: 1.3rem;
+    }
+    .register-btn {
+        font-size: 1rem;
+        padding: 10px 0;
+    }
+    .register-input {
+        font-size: 0.95rem;
+        padding: 10px 10px;
+    }
+}
+
+/* Título principal */
+.register-title {
+    color: #007d94;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+/* Input de texto (nombre, correo, contraseña) */
+.register-input {
+    width: 100%;
+    border: 2px solid transparent;
+    background: #f5f7fa;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 1rem;
+    color: #222;
+    outline: none;
+    margin-bottom: 0;
+    box-sizing: border-box;
+}
+
+/* Input enfocado */
+.register-input:focus {
+    border: 2px solid #007d94;
+    background: #f0fbff;
+    outline: none;
+}
+
+/* Espacio debajo del primer input */
+.register-input:first-child {
+    margin-bottom: 14px;
+}
+
+/* Botón principal de registro */
+.register-btn {
+    width: 100%;
+    background: #007d94;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 36px;
+    margin-bottom: 16px;
+    transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* Botón registro presionado (efecto/color pulsado) */
+.register-btn:active {
+    background: #5ca03c;
+    transform: scale(0.97);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) inset;
+}
+
+.register-btn:hover,
+.register-btn:focus {
+    background: #2563eb;
+}
+.register-container {
+    max-width: 350px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 1.04);
+    padding: 24px 16px 18px 16px;
+    text-align: center;
 }
 
 .register-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 24px;
-  color: #2d3a4a;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #007d94;
+
 }
 
 .register-input {
-  width: 100%;
-  padding: 12px 16px;
-  margin-bottom: 18px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #f7f9fa;
-  transition: border 0.2s;
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #f7f9fa;
+    transition: border 0.2s;
 }
 
 .register-input:focus {
-  border: 1.5px solid #3b82f6;
-  outline: none;
+    border: 1.5px solid #3b82f6;
+    outline: none;
 }
 
 .register-btn {
-  width: 100%;
-  padding: 12px 0;
-  background: #3b82f6;
-  color: #fff;
-  font-size: 1.1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 8px;
+    width: 100%;
+    padding: 12px 0;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 8px;
 }
 
 .register-btn:hover {
-  background: #2563eb;
+    background: #2563eb;
 }

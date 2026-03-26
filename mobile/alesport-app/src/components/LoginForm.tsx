@@ -1,5 +1,7 @@
 import React, { useState, useRef } from "react";
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { loginUser } from "../api/auth";
+import { loginWithGoogle } from "../api/auth";
 import { useAuth } from "./AuthContext";
 import { useHistory } from "react-router-dom";
 import { IonToast } from "@ionic/react";
@@ -11,6 +13,31 @@ import googleLogo from '../icons/googleLogo.svg';
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {
+
+    // Inicializar GoogleAuth (solo una vez)
+    React.useEffect(() => {
+        GoogleAuth.initialize({
+            // Reemplaza por tu client ID de Google
+            clientId: '516623761240-v5u1cfkcngu1bu0aroenhdblgcch76hn.apps.googleusercontent.com',
+            scopes: ['profile', 'email'],
+            grantOfflineAccess: true,
+        });
+    }, []);
+
+    // Login con Google
+    const handleGoogleLogin = async () => {
+        setError(null);
+        try {
+            const googleUser = await GoogleAuth.signIn();
+            const idToken = (googleUser as any).idToken;
+            if (!idToken) throw new Error('No se recibió idToken de Google');
+            const data = await loginWithGoogle(idToken);
+            setToken(data.access_token);
+            history.replace("/tab1");
+        } catch (err) {
+            setError("Error al iniciar sesión con Google");
+        }
+    };
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -42,7 +69,7 @@ const LoginForm: React.FC = () => {
                 <button className="social-btn apple">
                     <img src={appleLogo} alt="Apple" className="social-icon" /> Apple
                 </button>
-                <button className="social-btn google">
+                <button className="social-btn google" type="button" onClick={handleGoogleLogin}>
                     <img src={googleLogo} alt="Google" className="social-icon" /> Google
                 </button>
             </div>

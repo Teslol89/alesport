@@ -1,0 +1,143 @@
+/* ============================= */
+/* 1. Fondo blanco global splash */
+/* ============================= */
+.splash-page,
+.splash-content {
+    --background: #fff;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ============================= */
+/* 2. Contenedor principal logo  */
+/* ============================= */
+.splash-logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1 0 auto;
+    margin-top: 100px;
+    padding-bottom: 0;
+}
+
+/* ============================= */
+/* 3. Logo grande centrado       */
+/* ============================= */
+.splash-logo {
+    width: 420px;
+    max-width: 98vw;
+    margin: 0 auto;
+    position: relative;
+    display: inline-block;
+}
+
+.splash-logo-img {
+    display: block;
+    margin: 0 auto;
+    margin-top: 0;
+    align-self: flex-start;
+    max-width: 98vw;
+    width: 420px;
+}
+
+/* ============================= */
+/* 4. Loader centrado sobre logo */
+/* ============================= */
+.splash-loader-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: -60px;
+  gap: 8px;
+}
+
+.splash-loader-dots div {
+  width: 12px;
+  height: 12px;
+  background: #008c99; /* Cambia el color si quieres */
+  border-radius: 50%;
+  animation: splash-bounce 0.8s infinite alternate;
+}
+
+.splash-loader-dots div:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.splash-loader-dots div:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes splash-bounce {
+  to {
+    opacity: 0.3;
+    transform: translateY(-12px);
+  }
+}
+
+/* ============================= */
+/* 5. Título (si se usa)         */
+/* ============================= */
+.splash-title {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #007d94;
+    margin-bottom: 32px;
+    letter-spacing: 2px;
+}
+
+/* ============================= */
+/* 6. Footer discreto y centrado */
+/* ============================= */
+.splash-footer {
+    position: static;
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: 0;
+    text-align: center;
+    color: #aaa;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    pointer-events: none;
+}
+
+.splash-footer-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    height: 100%;
+}
+
+.splash-footer-img-container {
+    position: relative;
+    display: inline-block;
+}
+
+.splash-footer-img {
+    width: 140px;
+    max-width: 60vw;
+    display: block;
+    margin: 0 auto 0 -26px; /* mueve la imagen 12px a la izquierda, ajusta el valor si quieres más/menos */
+}
+
+/* 'from' arriba del logo de marca en el footer */
+.splash-footer-from {
+    position: absolute;
+    left: 50%;
+    top: 25%;
+    /* Ajusta este valor para mover el 'from' sobre la imagen */
+    transform: translate(-50%, -50%);
+    font-size: 1rem;
+    color: #000000;
+    font-style: normal;
+    text-align: center;
+    pointer-events: none;
+    width: 100%;
+    z-index: 2;
+}

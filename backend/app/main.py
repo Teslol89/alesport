@@ -75,15 +75,15 @@ app.add_middleware(
 )
 
 # ── Routers ───────────────────────────────────────────────────────────────────
-app.include_router(user_router)
-app.include_router(schedule_router)
-app.include_router(session_router)
-app.include_router(booking_router)
-app.include_router(auth_router)
+app.include_router(user_router, prefix="/api")
+app.include_router(schedule_router, prefix="/api")
+app.include_router(session_router, prefix="/api")
+app.include_router(booking_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
 
 
 # ── Endpoints de sistema ──────────────────────────────────────────────────────
-@app.get("/")
+@app.get("/api")
 def root():
     """Health check: verifica que la API esta en funcionamiento."""
     return {"message": "Alesport backend running"}

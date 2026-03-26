@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Alesport</string>
+    <string name="title_activity_main">Alesport</string>
+    <string name="package_name">com.alesport.app</string>
+    <string name="custom_url_scheme">com.alesport.app</string>
+</resources>

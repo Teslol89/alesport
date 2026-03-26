@@ -1,3 +1,141 @@
+
+# Guía paso a paso: Despliegue y actualización de Alesport (backend, frontend web y app móvil)
+
+Esta guía explica desde cero cómo desplegar, actualizar y mantener el proyecto Alesport en un VPS, incluyendo backend (FastAPI), frontend web (Ionic React) y app móvil. Sigue el orden para evitar errores y asegurar un entorno profesional.
+
+## 1. Descargar el repositorio en el VPS
+
+```bash
+cd /home/teslol
+git clone https://github.com/Teslol89/alesport.git
+cd alesport
+```
+
+## 2. Configurar el backend (FastAPI)
+
+1. Instala Python 3, pip y venv si no los tienes:
+   ```bash
+   sudo apt update && sudo apt install python3 python3-pip python3-venv
+   ```
+2. Crea y activa el entorno virtual:
+   ```bash
+   cd backend
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Instala las dependencias:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Configura el archivo `.env` en `backend/` con tus datos:
+   ```env
+   DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/alesport
+   JWT_SECRET_KEY=clave_secreta_segura
+   JWT_ALGORITHM=HS256
+   JWT_EXPIRE_MINUTES=60
+   ```
+5. (Opcional) Pobla la base de datos con datos de prueba:
+   ```bash
+   python seed.py
+   ```
+6. Lanza el backend en desarrollo:
+   ```bash
+   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+## 3. Configurar el frontend web (Ionic React)
+
+1. Instala Node.js 18+ y npm si no los tienes:
+   ```bash
+   sudo apt install nodejs npm
+   ```
+2. Entra en la carpeta del frontend:
+   ```bash
+   cd mobile/alesport-app
+   ```
+3. Instala dependencias:
+   ```bash
+   npm install
+   ```
+4. Configura el archivo `.env`:
+   ```env
+   VITE_API_BASE_URL=https://www.verdeguerlabs.es/api
+   ```
+5. Compila el build de producción:
+   ```bash
+   npm run build
+   ```
+6. Copia el contenido de `dist/` a la carpeta donde Nginx sirve la web:
+   ```bash
+   sudo cp -r dist/* /var/www/html/
+   ```
+
+## 4. Configurar Nginx y HTTPS
+
+1. Instala Nginx:
+   ```bash
+   sudo apt install nginx
+   ```
+2. Configura `/etc/nginx/sites-available/default` para servir el frontend y hacer proxy al backend en `/api`.
+3. (Opcional) Instala Certbot para HTTPS:
+   ```bash
+   sudo apt install certbot python3-certbot-nginx
+   sudo certbot --nginx
+   ```
+4. Recarga Nginx:
+   ```bash
+   sudo systemctl reload nginx
+   ```
+
+## 5. Despliegue y actualización de la app móvil
+
+1. Asegúrate de que el archivo `.env` de la app móvil apunte al backend correcto:
+   ```env
+   VITE_API_BASE_URL=https://www.verdeguerlabs.es/api
+   ```
+2. Compila y reinstala la app en tu dispositivo móvil.
+3. No es necesario copiar la carpeta `dist/` al VPS para la app móvil, solo asegúrate de que el backend esté actualizado y accesible.
+
+## 6. Actualización del proyecto (flujo típico)
+
+1. Haz cambios en tu PC y súbelos a GitHub:
+   ```bash
+   git add .
+   git commit -m "feat: tu mensaje"
+   git push
+   ```
+2. En el VPS, actualiza el código:
+   ```bash
+   cd /home/teslol/alesport
+   git pull
+   ```
+3. Si cambiaste dependencias:
+   ```bash
+   cd backend && source venv/bin/activate && pip install -r requirements.txt
+   cd ../mobile/alesport-app && npm install
+   ```
+4. Si es frontend web:
+   ```bash
+   cd mobile/alesport-app
+   npm run build
+   sudo cp -r dist/* /var/www/html/
+   ```
+5. Si es backend:
+   ```bash
+   cd backend
+   source venv/bin/activate
+   sudo systemctl restart alesport-backend
+   ```
+6. Si es app móvil, solo asegúrate de que el backend esté actualizado y reinstala la app.
+
+## 7. Buenas prácticas
+
+- No edites archivos directamente en el VPS, usa siempre git.
+- Usa ramas para nuevas features y mergea a main solo código probado.
+- Documenta los cambios importantes en el README y en los commits.
+- Si tienes dudas sobre qué copiar o compilar, pregunta: ¿es para web (Nginx) o solo para la app móvil?
+
+---
 # Alesport
 
 

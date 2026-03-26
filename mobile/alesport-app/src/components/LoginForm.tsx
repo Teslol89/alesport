@@ -24,7 +24,6 @@ const LoginForm: React.FC = () => {
     }, []);
 
     // Login con Google
-    // ...existing code...
     const handleGoogleLogin = async () => {
         setError(null);
         try {
@@ -35,10 +34,15 @@ const LoginForm: React.FC = () => {
             setToken(data.access_token);
             history.replace("/tab1");
         } catch (err: any) {
-            setError("Error al iniciar sesión con Google: " + (err?.message || JSON.stringify(err)));
+            // Si el usuario cancela, hacemos signOut para permitir elegir otra cuenta en el siguiente intento
+            if (err?.message?.toLowerCase().includes("cancel") || err?.error === "popup_closed_by_user") {
+                await GoogleAuth.signOut();
+                setError("Inicio de sesión cancelado. Intenta de nuevo para elegir otra cuenta.");
+            } else {
+                setError("Error al iniciar sesión con Google: " + (err?.message || JSON.stringify(err)));
+            }
         }
     };
-    // ...existing code...
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

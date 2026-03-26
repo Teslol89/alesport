@@ -1,26 +1,36 @@
 {
   "project_info": {
-    "project_number": "263966901529",
-    "project_id": "alesport-app",
-    "storage_bucket": "alesport-app.firebasestorage.app"
+    "project_number": "516623761240",
+    "project_id": "alesportapp",
+    "storage_bucket": "alesportapp.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:263966901529:android:eed53680ce113c74d6f188",
+        "mobilesdk_app_id": "1:516623761240:android:001cea1fec75f0b194af2d",
         "android_client_info": {
           "package_name": "com.alesport.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "516623761240-o7mo7hvef1lej6474cjsutrqdpo688om.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDc_OsrdCon6s6YPbi2V-n1OqvtgeZw1Ug"
+          "current_key": "AIzaSyCF64w6IrxbYj2Otc6MfPvetAwQfrXJBTs"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "516623761240-o7mo7hvef1lej6474cjsutrqdpo688om.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

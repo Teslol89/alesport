@@ -101,7 +101,6 @@
     background: #e6f7f7;
 }
 
-
 /* Iconos de los botones sociales */
 .social-icon {
     width: 24px;
@@ -139,6 +138,7 @@
 /* ----------------------------------- */
 /* Input de texto (correo, contraseña) */
 /* ----------------------------------- */
+/* Estilos base para los inputs */
 .login-input {
     width: 100%;
     border: 2px solid transparent;

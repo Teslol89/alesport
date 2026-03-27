@@ -49,13 +49,13 @@ const LoginForm: React.FC = () => {
                 await GoogleAuth.signOut();
                 setError(null);
                 setTimeout(() => {
-                    setError("Inicio de sesión cancelado.");
+                    setError("Cancelado.");
                     setToastKey((k) => k + 1);
                 }, 10);
             } else {
                 setError(null);
                 setTimeout(() => {
-                    setError("Error al iniciar sesión con Google:");
+                    setError("Error al iniciar sesión");
                     setToastKey((k) => k + 1);
                 }, 10);
             }

@@ -25,8 +25,9 @@
 /* --------------------------------- */
 .register-container {
     width: 90%;
-    margin: 0 auto;
-    min-height: 60vh;
+    height: 75vh;
+    margin: auto;
+    overflow-y: auto;
     background: #fff;
     border-radius: 24px;
     box-shadow: 0 2px 16px rgba(0, 0, 0, 1.04);
@@ -56,6 +57,24 @@
     font-size: 1rem;
 }
 
+/* -------------------------- */
+/* Texto para volver al LOGIN */
+/* -------------------------- */
+.register-return {
+    text-align: left;
+    color: #000000;
+    font-size: 0.9rem;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+}
+
+.register-return a {
+    color: #007efe;
+    /* Azul "DODGER BLUE" */
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+
 /* ------------------------------------------- */
 /* Input de texto (nombre, correo, contraseña) */
 /* ------------------------------------------- */
@@ -81,9 +100,31 @@
     outline: none;
 }
 
-/* El último input no tiene margen inferior */
-.register-input:last-of-type {
-    margin-bottom: 0;
+/* Wrapper para el input de contraseña y el icono de mostrar/ocultar */
+.password-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* ------------------------------------------- */
+/* Botón/icono para mostrar/ocultar contraseña */
+/* ------------------------------------------- */
+/* Posicionamiento absoluto dentro del contenedor del input de contraseña (Wrapper) */
+.toggle-password {
+    position: absolute;
+    right: 14px;
+    top: 40%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background: transparent;
+    pointer-events: auto;
 }
 
 /* ------------------------------- */
@@ -93,7 +134,7 @@
 .register-terms-modal {
     margin: 6px;
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
-    font-size: 0.95rem;
+    font-size: 0.90rem;
     color: #000000;
     text-align: left;
 }
@@ -129,6 +170,7 @@
     margin-bottom: 12px;
     color: #007d94;
 }
+
 /* Contenedor del texto con scroll */
 .modal-scroll {
     flex: 1 1 auto;
@@ -147,6 +189,7 @@
     --color: #fff;
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
 }
+
 .modal-accept-btn:active {
     --background: #77b154;
 }
@@ -185,4 +228,43 @@
     /* Verde "FOREST GREEN" */
     transform: scale(0.97);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) inset;
+}
+
+/* ------------------------- */
+/* Mensaje de error de login */
+/* ------------------------- */
+@keyframes shake {
+    0% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-8px);
+    }
+
+    40% {
+        transform: translateX(8px);
+    }
+
+    60% {
+        transform: translateX(-6px);
+    }
+
+    80% {
+        transform: translateX(6px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.toast-error-register {
+    --max-width: 300px;
+    --background: #901726;
+    --color: #ffffff;
+    animation: shake 0.4s;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    text-align: center;
 }

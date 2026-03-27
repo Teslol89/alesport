@@ -38,6 +38,12 @@
     margin-bottom: 8px;
 }
 
+.register-description{
+    color: #555;
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+}
+
 /* Input de texto (nombre, correo, contraseña) */
 .register-input {
     width: 100%;

@@ -230,9 +230,9 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) inset;
 }
 
-/* ------------------------- */
-/* Mensaje de error de login */
-/* ------------------------- */
+/* ------------------------------- */
+/* Mensaje de errores de Registros */
+/* ------------------------------- */
 @keyframes shake {
     0% {
         transform: translateX(0);
@@ -262,9 +262,41 @@
 .toast-error-register {
     --max-width: 300px;
     --background: #901726;
+    /* Rojo "CRIMSON" */
     --color: #ffffff;
     animation: shake 0.4s;
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
     font-size: 1rem;
     text-align: center;
+}
+
+/* Toast de error de validación (contraseña, email, etc) */
+.toast-validation-error {
+    --max-width: 300px;
+    --background: #901726;
+    /* Rojo "CRIMSON" */
+    --color: #ffffff;
+    animation: shake 0.4s;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    text-align: center;
+    border-radius: 12px;
+    border: 1.5px solid #ffe58f;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.toast-success-register {
+    --max-width: 300px;
+    --background: #77b154;
+    /* Verde "FOREST GREEN" */
+    --color: #ffffff;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    text-align: center;
+    border-radius: 12px;
+    border: 1.5px solid #a5d6a7;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.15);
 }

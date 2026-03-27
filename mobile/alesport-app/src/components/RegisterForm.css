@@ -1,16 +1,4 @@
-/* Contenedor principal del registro (igual que login) */
-.register-container {
-    width: 100%;
-    max-width: 350px;
-    margin: 0 auto;
-    min-height: 60vh;
-    background: #fff;
-    border-radius: 24px;
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 1.04);
-    padding: 24px 16px 18px 16px;
-    text-align: center;
-}
-
+/* Estilos para el formulario de registro */
 @media (max-width: 400px) {
     .register-container {
         padding: 12px 4px 12px 4px;
@@ -27,6 +15,19 @@
         font-size: 0.95rem;
         padding: 10px 10px;
     }
+}
+
+/* Contenedor principal del registro (igual que login) */
+.register-container {
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto;
+    min-height: 60vh;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 1.04);
+    padding: 24px 16px 18px 16px;
+    text-align: center;
 }
 
 /* Título principal */

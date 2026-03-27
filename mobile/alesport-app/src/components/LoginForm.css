@@ -1,4 +1,40 @@
-/* Contenedor principal del login (centrado horizontalmente, vertical lo gestiona el wrapper de la página) */
+/* ------------------------------------*/
+/* Estilos para el formulario de login */
+/* ------------------------------------*/
+@media (max-width: 400px) {
+    .login-container {
+        max-width: 100%;
+        padding: 12px;
+
+    }
+
+    .login-title {
+        font-size: 1.3rem;
+    }
+
+    .login-description {
+        font-size: 0.9rem;
+    }
+
+    .social-btn {
+        font-size: 1rem;
+        padding: 10px 0;
+    }
+
+    .login-btn {
+        font-size: 1rem;
+        padding: 10px 0;
+    }
+
+    .login-input {
+        font-size: 0.95rem;
+        padding: 10px 10px;
+    }
+}
+
+/* ------------------------------ */
+/* Contenedor principal del login */
+/* ------------------------------ */
 .login-container {
     width: 100%;
     max-width: 350px;
@@ -7,253 +43,77 @@
     background: #fff;
     border-radius: 24px;
     box-shadow: 0 2px 16px rgba(0, 0, 0, 1.04);
-    padding: 24px 16px 18px 16px;
+    padding: 24px 16px;
     text-align: center;
 }
 
-@media (max-width: 400px) {
-    .login-container {
-        padding: 12px 4px 12px 4px;
-        max-width: 98vw;
-    }
-    .login-title {
-        font-size: 1.3rem;
-    }
-    .login-description {
-        font-size: 0.9rem;
-    }
-    .login-btn {
-        font-size: 1rem;
-        padding: 10px 0;
-    }
-    .login-input {
-        font-size: 0.95rem;
-        padding: 10px 10px;
-    }
-}
-
+/* ---------------- */
 /* Título principal */
+/* ---------------- */
 .login-title {
-    color: #007d94;
+    color: #016875;
+    /* Azul "TEAL" */
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
     font-size: 2rem;
     font-weight: 700;
     margin-bottom: 8px;
+
 }
 
+/* ----------------------------- */
 /* Descripción debajo del título */
+/* ----------------------------- */
 .login-description {
     color: #000000;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
     font-size: 1rem;
 }
 
-/* Formulario de login */
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    /* Eliminamos el gap para inputs más compactos */
-}
-
-/* Input de texto (correo, contraseña) */
-.login-input {
-    width: 100%;
-    border: 2px solid transparent;
-    background: #f5f7fa;
-    border-radius: 12px;
-    padding: 14px 16px;
-    font-size: 1rem;
-    color: #222;
-    outline: none;
-    margin-bottom: 0;
-    box-sizing: border-box;
-}
-
-/* Input enfocado */
-.login-input:focus {
-    border: 2px solid #007d94;
-    background: #f0fbff;
-    outline: none;
-}
-
-/* Espacio debajo del primer input */
-.login-input:first-child {
-    margin-bottom: 14px;
-    /* Agrega espacio debajo del input enfocado */
-}
-
-/* Botón principal de login */
-.login-btn {
-    width: 100%;
-    background: #007d94;
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    padding: 14px 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 36px;
-    margin-bottom: 16px;
-    transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
-}
-
-
-/* Botón login presionado (efecto/color pulsado) */
-.login-btn:active {
-    background: #5ca03c;
-    transform: scale(0.97);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) inset;
-}
-
-/* Opciones debajo del formulario (ej: ¿Olvidaste tu contraseña?) */
-.login-options {
-    display: flex;
-    justify-content: flex-end;
-    /* Cambia de flex-end a center */
-    font-size: 0.85rem;
-    color: #007d94;
-
-}
-
-/* Enlace para recuperar contraseña */
-.forgot-password {
-    cursor: pointer;
-    font-size: 0.95rem;
-    color: #007d94;
-
-}
-
-/* Wrapper para el input de contraseña y el icono de mostrar/ocultar */
-.password-wrapper {
-    position: relative;
-    width: 100%;
-    display: flex;
-    align-items: center;
-}
-
-/* Input de contraseña con espacio para el icono */
-.password-wrapper .login-input {
-    padding-right: 44px;
-    /* Espacio para el icono */
-    height: 48px;
-    line-height: 1.2;
-    box-sizing: border-box;
-}
-
-/* Botón/icono para mostrar/ocultar contraseña */
-.toggle-password {
-    position: absolute;
-    right: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    user-select: none;
-    z-index: 2;
-    display: flex;
-    justify-content: center;
-    align-items: top;
-    height: 32px;
-    width: 32px;
-    padding: 0;
-    background: transparent;
-    pointer-events: auto;
-}
-
-/* Imagen del icono de mostrar/ocultar */
-.toggle-password img {
-    display: block;
-    margin: 0 auto;
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-}
-
-/* Pie de página del login (ej: ¿No tienes cuenta?) */
-.login-footer {
-    margin-top: 6px;
-    font-size: 1rem;
-    color: #222;
-}
-
-/* Enlace para registrarse */
-/* Botón/enlace para registrarse */
-.signup-link {
-    color: #2563eb;
-    font-weight: 600;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0;
-    margin-left: 4px;
-    font-size: 1rem;
-    transition: color 0.2s;
-    outline: none;
-    display: inline;
-}
-
-.signup-link:active {
-    color: #0d265c;
-    transform: scale(0.90);
-}
-
-/* Mensaje de error de login */
-.login-error {
-    color: #e74c3c;
-    font-size: 1rem;
-    margin: 0;
-}
-
+/* ------------------------------------- */
 /* Botones sociales (Google, Apple, etc) */
+/* ------------------------------------- */
+/* Contenedor de los botones sociales (div) */
 .login-socials {
     display: flex;
-    gap: 12px;
-    margin-bottom: 18px;
     justify-content: center;
+    gap: 12px;
 }
 
 /* Botón social genérico */
 .social-btn {
-    flex: 1;
-    background: #f5f7fa;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 0;
-    font-size: 1rem;
-    color: #222;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex: 1;
+    background: #f5f7fa;
+    color: #000000;
+    border: none;
+    border-radius: 10px;
+    padding: px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
     gap: 8px;
     cursor: pointer;
     transition: background 0.2s;
 }
 
-/* Iconos de los botones sociales */
-.social-icon {
-    width: 24px;
-    height: 24px;
-    margin-right: 8px;
-    object-fit: contain;
-}
-
-/* Icono Apple */
-.social-btn.apple .social-icon {
-    color: #1877f3;
-    font-size: 1.2em;
-}
-
-/* Icono Google */
-.social-btn.google .social-icon {
-    color: #ea4335;
-    font-size: 1.2em;
-}
-
-/* Hover en botón social */
 .social-btn:hover {
     background: #e6f7f7;
 }
 
+
+/* Iconos de los botones sociales */
+.social-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 4px;
+    object-fit: contain;
+}
+
+/* ------------------------------------------------ */
 /* Separador visual entre secciones (línea y texto) */
+/* ------------------------------------------------ */
+/* Contenedor del separador */
 .login-divider {
     display: flex;
     align-items: center;
@@ -274,4 +134,175 @@
 .divider-text {
     font-size: 1rem;
     color: #000000;
+}
+
+/* ----------------------------------- */
+/* Input de texto (correo, contraseña) */
+/* ----------------------------------- */
+.login-input {
+    width: 100%;
+    border: 2px solid transparent;
+    background: #f5f7fa;
+    border-radius: 12px;
+    padding: 12px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    color: #000000;
+    outline: none;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+}
+
+/* Input enfocado */
+.login-input:focus {
+    border: 2px solid #007d94;
+    background: #f0fbff;
+    outline: none;
+}
+
+/* Wrapper para el input de contraseña y el icono de mostrar/ocultar */
+.password-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* ------------------------------------------- */
+/* Botón/icono para mostrar/ocultar contraseña */
+/* ------------------------------------------- */
+/* Posicionamiento absoluto dentro del contenedor del input de contraseña (Wrapper) */
+.toggle-password {
+    position: absolute;
+    right: 14px;
+    top: 40%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background: transparent;
+    pointer-events: auto;
+}
+
+/* -------------------------------------------------------------- */
+/* Opciones debajo del formulario (ej: ¿Recuperar contraseña?) */
+/* -------------------------------------------------------------- */
+/* Contenedor de (¿Recuperar contraseña?) */
+.login-options {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Enlace para recuperar contraseña */
+.forgot-password {
+    cursor: pointer;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 0.90rem;
+    color: #901726;
+    /* Rojo "CRIMSON" */
+}
+
+/* ------------------------ */
+/* Botón principal de login */
+/* ------------------------ */
+/* Botón de login principal */
+.login-btn {
+    width: 100%;
+    background: #006875;
+    /* Azul "TEAL" */
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 50px;
+    margin-bottom: 16px;
+    transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* Botón login presionado (efecto/color pulsado) */
+.login-btn:active {
+    background: #77b154;
+    /* Verde "FOREST GREEN" */
+    transform: scale(0.97);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) inset;
+}
+
+
+/* ------------------------------------------------ */
+/* Pie de página del login (ej: ¿No tienes cuenta?) */
+/* ------------------------------------------------ */
+.login-footer {
+    margin-top: 6px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    color: #222;
+}
+
+/* Enlace para registrarse */
+/* Botón/enlace para registrarse */
+.signup-link {
+    color: #007efe;
+    /* Azul "DODGER BLUE" */
+    font-weight: 600;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: 4px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    transition: color 0.2s;
+    outline: none;
+    display: inline;
+}
+
+.signup-link:active {
+    color: #0d265c;
+    transform: scale(0.90);
+}
+
+/* ------------------------- */
+/* Mensaje de error de login */
+/* ------------------------- */
+@keyframes shake {
+    0% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-8px);
+    }
+
+    40% {
+        transform: translateX(8px);
+    }
+
+    60% {
+        transform: translateX(-6px);
+    }
+
+    80% {
+        transform: translateX(6px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.toast-error {
+    --max-width: 190px;
+    --background: #901726;
+    --color: #ffffff;
+    animation: shake 0.4s;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    text-align: center;
 }

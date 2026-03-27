@@ -72,10 +72,10 @@ const LoginForm: React.FC = () => {
             <h2 className="login-title">Iniciar sesión</h2>
             <p className="login-description">Introduce tu correo electrónico y contraseña para acceder a tu cuenta.</p>
             <div className="login-socials">
-                <button className="social-btn apple">
+                <button className="social-btn">
                     <img src={appleLogo} alt="Apple" className="social-icon" /> Apple
                 </button>
-                <button className="social-btn google" type="button" onClick={handleGoogleLogin}>
+                <button className="social-btn" type="button" onClick={handleGoogleLogin}>
                     <img src={googleLogo} alt="Google" className="social-icon" /> Google
                 </button>
             </div>
@@ -124,7 +124,7 @@ const LoginForm: React.FC = () => {
                     </span>
                 </div>
                 <div className="login-options">
-                    <span className="forgot-password">¿Olvidaste tu contraseña?</span>
+                    <span className="forgot-password">¿Recuperar contraseña?</span>
                 </div>
                 <button type="submit" className="login-btn">Iniciar sesión</button>
             </form>
@@ -138,11 +138,10 @@ const LoginForm: React.FC = () => {
                 onDidDismiss={() => setError(null)}
                 message={error || ''}
                 duration={3000}
-                color="danger"
-                position="top" />
+                position="top"
+                cssClass="toast-error" />
         </div>
     );
-
 };
 
 export default LoginForm;

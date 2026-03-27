@@ -15,6 +15,15 @@ import googleLogo from '../icons/googleLogo.svg';
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const passwordInputRef = useRef<HTMLInputElement>(null);
+    const [toastKey, setToastKey] = useState(0);
+    const { setToken } = useAuth();
+    const history = useHistory();
+
 
     // Inicializar GoogleAuth (solo una vez)
     React.useEffect(() => {
@@ -38,23 +47,22 @@ const LoginForm: React.FC = () => {
         } catch (err: any) {
             if (err?.message?.toLowerCase().includes("cancel") || err?.error === "popup_closed_by_user") {
                 await GoogleAuth.signOut();
-                setError("Inicio de sesión cancelado.");
+                setError(null);
+                setTimeout(() => {
+                    setError("Inicio de sesión cancelado.");
+                    setToastKey((k) => k + 1);
+                }, 10);
             } else {
-                setError("Error al iniciar sesión con Google:");
+                setError(null);
+                setTimeout(() => {
+                    setError("Error al iniciar sesión con Google:");
+                    setToastKey((k) => k + 1);
+                }, 10);
             }
         }
     };
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState<string | null>(null);
-    const [showPassword, setShowPassword] = useState(false);
-    const passwordInputRef = useRef<HTMLInputElement>(null);
-
-    const { setToken } = useAuth();
-    const history = useHistory();
-
-
+    // Login tradicional
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -63,7 +71,11 @@ const LoginForm: React.FC = () => {
             setToken(data.access_token);
             history.replace("/tab1");
         } catch (err) {
-            setError("Error al iniciar sesión");
+            setError(null);
+            setTimeout(() => {
+                setError("Error al iniciar sesión");
+                setToastKey((k) => k + 1); // Forzar re-render del toast
+            }, 10);
         }
     };
 
@@ -134,6 +146,7 @@ const LoginForm: React.FC = () => {
                 </button>
             </div>
             <IonToast
+                key={toastKey}
                 isOpen={!!error}
                 onDidDismiss={() => setError(null)}
                 message={error || ''}

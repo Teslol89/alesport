@@ -1,0 +1,11 @@
+.ion-page.register-page, .ion-page.register-page ion-content, .ion-page.register-page .ion-content {
+  --background: #eeeeee !important; /* Blanco "TIZA" */
+  background: #eeeeee !important;
+}
+
+.register-center-wrapper {
+    min-height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

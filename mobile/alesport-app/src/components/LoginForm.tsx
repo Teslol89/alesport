@@ -5,6 +5,8 @@ import { loginWithGoogle } from "../api/auth";
 import { useAuth } from "./AuthContext";
 import { useHistory } from "react-router-dom";
 import { IonToast } from "@ionic/react";
+// import { IonRouterLink } from "@ionic/react";
+
 
 import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
@@ -13,6 +15,15 @@ import googleLogo from '../icons/googleLogo.svg';
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const passwordInputRef = useRef<HTMLInputElement>(null);
+    const [toastKey, setToastKey] = useState(0);
+    const { setToken } = useAuth();
+    const history = useHistory();
+
 
     // Inicializar GoogleAuth (solo una vez)
     React.useEffect(() => {
@@ -34,26 +45,24 @@ const LoginForm: React.FC = () => {
             setToken(data.access_token);
             history.replace("/tab1");
         } catch (err: any) {
-            // Si el usuario cancela, hacemos signOut para permitir elegir otra cuenta en el siguiente intento
             if (err?.message?.toLowerCase().includes("cancel") || err?.error === "popup_closed_by_user") {
                 await GoogleAuth.signOut();
-                setError("Inicio de sesión cancelado. Intenta de nuevo para elegir otra cuenta.");
+                setError(null);
+                setTimeout(() => {
+                    setError("Cancelado.");
+                    setToastKey((k) => k + 1);
+                }, 10);
             } else {
-                setError("Error al iniciar sesión con Google: " + (err?.message || JSON.stringify(err)));
+                setError(null);
+                setTimeout(() => {
+                    setError("Error al iniciar sesión");
+                    setToastKey((k) => k + 1);
+                }, 10);
             }
         }
     };
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState<string | null>(null);
-    const [showPassword, setShowPassword] = useState(false);
-    const passwordInputRef = useRef<HTMLInputElement>(null);
-
-    const { setToken } = useAuth();
-    const history = useHistory();
-
-
+    // Login tradicional
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -62,7 +71,11 @@ const LoginForm: React.FC = () => {
             setToken(data.access_token);
             history.replace("/tab1");
         } catch (err) {
-            setError("Error al iniciar sesión");
+            setError(null);
+            setTimeout(() => {
+                setError("Error al iniciar sesión");
+                setToastKey((k) => k + 1); // Forzar re-render del toast
+            }, 10);
         }
     };
 
@@ -71,10 +84,10 @@ const LoginForm: React.FC = () => {
             <h2 className="login-title">Iniciar sesión</h2>
             <p className="login-description">Introduce tu correo electrónico y contraseña para acceder a tu cuenta.</p>
             <div className="login-socials">
-                <button className="social-btn apple">
+                <button className="social-btn">
                     <img src={appleLogo} alt="Apple" className="social-icon" /> Apple
                 </button>
-                <button className="social-btn google" type="button" onClick={handleGoogleLogin}>
+                <button className="social-btn" type="button" onClick={handleGoogleLogin}>
                     <img src={googleLogo} alt="Google" className="social-icon" /> Google
                 </button>
             </div>
@@ -123,23 +136,25 @@ const LoginForm: React.FC = () => {
                     </span>
                 </div>
                 <div className="login-options">
-                    <span className="forgot-password">¿Olvidaste tu contraseña?</span>
+                    <span className="forgot-password">¿Recuperar contraseña?</span>
                 </div>
                 <button type="submit" className="login-btn">Iniciar sesión</button>
             </form>
-            <div className="login-footer">
-                ¿No tienes una cuenta? <span className="signup-link">Regístrate</span>
+            <div className="login-footer">¿No tienes una cuenta?
+                <button type="button" className="signup-link"
+                    onClick={() => history.push('/register')}>Regístrate
+                </button>
             </div>
             <IonToast
+                key={toastKey}
                 isOpen={!!error}
                 onDidDismiss={() => setError(null)}
                 message={error || ''}
                 duration={3000}
-                color="danger"
-                position="top" />
+                position="top"
+                cssClass="toast-error" />
         </div>
     );
-
 };
 
 export default LoginForm;

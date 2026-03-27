@@ -1,6 +1,8 @@
 # ── Librería estándar ─────────────────────────────────────────────────────────
 import logging
 
+logging.basicConfig(level=logging.INFO)
+
 # ── Terceros ──────────────────────────────────────────────────────────────────
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -62,6 +64,7 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 logger = logging.getLogger(__name__)
+logger.info("Alesport backend iniciado correctamente")
 
 # ── Middleware CORS ───────────────────────────────────────────────────────────
 # Debe registrarse antes de los routers para interceptar todas las peticiones.

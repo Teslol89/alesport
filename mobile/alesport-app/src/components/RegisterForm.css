@@ -1,0 +1,188 @@
+/* Estilos para el formulario de registro */
+@media (max-width: 400px) {
+    .register-container {
+        padding: 12px 4px 12px 4px;
+        max-width: 98vw;
+    }
+
+    .register-title {
+        font-size: 1.3rem;
+    }
+
+    .register-btn {
+        font-size: 1rem;
+        padding: 10px 0;
+    }
+
+    .register-input {
+        font-size: 0.95rem;
+        padding: 10px 10px;
+    }
+}
+
+/* --------------------------------- */
+/* Contenedor principal del registro */
+/* --------------------------------- */
+.register-container {
+    width: 90%;
+    margin: 0 auto;
+    min-height: 60vh;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 1.04);
+    padding: 24px 16px 18px 16px;
+    text-align: center;
+}
+
+
+/* ---------------- */
+/* Título principal */
+/* ---------------- */
+.register-title {
+    color: #016875;
+    /* Azul "TEAL" */
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+/* ----------------------------- */
+/* Descripción debajo del título */
+/* ----------------------------- */
+.register-description {
+    color: #000000;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+}
+
+/* ------------------------------------------- */
+/* Input de texto (nombre, correo, contraseña) */
+/* ------------------------------------------- */
+/* Estilos base para los inputs */
+.register-input {
+    width: 100%;
+    border: 2px solid transparent;
+    background: #f5f7fa;
+    border-radius: 12px;
+    padding: 12px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    color: #000000;
+    outline: none;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+}
+
+/* Input enfocado */
+.register-input:focus {
+    border: 2px solid #007d94;
+    background: #f0fbff;
+    outline: none;
+}
+
+/* El último input no tiene margen inferior */
+.register-input:last-of-type {
+    margin-bottom: 0;
+}
+
+/* ------------------------------- */
+/* Texto de términos y condiciones */
+/* ------------------------------- */
+/* Modal de términos y condiciones */
+.register-terms-modal {
+    margin: 6px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 0.95rem;
+    color: #000000;
+    text-align: left;
+}
+
+.register-terms-text a {
+    color: #007efe;
+    /* Azul "DODGER BLUE" */
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* ------------------------------- */
+/* Modal de términos y condiciones */
+/* ------------------------------- */
+/* Contenedor del modal */
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    height: 90%;
+    width: 90%;
+    padding: 12px 12px 12px 12px;
+    background: #fff;
+    border-radius: 18px;
+    margin: auto;
+    box-shadow: none;
+    text-align: center;
+}
+
+/* Título del modal */
+.modal-content h3 {
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    color: #007d94;
+}
+/* Contenedor del texto con scroll */
+.modal-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    text-align: left;
+    margin-bottom: 12px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 0.95rem;
+    color: #222;
+}
+
+/* Botones del modal */
+.modal-accept-btn {
+    --background: #006875;
+    /* Azul "TEAL" */
+    --color: #fff;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+}
+.modal-accept-btn:active {
+    --background: #77b154;
+}
+
+/* Botón de cancelar del modal */
+.modal-cancel-btn {
+    --color: #901726;
+    /* Rojo "CRIMSON" */
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+}
+
+/* ----------------------------*/
+/* Botón principal de registro */
+/* ----------------------------*/
+/* Estilos base para el botón de registro */
+.register-btn {
+    width: 100%;
+    background: #006875;
+    /* Azul "TEAL" */
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 36px;
+    margin-bottom: 14px;
+    transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* Botón registro presionado (efecto/color pulsado) */
+.register-btn:active {
+    background: #77b154;
+    /* Verde "FOREST GREEN" */
+    transform: scale(0.97);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) inset;
+}

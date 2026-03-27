@@ -1,16 +1,3 @@
-from app.schemas.google_auth import GoogleLoginRequest
-import requests
-from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from app.auth.security import create_access_token, get_current_user, verify_password
-from app.database.db import get_db
-from app.models.user import User
-from app.schemas.auth import LoginRequest, LoginResponse
-
-router = APIRouter(prefix="/auth", tags=["auth"])
-
-
 # ── Rutas de autenticación ─────────────────────────────────────────────────────
 # Estas rutas permiten a los usuarios autenticarse y obtener un token JWT, así como acceder a su propia
 # información básica. La ruta de login verifica las credenciales y genera un token, mientras que la ruta /me
@@ -21,7 +8,23 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 # 4.    GET /auth/me requiere un token JWT válido y devuelve los datos básicos del usuario autenticado
 #       (id, email, name, role, is_active).
 
+from app.schemas.google_auth import GoogleLoginRequest
+import requests
+from datetime import datetime, timezone
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from app.auth.security import create_access_token, get_current_user, verify_password
+from app.database.db import get_db
+from app.models.user import User
+from app.schemas.auth import LoginRequest, LoginResponse
+from app.schemas.user import UserCreate, UserResponse
+from app.services.user_service import create_user
 
+# ─ RUTAS DE AUTENTICACIÓN ─────────────────────────────────────────────────────
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+# ── Login con email y contraseña ─────────────────────────────────────────────
 @router.post("/login", response_model=LoginResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     """Autentica a un usuario y devuelve un token JWT si las credenciales son válidas."""
@@ -46,6 +49,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     return LoginResponse(access_token=access_token, token_type="bearer")
 
 
+# ── Obtener datos del usuario autenticado ─────────────────────────────────────
 @router.get("/me")
 def get_me(current_user: User = Depends(get_current_user)):
     """Devuelve información básica del usuario autenticado."""
@@ -100,3 +104,14 @@ def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     user.last_login = datetime.now(timezone.utc)
     db.commit()
     return LoginResponse(access_token=access_token, token_type="bearer")
+
+
+# ── Registro de usuario ──────────────────────────────────────────────────────
+@router.post("/register", response_model=UserResponse, status_code=201)
+def register_user(payload: UserCreate, db: Session = Depends(get_db)):
+    """Registra un usuario nuevo (rol 'client')."""
+    try:
+        user = create_user(db, payload)
+        return user
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

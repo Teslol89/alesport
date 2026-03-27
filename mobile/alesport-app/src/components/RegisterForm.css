@@ -24,8 +24,7 @@
 /* Contenedor principal del registro */
 /* --------------------------------- */
 .register-container {
-    width: 100%;
-    max-width: 350px;
+    width: 90%;
     margin: 0 auto;
     min-height: 60vh;
     background: #fff;
@@ -82,6 +81,83 @@
     outline: none;
 }
 
+/* El último input no tiene margen inferior */
+.register-input:last-of-type {
+    margin-bottom: 0;
+}
+
+/* ------------------------------- */
+/* Texto de términos y condiciones */
+/* ------------------------------- */
+/* Modal de términos y condiciones */
+.register-terms-modal {
+    margin: 6px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 0.95rem;
+    color: #000000;
+    text-align: left;
+}
+
+.register-terms-text a {
+    color: #007efe;
+    /* Azul "DODGER BLUE" */
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* ------------------------------- */
+/* Modal de términos y condiciones */
+/* ------------------------------- */
+/* Contenedor del modal */
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    height: 90%;
+    width: 90%;
+    padding: 12px 12px 12px 12px;
+    background: #fff;
+    border-radius: 18px;
+    margin: auto;
+    box-shadow: none;
+    text-align: center;
+}
+
+/* Título del modal */
+.modal-content h3 {
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    color: #007d94;
+}
+/* Contenedor del texto con scroll */
+.modal-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    text-align: left;
+    margin-bottom: 12px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 0.95rem;
+    color: #222;
+}
+
+/* Botones del modal */
+.modal-accept-btn {
+    --background: #006875;
+    /* Azul "TEAL" */
+    --color: #fff;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+}
+.modal-accept-btn:active {
+    --background: #77b154;
+}
+
+/* Botón de cancelar del modal */
+.modal-cancel-btn {
+    --color: #901726;
+    /* Rojo "CRIMSON" */
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+}
+
 /* ----------------------------*/
 /* Botón principal de registro */
 /* ----------------------------*/
@@ -98,8 +174,8 @@
     font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
-    margin-top: 50px;
-    margin-bottom: 16px;
+    margin-top: 36px;
+    margin-bottom: 14px;
     transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }
 
@@ -110,4 +186,3 @@
     transform: scale(0.97);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) inset;
 }
-

@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
 import { IonModal, IonButton, IonToast } from "@ionic/react";
+import { registerUser } from "../api/auth";
 import { LegalText } from "../utils/legalText";
 import "./RegisterForm.css";
 
@@ -13,25 +14,48 @@ const RegisterForm: React.FC = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [canAccept, setCanAccept] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastColor, setToastColor] = useState("toast-error-register");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Manejar el envío del formulario
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!acceptedTerms) {
+      setToastMsg("Debes aceptar los términos y condiciones para crear una cuenta.");
+      setToastColor("toast-error-register");
       setShowToast(true);
       return;
     }
-    // Aquí irá la lógica de registro
-    alert("Registro enviado");
+    setIsSubmitting(true);
+    try {
+      await registerUser(name, email, password);
+      setToastMsg("¡Registro exitoso!.");
+      setToastColor("toast-success-register");
+      setShowToast(true);
+      setName("");
+      setEmail("");
+      setPassword("");
+      setAcceptedTerms(false);
+    } catch (err: any) {
+      setToastMsg(err.message || "No se pudo registrar el usuario.");
+      setToastColor("toast-error-register");
+      setShowToast(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  // Abrir el modal al hacer clic en los enlaces de términos o privacidad
   const handleOpenModal = (e: React.MouseEvent) => {
     e.preventDefault();
     setCanAccept(false); // Resetear cada vez que se abre
     setShowModal(true);
   };
 
+  // Cuando el usuario acepta los términos
   const handleAccept = () => {
     setAcceptedTerms(true);
     setShowModal(false);
@@ -105,7 +129,9 @@ const RegisterForm: React.FC = () => {
             <a href="#" onClick={handleOpenModal}> política de privacidad</a>.
           </span>
         </div>
-        <button type="submit" className="register-btn">Crear cuenta</button>
+        <button type="submit" className="register-btn" disabled={isSubmitting}>
+          {isSubmitting ? "Registrando..." : "Crear cuenta"}
+        </button>
       </form>
       <IonModal isOpen={showModal} onDidDismiss={() => setShowModal(false)}>
         <div className="modal-content">
@@ -122,10 +148,10 @@ const RegisterForm: React.FC = () => {
       <IonToast
         isOpen={showToast}
         onDidDismiss={() => setShowToast(false)}
-        message="Debes aceptar los términos y condiciones para crear una cuenta."
+        message={toastMsg}
         duration={3000}
         position="top"
-        cssClass={"toast-error-register"}
+        cssClass={toastColor}
       />
     </div>
   );

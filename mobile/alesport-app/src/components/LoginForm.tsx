@@ -5,7 +5,6 @@ import { loginWithGoogle } from "../api/auth";
 import { useAuth } from "./AuthContext";
 import { useHistory } from "react-router-dom";
 import { IonToast } from "@ionic/react";
-// import { IonRouterLink } from "@ionic/react";
 
 
 import ojoAbierto from "../icons/ojoAbierto.svg";
@@ -20,7 +19,7 @@ const LoginForm: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
     const passwordInputRef = useRef<HTMLInputElement>(null);
-    const [toastKey, setToastKey] = useState(0);
+    // toastKey eliminado, ya no es necesario
     const { setToken } = useAuth();
     const history = useHistory();
 
@@ -47,17 +46,9 @@ const LoginForm: React.FC = () => {
         } catch (err: any) {
             if (err?.message?.toLowerCase().includes("cancel") || err?.error === "popup_closed_by_user") {
                 await GoogleAuth.signOut();
-                setError(null);
-                setTimeout(() => {
-                    setError("Cancelado.");
-                    setToastKey((k) => k + 1);
-                }, 10);
+                setError("Cancelado.");
             } else {
-                setError(null);
-                setTimeout(() => {
-                    setError("Error al iniciar sesión");
-                    setToastKey((k) => k + 1);
-                }, 10);
+                setError("Error al iniciar sesión");
             }
         }
     };
@@ -65,17 +56,13 @@ const LoginForm: React.FC = () => {
     // Login tradicional
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
+        if (error) return; // Si el toast ya está visible, no mostrar otro
         try {
             const data = await loginUser(email, password);
             setToken(data.access_token);
             history.replace("/tab1");
         } catch (err) {
-            setError(null);
-            setTimeout(() => {
-                setError("Error al iniciar sesión");
-                setToastKey((k) => k + 1); // Forzar re-render del toast
-            }, 10);
+            setError("Error al iniciar sesión");
         }
     };
 
@@ -96,7 +83,6 @@ const LoginForm: React.FC = () => {
                 <span className="divider-text">o</span>
                 <span className="divider-line"></span>
             </div>
-
             <form onSubmit={handleSubmit}>
                 <input
                     type="email"
@@ -146,7 +132,6 @@ const LoginForm: React.FC = () => {
                 </button>
             </div>
             <IonToast
-                key={toastKey}
                 isOpen={!!error}
                 onDidDismiss={() => setError(null)}
                 message={error || ''}

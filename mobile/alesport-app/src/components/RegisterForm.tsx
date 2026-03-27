@@ -32,7 +32,7 @@ const RegisterForm: React.FC = () => {
     setIsSubmitting(true);
     try {
       await registerUser(name, email, password);
-      setToastMsg("¡Registro exitoso!.");
+      setToastMsg("¡Bienvenido!");
       setToastColor("toast-success-register");
       setShowToast(true);
       setName("");
@@ -40,8 +40,42 @@ const RegisterForm: React.FC = () => {
       setPassword("");
       setAcceptedTerms(false);
     } catch (err: any) {
-      setToastMsg(err.message || "No se pudo registrar el usuario.");
-      setToastColor("toast-error-register");
+      let msg = "No se pudo registrar el usuario.";
+      let color = "toast-error-register";
+      // Errores de validación de FastAPI (422)
+      if (err && typeof err.message === "object" && err.message.detail) {
+        const details = err.message.detail;
+        // Si hay error de contraseña
+        const pwdError = details.find((d: any) => d.loc && d.loc.includes("password"));
+        // Si hay error de email
+        const emailError = details.find((d: any) => d.loc && d.loc.includes("email"));
+        // Si hay error de nombre
+        const nameError = details.find((d: any) => d.loc && d.loc.includes("name"));
+        // Si hay campos vacíos
+        const requiredErrors = details.filter((d: any) => d.msg && d.msg.includes("field required"));
+        if (requiredErrors.length > 0) {
+          msg = "Por favor, completa todos los campos obligatorios.";
+        } else if (pwdError && pwdError.msg) {
+          msg = "Contraseña: " + pwdError.msg;
+        } else if (emailError && emailError.msg) {
+          msg = "Email: " + emailError.msg;
+        } else if (nameError && nameError.msg) {
+          msg = "Nombre: " + nameError.msg;
+        } else {
+          // Otros errores de validación
+          msg = details.map((d: any) => d.msg).join("\n");
+        }
+        color = "toast-validation-error";
+      } else if (typeof err.message === "string") {
+        // Error de email ya registrado
+        if (err.message.toLowerCase().includes("email ya está registrado")) {
+          msg = "El email ya está registrado. Usa otro o inicia sesión.";
+        } else {
+          msg = err.message;
+        }
+      }
+      setToastMsg(msg);
+      setToastColor(color);
       setShowToast(true);
     } finally {
       setIsSubmitting(false);

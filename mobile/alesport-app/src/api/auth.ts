@@ -8,13 +8,20 @@ export async function registerUser(name: string, email: string, password: string
         body: JSON.stringify({ name, email, password })
     });
     if (!response.ok) {
-        // Intenta extraer mensaje de error del backend
-        let errorMsg = 'No se pudo registrar el usuario.';
         try {
             const data = await response.json();
-            if (data && data.detail) errorMsg = data.detail;
-        } catch { }
-        throw new Error(errorMsg);
+            // Si es error de validación (422), lanza el objeto completo
+            if (response.status === 422 && data && data.detail) {
+                const error = new Error();
+                (error as any).message = data;
+                throw error;
+            }
+            // Si es error normal, lanza el mensaje
+            if (data && data.detail) throw new Error(data.detail);
+        } catch (e) {
+            // Si no se puede parsear, lanza error genérico
+            throw new Error('No se pudo registrar el usuario.');
+        }
     }
     return response.json();
 }

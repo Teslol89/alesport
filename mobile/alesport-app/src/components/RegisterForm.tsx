@@ -8,7 +8,7 @@ import { registerUser } from "../api/auth";
 import { LegalText } from "../utils/legalText";
 import "./RegisterForm.css";
 
-// Animación shake para los errores de los inputs
+// Animación shake para los errores de los inputss
 const shakeClass = "shake-anim";
 
 // Componente principal de registro

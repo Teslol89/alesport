@@ -24,6 +24,14 @@ class Settings:
         self.SECRET_KEY = os.environ["JWT_SECRET_KEY"]
         self.ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
         self.ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("JWT_EXPIRE_MINUTES", 60))
+        # SMTP config
+        self.SMTP_HOST = os.environ.get("SMTP_HOST")
+        self.SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
+        self.SMTP_USER = os.environ.get("SMTP_USER")
+        self.SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
+        self.SMTP_FROM = os.environ.get("SMTP_FROM")
+        # Frontend URL base para enlaces de verificación
+        self.FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://www.verdeguerlabs.es")
 
 
 settings = Settings()

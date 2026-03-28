@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { useHistory } from "react-router-dom";
 import { Link } from "react-router-dom";
 import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
@@ -12,6 +13,8 @@ const shakeClass = "shake-anim";
 
 // Componente principal de registro
 const RegisterForm: React.FC = () => {
+  // Hook de navegación de React Router para redirigir tras el registro exitoso
+  const history = useHistory();
   // Estados para los campos del formulario
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -129,6 +132,10 @@ const RegisterForm: React.FC = () => {
       setEmail("");
       setPassword("");
       setAcceptedTerms(false);
+      // Redirigir al login tras mostrar el toast
+      setTimeout(() => {
+        history.push("/login");
+      }, 1200); // Espera breve para que el usuario vea el toast
     } catch (err: any) {
       let msg = "No se pudo registrar el usuario.";
       let color = "toast-error-register";

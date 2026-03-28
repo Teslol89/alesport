@@ -70,6 +70,9 @@ def run_tests(token, role):
         booking_payload = {"session_id": session_id}
         r5 = requests.post(f"{BASE_URL}/bookings/", headers=headers, json=booking_payload)
         if role == "client":
+            if r5.status_code not in (200, 201, 409):
+                print("DEBUG /bookings/: status_code =", r5.status_code)
+                print("DEBUG /bookings/: response =", r5.text)
             assert r5.status_code in (200, 201, 409), f"/bookings/ should be allowed for client"
             # Intentar reservar de nuevo la misma sesión (debe dar 409)
             r5b = requests.post(f"{BASE_URL}/bookings/", headers=headers, json=booking_payload)

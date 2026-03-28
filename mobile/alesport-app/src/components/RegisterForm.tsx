@@ -125,17 +125,17 @@ const RegisterForm: React.FC = () => {
 
     try {
       await registerUser(name, email, password);
-      setToastMsg("¡Bienvenido!");
+      setToastMsg("Registro exitoso. Revisa tu correo para verificar tu cuenta.");
       setToastColor("toast-success-register");
       setShowToast(true);
       setName("");
       setEmail("");
       setPassword("");
       setAcceptedTerms(false);
-      // Redirigir al login tras mostrar el toast
+      // Redirigir a la página de verificación tras mostrar el toast
       setTimeout(() => {
-        history.push("/login");
-      }, 1200); // Espera breve para que el usuario vea el toast
+        history.push("/verify-email");
+      }, 1800); // Espera breve para que el usuario vea el toast
     } catch (err: any) {
       let msg = "No se pudo registrar el usuario.";
       let color = "toast-error-register";
@@ -309,7 +309,7 @@ const RegisterForm: React.FC = () => {
             disabled={!!validateName(name) || !!validateEmail(email)}
           />
           <span
-            className="toggle-password"
+            className="toggle-password-register"
             onClick={() => setShowPassword((v) => !v)}
             tabIndex={0}
             role="button"

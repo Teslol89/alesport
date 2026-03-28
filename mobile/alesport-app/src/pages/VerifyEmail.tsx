@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import { IonPage, IonContent, IonButton, IonSpinner } from "@ionic/react";
+import VerifyEmailInfo from "../components/VerifyEmailInfo";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -9,14 +10,14 @@ function useQuery() {
 const VerifyEmail: React.FC = () => {
   const query = useQuery();
   const history = useHistory();
-  const [status, setStatus] = useState<"pending" | "success" | "error">("pending");
+  const [status, setStatus] = useState<"pending" | "success" | "error" | "no-token">("pending");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     const token = query.get("token");
     if (!token) {
-      setStatus("error");
-      setMessage("Token de verificación no proporcionado.");
+      setStatus("no-token");
+      setMessage("");
       return;
     }
     fetch(`${process.env.REACT_APP_API_URL || "/api"}/auth/verify-email?token=${token}`)
@@ -36,6 +37,9 @@ const VerifyEmail: React.FC = () => {
       });
   }, [query]);
 
+  if (status === "no-token") {
+    return <VerifyEmailInfo />;
+  }
   return (
     <IonPage>
       <IonContent className="ion-padding">

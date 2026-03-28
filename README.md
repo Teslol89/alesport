@@ -465,7 +465,46 @@ Request example:
 5. Login as admin and run `POST /schedule/generate-sessions` -> expected `200`
 
 
-## Mobile App (Ionic React)
+
+## Registro de usuario: experiencia y validaciones profesionales
+
+El proceso de creación de usuario en Alesport está diseñado para ser robusto, claro y profesional, tanto en la app móvil como en la web. A continuación se detallan los aspectos clave del flujo de registro:
+
+### 1. Validaciones frontend (Ionic React)
+
+- **Validación secuencial:** El usuario solo puede avanzar al siguiente campo si el anterior es válido. Por ejemplo, no puede escribir el email si el nombre no es correcto.
+- **Mensajes de error claros y específicos:** Cada campo muestra mensajes de error dinámicos y detallados justo debajo del input, indicando exactamente qué falta o es incorrecto (ej: "Debe tener al menos 2 caracteres").
+- **Animación shake:** Si el usuario intenta avanzar con un campo inválido, el input correspondiente vibra (shake) para llamar la atención de forma visual y profesional.
+- **Toasts solo para errores globales:** Los mensajes emergentes (IonToast) solo aparecen para errores esenciales (formulario incompleto, email ya registrado, términos no aceptados, registro exitoso). Los errores de validación de campos nunca se muestran en toast, solo bajo el input.
+- **Aceptación de términos:** El toast "Debes aceptar los términos y condiciones" solo aparece si todos los campos previos son válidos.
+
+### 2. Interacción con el backend (FastAPI)
+
+- El formulario envía los datos solo si todas las validaciones frontend pasan.
+- Si el backend responde con errores de validación (por ejemplo, email ya registrado), estos se muestran de forma priorizada y clara en el frontend, siguiendo el mismo patrón de mensajes específicos.
+- El mensaje de éxito "¡Bienvenido!" se muestra en un toast solo si el registro es correcto.
+
+### 3. Experiencia de usuario (UX) y accesibilidad
+
+- El flujo evita frustraciones: nunca se bloquea al usuario sin explicar el motivo.
+- Los mensajes son siempre accionables y ayudan a corregir el error.
+- El botón de registro se desactiva durante el envío para evitar dobles envíos.
+- El enlace "¿Ya tienes una cuenta? Inicia sesión" usa navegación interna (React Router) para evitar recargas y problemas de splash.
+
+### 4. Detalles técnicos importantes
+
+- El formulario está implementado en `src/components/RegisterForm.tsx`.
+- Las animaciones y estilos de error están en `src/components/RegisterForm.css`.
+- Se usa React, Ionic y React Router para la navegación y experiencia fluida.
+- El backend FastAPI valida de nuevo todos los datos y responde con detalles claros en caso de error.
+- El código sigue buenas prácticas de separación de responsabilidades y feedback inmediato al usuario.
+
+### 5. Pruebas y mantenimiento
+
+- El flujo ha sido probado manualmente y cubre los casos de error más comunes (campos vacíos, email inválido, contraseña corta, email duplicado, términos no aceptados).
+- El código está preparado para ser extendido con tests automáticos y nuevas validaciones si se requieren.
+
+---
 
 ### Autenticación y Seguridad (Frontend)
 

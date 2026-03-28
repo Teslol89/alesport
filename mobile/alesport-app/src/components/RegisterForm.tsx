@@ -1,4 +1,6 @@
 import React, { useState, useRef } from "react";
+import { useHistory } from "react-router-dom";
+import { Link } from "react-router-dom";
 import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
 import { IonModal, IonButton, IonToast } from "@ionic/react";
@@ -6,11 +8,46 @@ import { registerUser } from "../api/auth";
 import { LegalText } from "../utils/legalText";
 import "./RegisterForm.css";
 
+// Animación shake para los errores de los inputs
+const shakeClass = "shake-anim";
+
+// Componente principal de registro
 const RegisterForm: React.FC = () => {
+  // Hook de navegación de React Router para redirigir tras el registro exitoso
+  const history = useHistory();
+  // Estados para los campos del formulario
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showModal, setShowModal] = useState(false);
+
+  // Estados para validación y animación
+  const [nameError, setNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [shakeName, setShakeName] = useState(false);
+  const [shakeEmail, setShakeEmail] = useState(false);
+  const [shakePassword, setShakePassword] = useState(false);
+
+  // Validaciones simples
+  const validateName = (val: string) => {
+    if (!val.trim()) return "Nombre: Este campo es obligatorio";
+    if (val.trim().length < 2) return "Nombre: Debe tener al menos 2 caracteres";
+    return "";
+  };
+  const validateEmail = (val: string) => {
+    if (!val.trim()) return "Email: Este campo es obligatorio";
+    // Regex simple para email
+    if (!/^\S+@\S+\.\S+$/.test(val.trim())) return "Email: Formato inválido";
+    return "";
+  };
+  const validatePassword = (val: string) => {
+    if (!val) return "Contraseña: Este campo es obligatorio";
+    if (val.length < 6) return "Contraseña: Debe tener al menos 6 caracteres";
+    return "";
+  };
+
+  // Estados para términos y condiciones
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [canAccept, setCanAccept] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -18,18 +55,74 @@ const RegisterForm: React.FC = () => {
   const [toastColor, setToastColor] = useState("toast-error-register");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   // Manejar el envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    // ...validaciones de campos...
+
+    // Validación previa antes de enviar
+    const nErr = validateName(name);
+    const eErr = validateEmail(email);
+    const pErr = validatePassword(password);
+    setNameError(nErr);
+    setEmailError(eErr);
+    setPasswordError(pErr);
+
+    // 1. Si los 3 campos vacíos
+    if (!name && !email && !password) {
+      setIsSubmitting(false);
+      setToastMsg("Formulario incompleto");
+      setToastColor("toast-validation-error");
+      setShowToast(true);
+      return;
+    }
+
+    // 2. Si nombre inválido
+    if (nErr) {
+      setIsSubmitting(false);
+      // Solo mostrar el error debajo del input, no toast
+      return;
+    }
+
+    // 3. Si nombre válido, email vacío o inválido
+    if (!eErr && (!email || email.trim() === "")) {
+      setIsSubmitting(false);
+      setToastMsg("Formulario incompleto");
+      setToastColor("toast-validation-error");
+      setShowToast(true);
+      return;
+    }
+    if (eErr) {
+      setIsSubmitting(false);
+      // Solo mostrar el error debajo del input, no toast
+      return;
+    }
+
+    // 4. Si nombre y email válidos, pero contraseña vacía o inválida
+    if (!pErr && (!password || password.trim() === "")) {
+      setIsSubmitting(false);
+      setToastMsg("Formulario incompleto");
+      setToastColor("toast-validation-error");
+      setShowToast(true);
+      return;
+    }
+    if (pErr) {
+      setIsSubmitting(false);
+      // Solo mostrar el error debajo del input, no toast
+      return;
+    }
+
+    // 5. Si todo es válido pero no se han aceptado los términos
     if (!acceptedTerms) {
+      setIsSubmitting(false);
       setToastMsg("Debes aceptar los términos y condiciones para crear una cuenta.");
       setToastColor("toast-error-register");
       setShowToast(true);
       return;
     }
-    setIsSubmitting(true);
+
     try {
       await registerUser(name, email, password);
       setToastMsg("¡Bienvenido!");
@@ -39,40 +132,52 @@ const RegisterForm: React.FC = () => {
       setEmail("");
       setPassword("");
       setAcceptedTerms(false);
+      // Redirigir al login tras mostrar el toast
+      setTimeout(() => {
+        history.push("/login");
+      }, 1200); // Espera breve para que el usuario vea el toast
     } catch (err: any) {
       let msg = "No se pudo registrar el usuario.";
       let color = "toast-error-register";
-      // Errores de validación de FastAPI (422)
-      if (err && typeof err.message === "object" && err.message.detail) {
-        const details = err.message.detail;
-        // Si hay error de contraseña
-        const pwdError = details.find((d: any) => d.loc && d.loc.includes("password"));
-        // Si hay error de email
-        const emailError = details.find((d: any) => d.loc && d.loc.includes("email"));
-        // Si hay error de nombre
-        const nameError = details.find((d: any) => d.loc && d.loc.includes("name"));
-        // Si hay campos vacíos
-        const requiredErrors = details.filter((d: any) => d.msg && d.msg.includes("field required"));
-        if (requiredErrors.length > 0) {
-          msg = "Por favor, completa todos los campos obligatorios.";
-        } else if (pwdError && pwdError.msg) {
-          msg = "Contraseña: " + pwdError.msg;
-        } else if (emailError && emailError.msg) {
-          msg = "Email: " + emailError.msg;
-        } else if (nameError && nameError.msg) {
-          msg = "Nombre: " + nameError.msg;
-        } else {
-          // Otros errores de validación
-          msg = details.map((d: any) => d.msg).join("\n");
+      const details =
+        err?.apiDetail ||
+        err?.cause?.apiDetail ||
+        err?.response?.data?.detail;
+      const getErrorMessage = (e: any) => {
+        return e?.msg || e?.message || "Error desconocido";
+      };
+      if (Array.isArray(details)) {
+        const fieldOrder = [
+          { key: "name", label: "Nombre" },
+          { key: "email", label: "Email" },
+          { key: "password", label: "Contraseña" },
+        ];
+        const errorLines: string[] = [];
+        const usedIndexes = new Set();
+        for (const { key, label } of fieldOrder) {
+          const idx = details.findIndex((d: any) =>
+            Array.isArray(d.loc) && d.loc.includes(key)
+          );
+          if (idx !== -1) {
+            errorLines.push(label + ": " + getErrorMessage(details[idx]));
+            usedIndexes.add(idx);
+          }
         }
+        details.forEach((d: any, i: number) => {
+          if (!usedIndexes.has(i)) {
+            errorLines.push(getErrorMessage(d));
+          }
+        });
+        msg = errorLines.join("\n");
         color = "toast-validation-error";
       } else if (typeof err.message === "string") {
-        // Error de email ya registrado
-        if (err.message.toLowerCase().includes("email ya está registrado")) {
+        if (err.message.toLowerCase().includes("email")) {
           msg = "El email ya está registrado. Usa otro o inicia sesión.";
         } else {
           msg = err.message;
         }
+      } else {
+        console.error("Error inesperado:", err);
       }
       setToastMsg(msg);
       setToastColor(color);
@@ -80,6 +185,52 @@ const RegisterForm: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Handlers para animación shake y validación secuencial
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef2 = useRef<HTMLInputElement>(null);
+
+  const handleNameBlur = () => {
+    const err = validateName(name);
+    setNameError(err);
+  };
+
+  // Si el usuario intenta enfocar el email pero el nombre no es válido, sacudir el input del nombre
+  const handleEmailFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (validateName(name)) {
+      setShakeName(true);
+      setTimeout(() => setShakeName(false), 500);
+      nameInputRef.current?.focus();
+    }
+  };
+
+  // Validar email al perder el foco
+  const handleEmailBlur = () => {
+    const err = validateEmail(email);
+    setEmailError(err);
+  };
+
+  // Validar contraseña al enfocar
+  const handlePasswordFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (validateName(name)) {
+      setShakeName(true);
+      setTimeout(() => setShakeName(false), 500);
+      nameInputRef.current?.focus();
+      return;
+    }
+    if (validateEmail(email)) {
+      setShakeEmail(true);
+      setTimeout(() => setShakeEmail(false), 500);
+      emailInputRef.current?.focus();
+    }
+  };
+
+  // Validar contraseña al perder el foco
+  const handlePasswordBlur = () => {
+    const err = validatePassword(password);
+    setPasswordError(err);
   };
 
   // Abrir el modal al hacer clic en los enlaces de términos o privacidad
@@ -115,7 +266,7 @@ const RegisterForm: React.FC = () => {
         <span className="divider-text">o</span>
         <span className="divider-line"></span>
       </div>
-      <p className="register-return">¿Ya tienes una cuenta? <a href="/login">Inicia sesión</a></p>
+      <p className="register-return">¿Ya tienes una cuenta? <Link to="/login">Inicia sesión</Link></p>
 
       <form onSubmit={handleSubmit}>
         <input
@@ -123,24 +274,39 @@ const RegisterForm: React.FC = () => {
           placeholder="Nombre"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onBlur={handleNameBlur}
+          ref={nameInputRef}
           className="register-input"
         />
+        {nameError && (
+          <div className={`input-error-msg${shakeName ? ' ' + shakeClass : ''}`}>{nameError.replace(/^Nombre: /, "")}</div>
+        )}
         <input
           type="email"
           placeholder="Correo electrónico"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onFocus={handleEmailFocus}
+          onBlur={handleEmailBlur}
+          ref={emailInputRef}
           className="register-input"
+          disabled={!!validateName(name)}
         />
+        {emailError && (
+          <div className={`input-error-msg${shakeEmail ? ' ' + shakeClass : ''}`}>{emailError.replace(/^Email: /, "")}</div>
+        )}
         <div className="password-wrapper">
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onFocus={handlePasswordFocus}
+            onBlur={handlePasswordBlur}
+            ref={passwordInputRef2}
             className="register-input"
             autoComplete="new-password"
-            ref={passwordInputRef}
+            disabled={!!validateName(name) || !!validateEmail(email)}
           />
           <span
             className="toggle-password"
@@ -156,6 +322,9 @@ const RegisterForm: React.FC = () => {
             />
           </span>
         </div>
+        {passwordError && (
+          <div className={`input-error-msg${shakePassword ? ' ' + shakeClass : ''}`}>{passwordError.replace(/^Contraseña: /, "")}</div>
+        )}
         <div className="register-terms-modal">
           <span className="register-terms-text">
             Al crear una cuenta, aceptas los
@@ -163,7 +332,11 @@ const RegisterForm: React.FC = () => {
             <a href="#" onClick={handleOpenModal}> política de privacidad</a>.
           </span>
         </div>
-        <button type="submit" className="register-btn" disabled={isSubmitting}>
+        <button
+          type="submit"
+          className="register-btn"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? "Registrando..." : "Crear cuenta"}
         </button>
       </form>

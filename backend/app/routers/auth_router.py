@@ -40,6 +40,11 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cuenta desactivada",
         )
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Debes verificar tu email antes de iniciar sesión. Revisa tu correo.",
+        )
     access_token = create_access_token(
         {"sub": user.email, "user_id": user.id, "role": user.role}
     )
@@ -107,11 +112,27 @@ def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
 
 
 # ── Registro de usuario ──────────────────────────────────────────────────────
+
+# Registro de usuario (async)
 @router.post("/register", response_model=UserResponse, status_code=201)
-def register_user(payload: UserCreate, db: Session = Depends(get_db)):
+async def register_user(payload: UserCreate, db: Session = Depends(get_db)):
     """Registra un usuario nuevo (rol 'client')."""
     try:
-        user = create_user(db, payload)
+        user = await create_user(db, payload)
         return user
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# Endpoint de verificación de email
+@router.get("/verify-email")
+async def verify_email(token: str, db: Session = Depends(get_db)):
+    """Verifica el email del usuario usando el token enviado por correo."""
+    user = db.query(User).filter(User.verification_token == token).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Token de verificación inválido o expirado")
+    if user.is_verified:
+        return {"message": "La cuenta ya estaba verificada."}
+    user.is_verified = True
+    user.verification_token = None
+    db.commit()
+    return {"message": "¡Email verificado correctamente! Ya puedes iniciar sesión."}

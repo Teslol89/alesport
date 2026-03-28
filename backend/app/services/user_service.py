@@ -5,11 +5,52 @@
 # se facilita el mantenimiento y la reutilización del código en diferentes partes de la
 # aplicación (routers, otros servicios, etc.).
 
+
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.user import UserCreate
 from app.auth.security import hash_password
 from sqlalchemy.exc import IntegrityError
+import secrets
+import aiosmtplib
+from email.message import EmailMessage
+from app.config import settings
+
+# Envío real de email de verificación
+import asyncio
+
+async def send_verification_email(email: str, token: str):
+    subject = "Verifica tu cuenta en Alesport"
+    verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+    body = f"""
+Hola,
+
+Gracias por registrarte en Alesport. Para activar tu cuenta, haz clic en el siguiente enlace:
+
+{verify_url}
+
+Si no has solicitado esta cuenta, ignora este correo.
+
+Un saludo,
+El equipo de Alesport
+"""
+    msg = EmailMessage()
+    msg["From"] = settings.SMTP_FROM
+    msg["To"] = email
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    try:
+        await aiosmtplib.send(
+            msg,
+            hostname=settings.SMTP_HOST,
+            port=settings.SMTP_PORT,
+            username=settings.SMTP_USER,
+            password=settings.SMTP_PASSWORD,
+            start_tls=True,
+        )
+    except Exception as e:
+        print(f"[ERROR] Fallo al enviar email de verificación: {e}")
 
 
 # --- OBTENER USUARIOS ---
@@ -19,10 +60,11 @@ def get_all_users(db: Session) -> list[User]:
 
 
 # --- CREAR USUARIO NUEVO ---
-def create_user(db: Session, user_in: UserCreate) -> User:
-    """Crea un usuario nuevo con contraseña hasheada. Lanza excepción si el email ya existe."""
+async def create_user(db: Session, user_in: UserCreate) -> User:
+    """Crea un usuario nuevo con contraseña hasheada y verificación de email. Lanza excepción si el email ya existe."""
     if db.query(User).filter(User.email == user_in.email).first():
         raise ValueError("El email ya está registrado")
+    verification_token = secrets.token_urlsafe(32)
     user = User(
         name=user_in.name,
         email=user_in.email,
@@ -30,11 +72,14 @@ def create_user(db: Session, user_in: UserCreate) -> User:
         role="client",
         is_active=True,
         membership_active=True,
+        is_verified=False,
+        verification_token=verification_token,
     )
     db.add(user)
     try:
         db.commit()
         db.refresh(user)
+        await send_verification_email(user.email, verification_token)
     except IntegrityError:
         db.rollback()
         raise ValueError("Error de integridad al crear usuario")

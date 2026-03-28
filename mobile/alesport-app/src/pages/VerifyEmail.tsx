@@ -10,7 +10,7 @@ function useQuery() {
 const VerifyEmail: React.FC = () => {
   const query = useQuery();
   const history = useHistory();
-  const [status, setStatus] = useState<"pending" | "success" | "error">("pending");
+  const [status, setStatus] = useState<"pending" | "success" | "error" | "no-token">("pending");
   const [message, setMessage] = useState("");
 
   useEffect(() => {

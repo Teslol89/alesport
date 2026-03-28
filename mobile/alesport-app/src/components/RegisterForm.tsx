@@ -309,7 +309,7 @@ const RegisterForm: React.FC = () => {
             disabled={!!validateName(name) || !!validateEmail(email)}
           />
           <span
-            className="toggle-password"
+            className="toggle-password-register"
             onClick={() => setShowPassword((v) => !v)}
             tabIndex={0}
             role="button"

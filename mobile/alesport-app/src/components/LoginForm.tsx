@@ -108,7 +108,7 @@ const LoginForm: React.FC = () => {
                         }}
                     />
                     <span
-                        className="toggle-password"
+                        className="toggle-password-login"
                         onClick={() => setShowPassword((v) => !v)}
                         tabIndex={0}
                         role="button"

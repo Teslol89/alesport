@@ -148,7 +148,7 @@
 /* Botón/icono para mostrar/ocultar contraseña */
 /* ------------------------------------------- */
 /* Posicionamiento absoluto dentro del contenedor del input de contraseña (Wrapper) */
-.toggle-password {
+.toggle-password-register {
     position: absolute;
     right: 14px;
     top: 65%;

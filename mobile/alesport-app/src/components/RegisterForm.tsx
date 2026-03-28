@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
 import { IonModal, IonButton, IonToast } from "@ionic/react";
@@ -6,9 +7,12 @@ import { registerUser } from "../api/auth";
 import { LegalText } from "../utils/legalText";
 import "./RegisterForm.css";
 
-// Animación shake para inputs
+// Animación shake para los errores de los inputs
 const shakeClass = "shake-anim";
+
+// Componente principal de registro
 const RegisterForm: React.FC = () => {
+  // Estados para los campos del formulario
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -55,14 +59,6 @@ const RegisterForm: React.FC = () => {
     setIsSubmitting(true);
     // ...validaciones de campos...
 
-    // Si todos los campos son válidos, pero no se han aceptado los términos
-    if (!acceptedTerms) {
-      setIsSubmitting(false);
-      setToastMsg("Debes aceptar los términos y condiciones para crear una cuenta.");
-      setToastColor("toast-error-register");
-      setShowToast(true);
-      return;
-    }
     // Validación previa antes de enviar
     const nErr = validateName(name);
     const eErr = validateEmail(email);
@@ -114,6 +110,16 @@ const RegisterForm: React.FC = () => {
       // Solo mostrar el error debajo del input, no toast
       return;
     }
+
+    // 5. Si todo es válido pero no se han aceptado los términos
+    if (!acceptedTerms) {
+      setIsSubmitting(false);
+      setToastMsg("Debes aceptar los términos y condiciones para crear una cuenta.");
+      setToastColor("toast-error-register");
+      setShowToast(true);
+      return;
+    }
+
     try {
       await registerUser(name, email, password);
       setToastMsg("¡Bienvenido!");
@@ -184,6 +190,7 @@ const RegisterForm: React.FC = () => {
     setNameError(err);
   };
 
+  // Si el usuario intenta enfocar el email pero el nombre no es válido, sacudir el input del nombre
   const handleEmailFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     if (validateName(name)) {
       setShakeName(true);
@@ -192,11 +199,13 @@ const RegisterForm: React.FC = () => {
     }
   };
 
+  // Validar email al perder el foco
   const handleEmailBlur = () => {
     const err = validateEmail(email);
     setEmailError(err);
   };
 
+  // Validar contraseña al enfocar
   const handlePasswordFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     if (validateName(name)) {
       setShakeName(true);
@@ -211,6 +220,7 @@ const RegisterForm: React.FC = () => {
     }
   };
 
+  // Validar contraseña al perder el foco
   const handlePasswordBlur = () => {
     const err = validatePassword(password);
     setPasswordError(err);
@@ -249,7 +259,7 @@ const RegisterForm: React.FC = () => {
         <span className="divider-text">o</span>
         <span className="divider-line"></span>
       </div>
-      <p className="register-return">¿Ya tienes una cuenta? <a href="/login">Inicia sesión</a></p>
+      <p className="register-return">¿Ya tienes una cuenta? <Link to="/login">Inicia sesión</Link></p>
 
       <form onSubmit={handleSubmit}>
         <input

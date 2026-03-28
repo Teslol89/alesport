@@ -8,7 +8,7 @@ import { registerUser } from "../api/auth";
 import { LegalText } from "../utils/legalText";
 import "./RegisterForm.css";
 
-// Animación shake para los errores de los inputss
+// Animación shake para los errores de los inputs
 const shakeClass = "shake-anim";
 
 // Componente principal de registro
@@ -132,10 +132,10 @@ const RegisterForm: React.FC = () => {
       setEmail("");
       setPassword("");
       setAcceptedTerms(false);
-      // Redirigir a la página de verificación tras mostrar el toast
+      // Mostrar el toast durante 4.5 segundos y luego redirigir a /login
       setTimeout(() => {
-        history.push("/verify-email");
-      }, 1800); // Espera breve para que el usuario vea el toast
+        history.push("/login");
+      }, 4500); // 4.5 segundos para que el usuario vea el toast
     } catch (err: any) {
       let msg = "No se pudo registrar el usuario.";
       let color = "toast-error-register";

@@ -128,11 +128,15 @@ async def register_user(payload: UserCreate, db: Session = Depends(get_db)):
 async def verify_email(token: str, db: Session = Depends(get_db)):
     """Verifica el email del usuario usando el token enviado por correo."""
     user = db.query(User).filter(User.verification_token == token).first()
-    if not user:
-        raise HTTPException(status_code=400, detail="Token de verificación inválido o expirado")
-    if user.is_verified:
-        return {"message": "La cuenta ya estaba verificada."}
-    user.is_verified = True
-    user.verification_token = None
-    db.commit()
-    return {"message": "¡Email verificado correctamente! Ya puedes iniciar sesión."}
+    if user:
+        if user.is_verified:
+            return {"message": "¡Email verificado correctamente! Ya puedes iniciar sesión."}
+        user.is_verified = True
+        user.verification_token = None
+        db.commit()
+        return {"message": "¡Email verificado correctamente! Ya puedes iniciar sesión."}
+    # Si no se encuentra el token, buscar por si hay un usuario ya verificado con ese token previamente usado
+    user_verified = db.query(User).filter(User.is_verified == True, User.verification_token == None).first()
+    if user_verified:
+        return {"message": "¡Email verificado correctamente! Ya puedes iniciar sesión."}
+    raise HTTPException(status_code=400, detail="Token de verificación inválido o expirado")

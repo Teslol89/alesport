@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { useHistory } from 'react-router-dom';
 import { Route, Redirect } from 'react-router-dom';
 import {
   IonApp,
@@ -68,15 +70,24 @@ function RootRedirect() {
 }
 
 const App: React.FC = () => {
-  // Estado para controlar si el splash ya terminó
   const [splashDone, setSplashDone] = useState(false);
+  const history = useHistory();
 
-  // Cuando splashDone es false, mostramos el SplashPage
+  useEffect(() => {
+    const handler = ({ url }: { url: string }) => {
+      if (url && url.includes('/verify-email')) {
+        history.push('/login');
+      }
+    };
+    CapacitorApp.addListener('appUrlOpen', handler);
+    return () => {
+      CapacitorApp.removeAllListeners();
+    };
+  }, [history]);
+
   if (!splashDone) {
     return <SplashPage onFinish={() => setSplashDone(true)} />;
   }
-
-  // Cuando termina el splash, mostramos la app normal
   return (
     <IonApp>
       <IonReactRouter>

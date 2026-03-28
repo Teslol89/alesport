@@ -40,8 +40,11 @@ El equipo de Alesport
     msg["Subject"] = subject
     msg.set_content(body)
 
+    print(f"[LOG] Intentando enviar email de verificación a: {email}")
+    print(f"[LOG] SMTP_HOST: {settings.SMTP_HOST}, SMTP_PORT: {settings.SMTP_PORT}, SMTP_USER: {settings.SMTP_USER}, SMTP_FROM: {settings.SMTP_FROM}")
+    print(f"[LOG] Enlace de verificación: {verify_url}")
     try:
-        await aiosmtplib.send(
+        result = await aiosmtplib.send(
             msg,
             hostname=settings.SMTP_HOST,
             port=settings.SMTP_PORT,
@@ -49,6 +52,7 @@ El equipo de Alesport
             password=settings.SMTP_PASSWORD,
             start_tls=True,
         )
+        print(f"[LOG] Email enviado correctamente. Respuesta SMTP: {result}")
     except Exception as e:
         print(f"[ERROR] Fallo al enviar email de verificación: {e}")
 
@@ -63,6 +67,7 @@ def get_all_users(db: Session) -> list[User]:
 async def create_user(db: Session, user_in: UserCreate) -> User:
     """Crea un usuario nuevo con contraseña hasheada y verificación de email. Lanza excepción si el email ya existe."""
     if db.query(User).filter(User.email == user_in.email).first():
+        print(f"[LOG] Registro fallido: el email {user_in.email} ya está registrado.")
         raise ValueError("El email ya está registrado")
     verification_token = secrets.token_urlsafe(32)
     user = User(
@@ -79,8 +84,10 @@ async def create_user(db: Session, user_in: UserCreate) -> User:
     try:
         db.commit()
         db.refresh(user)
+        print(f"[LOG] Usuario creado correctamente en la base de datos: {user.email}")
         await send_verification_email(user.email, verification_token)
-    except IntegrityError:
+    except IntegrityError as e:
         db.rollback()
+        print(f"[ERROR] Error de integridad al crear usuario: {e}")
         raise ValueError("Error de integridad al crear usuario")
     return user

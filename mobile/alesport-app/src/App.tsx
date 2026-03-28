@@ -23,6 +23,7 @@ import Tab3 from './pages/Tab3';
 import SplashPage from './pages/SplashPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
+import VerifyEmail from './pages/VerifyEmail';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -94,6 +95,7 @@ function MainRoutes() {
       <IonRouterOutlet>
         <Route exact path="/login" component={Login} />
         <Route exact path="/register" component={Register} />
+        <Route exact path="/verify-email" component={VerifyEmail} />
         <Route exact path="/" component={RootRedirect} />
       </IonRouterOutlet>
     );

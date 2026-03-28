@@ -19,7 +19,7 @@ def run_tests(token, role):
     print(f"\n===== TESTS for {role.upper()} =====")
     headers = {"Authorization": f"Bearer {token}"}
 
-    # 1. /auth/me
+    # 1. /auth/mee
     r1 = requests.get(f"{BASE_URL}/auth/me", headers=headers)
     assert r1.status_code == 200, f"/auth/me failed for {role}"
     user_id = r1.json().get("id")

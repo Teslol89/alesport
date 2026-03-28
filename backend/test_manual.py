@@ -1,7 +1,7 @@
 import requests
 from datetime import datetime
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "https://www.verdeguerlabs.es/api"
 USERS = [
     {"email": "admin@demo.com", "password": "admin123", "role": "admin"},
     {"email": "trainer@demo.com", "password": "trainer123", "role": "trainer"},

@@ -95,6 +95,7 @@ def run_tests(token, role):
         if role == "admin":
             week_payload["trainer_id"] = 11
         r9 = requests.patch(f"{BASE_URL}/sessions/week", headers=headers, json=week_payload)
+        print("PATCH /sessions/week:", r9.status_code, r9.text)
         if role in ("admin", "trainer"):
             assert r9.status_code == 200, f"/sessions/week should be allowed for {role}"
         else:

@@ -8,12 +8,12 @@ import "./RegisterForm.css";
 
 // Animación shake para inputs
 const shakeClass = "shake-anim";
-
 const RegisterForm: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showModal, setShowModal] = useState(false);
+
   // Estados para validación y animación
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -21,6 +21,7 @@ const RegisterForm: React.FC = () => {
   const [shakeName, setShakeName] = useState(false);
   const [shakeEmail, setShakeEmail] = useState(false);
   const [shakePassword, setShakePassword] = useState(false);
+
   // Validaciones simples
   const validateName = (val: string) => {
     if (!val.trim()) return "Nombre: Este campo es obligatorio";
@@ -38,6 +39,8 @@ const RegisterForm: React.FC = () => {
     if (val.length < 6) return "Contraseña: Debe tener al menos 6 caracteres";
     return "";
   };
+
+  // Estados para términos y condiciones
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [canAccept, setCanAccept] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -49,13 +52,17 @@ const RegisterForm: React.FC = () => {
   // Manejar el envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    // ...validaciones de campos...
+
+    // Si todos los campos son válidos, pero no se han aceptado los términos
     if (!acceptedTerms) {
+      setIsSubmitting(false);
       setToastMsg("Debes aceptar los términos y condiciones para crear una cuenta.");
       setToastColor("toast-error-register");
       setShowToast(true);
       return;
     }
-    setIsSubmitting(true);
     // Validación previa antes de enviar
     const nErr = validateName(name);
     const eErr = validateEmail(email);
@@ -76,9 +83,7 @@ const RegisterForm: React.FC = () => {
     // 2. Si nombre inválido
     if (nErr) {
       setIsSubmitting(false);
-      setToastMsg(nErr);
-      setToastColor("toast-validation-error");
-      setShowToast(true);
+      // Solo mostrar el error debajo del input, no toast
       return;
     }
 
@@ -92,9 +97,7 @@ const RegisterForm: React.FC = () => {
     }
     if (eErr) {
       setIsSubmitting(false);
-      setToastMsg(eErr);
-      setToastColor("toast-validation-error");
-      setShowToast(true);
+      // Solo mostrar el error debajo del input, no toast
       return;
     }
 
@@ -108,9 +111,7 @@ const RegisterForm: React.FC = () => {
     }
     if (pErr) {
       setIsSubmitting(false);
-      setToastMsg(pErr);
-      setToastColor("toast-validation-error");
-      setShowToast(true);
+      // Solo mostrar el error debajo del input, no toast
       return;
     }
     try {
@@ -258,9 +259,11 @@ const RegisterForm: React.FC = () => {
           onChange={(e) => setName(e.target.value)}
           onBlur={handleNameBlur}
           ref={nameInputRef}
-          className={`register-input${shakeName ? ' ' + shakeClass : ''}`}
+          className="register-input"
         />
-        {nameError && <div className="input-error-msg">{nameError}</div>}
+        {nameError && (
+          <div className={`input-error-msg${shakeName ? ' ' + shakeClass : ''}`}>{nameError.replace(/^Nombre: /, "")}</div>
+        )}
         <input
           type="email"
           placeholder="Correo electrónico"
@@ -269,10 +272,12 @@ const RegisterForm: React.FC = () => {
           onFocus={handleEmailFocus}
           onBlur={handleEmailBlur}
           ref={emailInputRef}
-          className={`register-input${shakeEmail ? ' ' + shakeClass : ''}`}
+          className="register-input"
           disabled={!!validateName(name)}
         />
-        {emailError && <div className="input-error-msg">{emailError}</div>}
+        {emailError && (
+          <div className={`input-error-msg${shakeEmail ? ' ' + shakeClass : ''}`}>{emailError.replace(/^Email: /, "")}</div>
+        )}
         <div className="password-wrapper">
           <input
             type={showPassword ? "text" : "password"}
@@ -282,7 +287,7 @@ const RegisterForm: React.FC = () => {
             onFocus={handlePasswordFocus}
             onBlur={handlePasswordBlur}
             ref={passwordInputRef2}
-            className={`register-input${shakePassword ? ' ' + shakeClass : ''}`}
+            className="register-input"
             autoComplete="new-password"
             disabled={!!validateName(name) || !!validateEmail(email)}
           />
@@ -300,7 +305,9 @@ const RegisterForm: React.FC = () => {
             />
           </span>
         </div>
-        {passwordError && <div className="input-error-msg">{passwordError}</div>}
+        {passwordError && (
+          <div className={`input-error-msg${shakePassword ? ' ' + shakeClass : ''}`}>{passwordError.replace(/^Contraseña: /, "")}</div>
+        )}
         <div className="register-terms-modal">
           <span className="register-terms-text">
             Al crear una cuenta, aceptas los

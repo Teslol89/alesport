@@ -1,29 +1,6 @@
-/* Animación shake para inputs de registro */
-.shake-anim {
-    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-}
-@keyframes shake {
-    10%, 90% { transform: translateX(-2px); }
-    20%, 80% { transform: translateX(4px); }
-    30%, 50%, 70% { transform: translateX(-8px); }
-    40%, 60% { transform: translateX(8px); }
-}
-
-/* Mensaje de error debajo de cada input */
-.input-error-msg {
-    color: #e74c3c;
-    font-size: 0.95em;
-    margin-bottom: 4px;
-    margin-left: 2px;
-}
-
-
-
-
-
-
-
+/* ---------------------------------------*/
 /* Estilos para el formulario de registro */
+/* ---------------------------------------*/
 @media (max-width: 400px) {
     .register-container {
         padding: 12px 4px 12px 4px;
@@ -44,6 +21,39 @@
         padding: 10px 10px;
     }
 }
+
+/* ------------------------------------------- */
+/* Animación de sacudida para inputs con error */
+/* ------------------------------------------- */
+@keyframes shake {
+
+    10%,
+    90% {
+        transform: translateX(-2px);
+    }
+
+    20%,
+    80% {
+        transform: translateX(4px);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translateX(-8px);
+    }
+
+    40%,
+    60% {
+        transform: translateX(8px);
+    }
+}
+
+.shake-anim {
+    animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+
 
 /* --------------------------------- */
 /* Contenedor principal del registro */
@@ -87,6 +97,7 @@
 /* -------------------------- */
 .register-return {
     text-align: left;
+    margin-bottom: 0;
     color: #000000;
     font-size: 0.9rem;
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
@@ -114,7 +125,7 @@
     font-size: 1rem;
     color: #000000;
     outline: none;
-    margin-bottom: 14px;
+    margin-top: 16px;
     box-sizing: border-box;
 }
 
@@ -140,7 +151,7 @@
 .toggle-password {
     position: absolute;
     right: 14px;
-    top: 40%;
+    top: 60%;
     transform: translateY(-50%);
     cursor: pointer;
     user-select: none;
@@ -258,32 +269,6 @@
 /* ------------------------------- */
 /* Mensaje de errores de Registros */
 /* ------------------------------- */
-@keyframes shake {
-    0% {
-        transform: translateX(0);
-    }
-
-    20% {
-        transform: translateX(-8px);
-    }
-
-    40% {
-        transform: translateX(8px);
-    }
-
-    60% {
-        transform: translateX(-6px);
-    }
-
-    80% {
-        transform: translateX(6px);
-    }
-
-    100% {
-        transform: translateX(0);
-    }
-}
-
 .toast-error-register {
     --max-width: 300px;
     --background: #901726;
@@ -324,4 +309,16 @@
     font-weight: 600;
     letter-spacing: 0.01em;
     box-shadow: 0 2px 8px rgba(46, 125, 50, 0.15);
+}
+
+/* --------------------------------------- */
+/* Animación shake para inputs de registro */
+/* --------------------------------------- */
+.input-error-msg {
+    color: #de0a0d;
+    /* Rojo "BERMELLÓN" */
+    text-align: left;
+    font-size: 0.95em;
+    margin-bottom: 4px;
+    margin-left: 2px;
 }

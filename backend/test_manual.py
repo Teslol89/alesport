@@ -23,6 +23,9 @@ def run_tests(token, role):
     r1 = requests.get(f"{BASE_URL}/auth/me", headers=headers)
     assert r1.status_code == 200, f"/auth/me failed for {role}"
     user_id = r1.json().get("id")
+    user_role = r1.json().get("role")
+    # Si es trainer, guardar su id
+    trainer_id = user_id if user_role == "trainer" else None
 
     # 2. /sessions/
     r2 = requests.get(f"{BASE_URL}/sessions/", headers=headers)
@@ -37,8 +40,19 @@ def run_tests(token, role):
         assert r3.status_code == 403, f"/users/ should be forbidden for {role}"
 
     # 4. POST /schedule/
+    # Usar el id real del trainer creado por la semilla
+    # Si es admin, buscar el id del trainer por API
+    trainer_api_id = None
+    if role == "admin":
+        r_trainers = requests.get(f"{BASE_URL}/users/", headers=headers)
+        if r_trainers.status_code == 200:
+            trainers = [u for u in r_trainers.json() if u["role"] == "trainer"]
+            if trainers:
+                trainer_api_id = trainers[0]["id"]
+    elif role == "trainer":
+        trainer_api_id = trainer_id
     schedule_payload = {
-        "trainer_id": 11,
+        "trainer_id": trainer_api_id or 1,
         "day_of_week": datetime.now().weekday(),
         "start_time": "12:00",
         "end_time": "13:00",
@@ -93,7 +107,8 @@ def run_tests(token, role):
             "capacity": 7
         }
         if role == "admin":
-            week_payload["trainer_id"] = 11
+            # Usar el id real del trainer
+            week_payload["trainer_id"] = trainer_api_id or 1
         r9 = requests.patch(f"{BASE_URL}/sessions/week", headers=headers, json=week_payload)
         print("PATCH /sessions/week:", r9.status_code, r9.text)
         if role in ("admin", "trainer"):
@@ -172,7 +187,7 @@ def run_tests(token, role):
     # 16. Crear horario solapado
     if role == "admin":
         solapado_payload = {
-            "trainer_id": 11,
+            "trainer_id": trainer_api_id or 1,
             "day_of_week": datetime.now().weekday(),
             "start_time": "10:30",
             "end_time": "11:30",

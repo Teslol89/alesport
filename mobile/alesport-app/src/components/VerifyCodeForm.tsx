@@ -8,25 +8,16 @@ const VerifyCodeForm: React.FC = () => {
     const history = useHistory();
     const [email, setEmail] = useState(() => localStorage.getItem("pendingVerificationEmail") || "");
     const emailFromStorage = localStorage.getItem("pendingVerificationEmail") || "";
+    const [noPending, setNoPending] = useState(false);
     React.useEffect(() => {
         const pendingEmail = localStorage.getItem("pendingVerificationEmail");
+        console.log("[VerifyCodeForm] pendingVerificationEmail:", pendingEmail);
         if (!pendingEmail) {
+            setNoPending(true);
             history.replace("/login");
             return;
         }
-        // Comprobar en el backend si el usuario pendiente existe
-        const apiUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-        fetch(`${apiUrl}/auth/check-user-exists?email=${encodeURIComponent(pendingEmail)}`)
-            .then(res => {
-                if (res.status === 404) {
-                    localStorage.removeItem("pendingVerificationEmail");
-                    history.replace("/login");
-                }
-                // Si 200, todo ok, no hacer nada
-            })
-            .catch(() => {
-                // Si hay error de red, opcional: mostrar toast o redirigir a login
-            });
+        // No se comprueba en backend, solo se permite verificar si hay email pendiente
     }, [history]);
     const [code, setCode] = useState("");
     const [loading, setLoading] = useState(false);
@@ -61,6 +52,14 @@ const VerifyCodeForm: React.FC = () => {
         }
     };
 
+    if (noPending) {
+        return (
+            <div className="verify-code-container">
+                <h2 className="verify-code-title">No hay registro pendiente</h2>
+                <p className="verify-code-description">Redirigiendo a login...</p>
+            </div>
+        );
+    }
     return (
         <div className="verify-code-container">
             <h2 className="verify-code-title">Verifica tu correo</h2>

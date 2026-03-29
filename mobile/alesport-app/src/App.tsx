@@ -25,6 +25,7 @@ import Tab3 from './pages/Tab3';
 import SplashPage from './pages/SplashPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
+import { getPendingUser, deletePendingUser } from './api/auth';
 
 // import VerifyEmail from './pages/VerifyEmail';
 import VerifyCode from './pages/VerifyCode';
@@ -62,8 +63,6 @@ import './App.css';
 
 setupIonicReact();
 
-
-
 // App principal con SplashPage integrado
 // Componente dedicado para la redirección de la ruta raíz
 function RootRedirect() {
@@ -76,13 +75,33 @@ const App: React.FC = () => {
   const [splashDone, setSplashDone] = useState(false);
   const history = useHistory();
 
-  // Redirigir automáticamente a /verify-code si hay email pendiente y no está autenticado
+  // Al abrir la app, si hay un email pendiente de verificación y no hay sesión,
+  // se limpia/elimina el usuario pendiente y se redirige siempre a /login.
   useEffect(() => {
-    const pendingEmail = localStorage.getItem("pendingVerificationEmail");
-    const isAuthenticated = !!localStorage.getItem("token"); // Ajusta según tu lógica de auth
-    if (pendingEmail && !isAuthenticated && window.location.pathname !== "/verify-code") {
-      history.replace("/verify-code");
-    }
+    const checkAndCleanPendingUser = async () => {
+      const pendingEmail = localStorage.getItem("pendingVerificationEmail");
+      const isAuthenticated = !!localStorage.getItem("token");
+      if (pendingEmail && !isAuthenticated) {
+        try {
+          const user = await getPendingUser(pendingEmail);
+          if (user) {
+            // El usuario sigue pendiente, lo eliminamos
+            await deletePendingUser(pendingEmail);
+            localStorage.removeItem("pendingVerificationEmail");
+            alert("Tu registro anterior no fue verificado y ha sido eliminado. Por favor, regístrate de nuevo.");
+          } else {
+            // Ya no está pendiente, limpiar localStorage
+            localStorage.removeItem("pendingVerificationEmail");
+          }
+        } catch (err) {
+          console.error("[App.tsx][useEffect] Error al limpiar usuario pendiente:", err);
+        }
+        // Siempre redirigir a login si había pendingEmail y no autenticado
+        history.replace("/login");
+        return;
+      }
+    };
+    checkAndCleanPendingUser();
   }, [history]);
 
   useEffect(() => {
@@ -128,44 +147,44 @@ const App: React.FC = () => {
     </IonApp>
   );
 
-// Componente que separa rutas públicas y privadas
-function MainRoutes() {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) {
+  // Componente que separa rutas públicas y privadas
+  function MainRoutes() {
+    const { isAuthenticated } = useAuth();
+    if (!isAuthenticated) {
+      return (
+        <IonRouterOutlet>
+          <Route exact path="/login" component={Login} />
+          <Route exact path="/register" component={Register} />
+          <Route exact path="/verify-code" component={VerifyCode} />
+          <Route exact path="/" component={RootRedirect} />
+        </IonRouterOutlet>
+      );
+    }
     return (
-      <IonRouterOutlet>
-        <Route exact path="/login" component={Login} />
-        <Route exact path="/register" component={Register} />
-        <Route exact path="/verify-code" component={VerifyCode} />
-        <Route exact path="/" component={RootRedirect} />
-      </IonRouterOutlet>
+      <IonTabs>
+        <IonRouterOutlet>
+          <PrivateRoute exact path="/tab1" component={Tab1} />
+          <PrivateRoute exact path="/tab2" component={Tab2} />
+          <PrivateRoute path="/tab3" component={Tab3} />
+          <Route exact path="/" component={RootRedirect} />
+        </IonRouterOutlet>
+        <IonTabBar slot="bottom">
+          <IonTabButton tab="tab1" href="/tab1">
+            <IonIcon aria-hidden="true" icon={triangle} />
+            <IonLabel>Tab 1</IonLabel>
+          </IonTabButton>
+          <IonTabButton tab="tab2" href="/tab2">
+            <IonIcon aria-hidden="true" icon={ellipse} />
+            <IonLabel>Tab 2</IonLabel>
+          </IonTabButton>
+          <IonTabButton tab="tab3" href="/tab3">
+            <IonIcon aria-hidden="true" icon={square} />
+            <IonLabel>Tab 3</IonLabel>
+          </IonTabButton>
+        </IonTabBar>
+      </IonTabs>
     );
   }
-  return (
-    <IonTabs>
-      <IonRouterOutlet>
-        <PrivateRoute exact path="/tab1" component={Tab1} />
-        <PrivateRoute exact path="/tab2" component={Tab2} />
-        <PrivateRoute path="/tab3" component={Tab3} />
-        <Route exact path="/" component={RootRedirect} />
-      </IonRouterOutlet>
-      <IonTabBar slot="bottom">
-        <IonTabButton tab="tab1" href="/tab1">
-          <IonIcon aria-hidden="true" icon={triangle} />
-          <IonLabel>Tab 1</IonLabel>
-        </IonTabButton>
-        <IonTabButton tab="tab2" href="/tab2">
-          <IonIcon aria-hidden="true" icon={ellipse} />
-          <IonLabel>Tab 2</IonLabel>
-        </IonTabButton>
-        <IonTabButton tab="tab3" href="/tab3">
-          <IonIcon aria-hidden="true" icon={square} />
-          <IonLabel>Tab 3</IonLabel>
-        </IonTabButton>
-      </IonTabBar>
-    </IonTabs>
-  );
-}
 };
 
 export default App;

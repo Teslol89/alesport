@@ -1,8 +1,13 @@
-from sqlalchemy.orm import Session
+# --- SERVICIOS DE USUARIOS ---
+# Estos servicios encapsulan la lógica de negocio relacionada con los usuarios,
+# como la creación de nuevos usuarios, la recuperación de usuarios por email o ID,
+# y la actualización de información del usuario. Al centralizar esta lógica en un servicio,
+# se facilita el mantenimiento y la reutilización del código en diferentes partes de la
+# aplicación (routers, otros servicios, etc.).
 
+
+from sqlalchemy.orm import Session
 from app.models.user import User
-<<<<<<< HEAD
-=======
 from app.schemas.user import UserCreate
 from app.auth.security import hash_password
 from sqlalchemy.exc import IntegrityError
@@ -11,8 +16,6 @@ import aiosmtplib
 from email.message import EmailMessage
 from app.config import settings
 
-# Envío real de email de verificación
-import asyncio
 
 async def send_verification_email(email: str, token: str):
     subject = "Verifica tu cuenta en Alesport"
@@ -24,9 +27,11 @@ async def send_verification_email(email: str, token: str):
 <body>
 <p>Hola,</p>
 <p>Gracias por registrarte en Alesport. Para activar tu cuenta, pulsa el siguiente botón desde tu móvil:</p>
-<p style='text-align:center;margin:32px 0;'>
-  <a href="{deep_link}" style="background:#2dd36f;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:18px;display:inline-block;">Abrir en la app</a>
-</p>
+<div style='text-align:center;margin:32px 0;'>
+    <a href="{deep_link}" style="text-decoration:none;" target="_blank" rel="noopener noreferrer">
+        <button style="background:#2dd36f;color:#fff;padding:14px 32px;border:none;border-radius:8px;font-weight:bold;font-size:18px;cursor:pointer;">Abrir en la app</button>
+    </a>
+</div>
 <p>Si el botón no funciona, copia y pega este enlace en tu navegador móvil:</p>
 <p style='word-break:break-all;font-family:monospace;font-size:15px'>{deep_link}</p>
 <p>Si no has solicitado esta cuenta, ignora este correo.</p>
@@ -55,7 +60,9 @@ El equipo de Alesport
     msg.add_alternative(html_body, subtype="html")
 
     print(f"[LOG] Intentando enviar email de verificación a: {email}")
-    print(f"[LOG] SMTP_HOST: {settings.SMTP_HOST}, SMTP_PORT: {settings.SMTP_PORT}, SMTP_USER: {settings.SMTP_USER}, SMTP_FROM: {settings.SMTP_FROM}")
+    print(
+        f"[LOG] SMTP_HOST: {settings.SMTP_HOST}, SMTP_PORT: {settings.SMTP_PORT}, SMTP_USER: {settings.SMTP_USER}, SMTP_FROM: {settings.SMTP_FROM}"
+    )
     print(f"[LOG] Enlace de verificación: {deep_link}")
     try:
         result = await aiosmtplib.send(
@@ -69,9 +76,39 @@ El equipo de Alesport
         print(f"[LOG] Email enviado correctamente. Respuesta SMTP: {result}")
     except Exception as e:
         print(f"[ERROR] Fallo al enviar email de verificación: {e}")
->>>>>>> 97e5553bde3fd4007ae7d7c334535f62557f807f
 
 
+# --- OBTENER USUARIOS ---
 def get_all_users(db: Session) -> list[User]:
     """Devuelve todos los usuarios registrados en la base de datos."""
     return db.query(User).all()
+
+
+# --- CREAR USUARIO NUEVO ---
+async def create_user(db: Session, user_in: UserCreate) -> User:
+    """Crea un usuario nuevo con contraseña hasheada y verificación de email. Lanza excepción si el email ya existe."""
+    if db.query(User).filter(User.email == user_in.email).first():
+        print(f"[LOG] Registro fallido: el email {user_in.email} ya está registrado.")
+        raise ValueError("El email ya está registrado")
+    verification_token = secrets.token_urlsafe(32)
+    user = User(
+        name=user_in.name,
+        email=user_in.email,
+        password_hash=hash_password(user_in.password),
+        role="client",
+        is_active=True,
+        membership_active=True,
+        is_verified=False,
+        verification_token=verification_token,
+    )
+    db.add(user)
+    try:
+        db.commit()
+        db.refresh(user)
+        print(f"[LOG] Usuario creado correctamente en la base de datos: {user.email}")
+        await send_verification_email(user.email, verification_token)
+    except IntegrityError as e:
+        db.rollback()
+        print(f"[ERROR] Error de integridad al crear usuario: {e}")
+        raise ValueError("Error de integridad al crear usuario")
+    return user

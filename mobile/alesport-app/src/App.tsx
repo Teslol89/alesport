@@ -75,8 +75,25 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handler = ({ url }: { url: string }) => {
-      if (url && url.includes('/verify-email')) {
-        history.push('/login');
+      if (url) {
+        // Deep link: alesport://verify-email?token=...
+        if (url.startsWith('alesport://verify-email')) {
+          try {
+            const parsed = new URL(url);
+            const token = parsed.searchParams.get('token');
+            if (token) {
+              history.push(`/verify-email?token=${token}`);
+            } else {
+              history.push('/verify-email');
+            }
+          } catch {
+            history.push('/verify-email');
+          }
+        }
+        // Fallback: si viene de web
+        else if (url.includes('/verify-email')) {
+          history.push('/login');
+        }
       }
     };
     CapacitorApp.addListener('appUrlOpen', handler);

@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, text
 from passlib.context import CryptContext
 
 # Configuración de conexión (ajusta según tu entorno)
-DB_URL = os.getenv("ALESPORT_DB_URL") or "postgresql+psycopg://postgres:Verdeguer89**@localhost:5432/alesportAPP"
+DB_URL = "postgresql+psycopg://postgres:Verdeguer89**@212.227.99.222:5432/alesportAPP"
 engine = create_engine(DB_URL)
 
 # Hasher bcrypt

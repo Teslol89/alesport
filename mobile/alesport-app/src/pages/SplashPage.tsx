@@ -4,13 +4,14 @@ import alesportLogo1 from '../assets/img/alesportLogo1.jpg';
 import verdeLabsHori from '../assets/img/verdeLabsHori.png';
 import './SplashPage.css';
 
+
 // SplashPage: muestra el logo y un loader mientras se cargan datos o se decide a dónde redirigir
 const SplashPage: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
     useEffect(() => {
         // Simula carga de datos o comprobaciones (puedes reemplazar el timeout por tu lógica real)
         const timer = setTimeout(() => {
             onFinish();
-        }, 2500); // 2.5 segundos
+        }, 2500); // 2.5 segundos (valor original)
         return () => clearTimeout(timer);
     }, [onFinish]);
 

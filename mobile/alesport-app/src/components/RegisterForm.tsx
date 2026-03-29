@@ -282,7 +282,7 @@ const RegisterForm: React.FC = () => {
 
         />
         {nameError && (
-          <div className={`input-error-msg${shakeName ? ' ' + shakeClass : ''}`}>{nameError.replace(/^Nombre: /, "")}</div>
+          <div className={`input-error-msg${shakeName ? ' ' + shakeClass : ''}`}>{(nameError || "").replace(/^Nombre: /, "")}</div>
         )}
         <input
           className="register-input"
@@ -296,7 +296,7 @@ const RegisterForm: React.FC = () => {
           disabled={!!validateName(name)}
         />
         {emailError && (
-          <div className={`input-error-msg${shakeEmail ? ' ' + shakeClass : ''}`}>{emailError.replace(/^Email: /, "")}</div>
+          <div className={`input-error-msg${shakeEmail ? ' ' + shakeClass : ''}`}>{(emailError || "").replace(/^Email: /, "")}</div>
         )}
         <div className="password-wrapper">
           <input
@@ -326,7 +326,7 @@ const RegisterForm: React.FC = () => {
           </span>
         </div>
         {passwordError && (
-          <div className={`input-error-msg${shakePassword ? ' ' + shakeClass : ''}`}>{passwordError.replace(/^Contraseña: /, "")}</div>
+          <div className={`input-error-msg${shakePassword ? ' ' + shakeClass : ''}`}>{(passwordError || "").replace(/^Contraseña: /, "")}</div>
         )}
         <div className="register-terms-modal">
           <span className="register-terms-text">

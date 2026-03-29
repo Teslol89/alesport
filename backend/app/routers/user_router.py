@@ -9,9 +9,38 @@ from app.database.db import get_db
 from app.models.user import User, User as UserModel
 from app.schemas.user import UserResponse
 from app.services.user_service import get_all_users
+from app.models.user import User as UserModel
+from fastapi import Query
+
 
 # --- INICIALIZAR ROUTER ANTES DE USARLO ---
 router = APIRouter(prefix="/users", tags=["users"])
+
+# --- ENDPOINTS PÚBLICOS PARA USUARIO PENDIENTE DE VERIFICACIÓN ---
+@router.get("/pending/{email}", response_model=UserResponse, tags=["users"])
+def get_pending_user_by_email(
+    email: str = Path(..., description="Email del usuario pendiente a consultar"),
+    db: Session = Depends(get_db),
+):
+    """Devuelve el usuario pendiente (no verificado) por email. 404 si no existe o ya está verificado."""
+    user = db.query(UserModel).filter(UserModel.email == email).first()
+    if not user or user.is_verified:
+        raise HTTPException(status_code=404, detail="Usuario pendiente no encontrado")
+    return user
+
+
+@router.delete("/pending/{email}", status_code=204, tags=["users"])
+def delete_pending_user_by_email(
+    email: str = Path(..., description="Email del usuario pendiente a eliminar"),
+    db: Session = Depends(get_db),
+):
+    """Elimina el usuario pendiente (no verificado) por email. 404 si no existe o ya está verificado."""
+    user = db.query(UserModel).filter(UserModel.email == email).first()
+    if not user or user.is_verified:
+        raise HTTPException(status_code=404, detail="Usuario pendiente no encontrado")
+    db.delete(user)
+    db.commit()
+    return
 
 # --- ESQUEMA PATCH ---
 class UserUpdateIsActive(BaseModel):

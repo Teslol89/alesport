@@ -8,9 +8,12 @@ const VerifyCodeForm: React.FC = () => {
     const history = useHistory();
     const [email, setEmail] = useState(() => localStorage.getItem("pendingVerificationEmail") || "");
     const emailFromStorage = localStorage.getItem("pendingVerificationEmail") || "";
+    const [noPending, setNoPending] = useState(false);
     React.useEffect(() => {
         const pendingEmail = localStorage.getItem("pendingVerificationEmail");
+        console.log("[VerifyCodeForm] pendingVerificationEmail:", pendingEmail);
         if (!pendingEmail) {
+            setNoPending(true);
             history.replace("/login");
             return;
         }
@@ -49,6 +52,14 @@ const VerifyCodeForm: React.FC = () => {
         }
     };
 
+    if (noPending) {
+        return (
+            <div className="verify-code-container">
+                <h2 className="verify-code-title">No hay registro pendiente</h2>
+                <p className="verify-code-description">Redirigiendo a login...</p>
+            </div>
+        );
+    }
     return (
         <div className="verify-code-container">
             <h2 className="verify-code-title">Verifica tu correo</h2>

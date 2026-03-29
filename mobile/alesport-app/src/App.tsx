@@ -72,8 +72,18 @@ function RootRedirect() {
 }
 
 const App: React.FC = () => {
+
   const [splashDone, setSplashDone] = useState(false);
   const history = useHistory();
+
+  // Redirigir automáticamente a /verify-code si hay email pendiente y no está autenticado
+  useEffect(() => {
+    const pendingEmail = localStorage.getItem("pendingVerificationEmail");
+    const isAuthenticated = !!localStorage.getItem("token"); // Ajusta según tu lógica de auth
+    if (pendingEmail && !isAuthenticated && window.location.pathname !== "/verify-code") {
+      history.replace("/verify-code");
+    }
+  }, [history]);
 
   useEffect(() => {
     const handler = ({ url }: { url: string }) => {

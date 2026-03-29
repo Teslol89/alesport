@@ -125,6 +125,8 @@ const RegisterForm: React.FC = () => {
 
     try {
       await registerUser(name, email, password);
+      // Guardar el email en localStorage para el flujo de verificación
+      localStorage.setItem("pendingVerificationEmail", email);
       setToastMsg("Registro exitoso. Revisa tu correo para activar tu cuenta.");
       setToastColor("toast-success-register");
       setShowToast(true);

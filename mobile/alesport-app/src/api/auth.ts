@@ -82,3 +82,17 @@ export async function loginWithGoogle(idToken: string) {
 
     return response.json();
 }
+
+// Elimina un usuario pendiente (no verificado) por email
+export async function deletePendingUser(email: string) {
+    const response = await fetch(`${baseApiUrl}/auth/delete-pending-user?email=${encodeURIComponent(email)}`, {
+        method: 'DELETE',
+    });
+    if (!response.ok) {
+        // Si 404, ya no existe, lo tratamos como éxito para el flujo
+        if (response.status === 404) return;
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || 'No se pudo eliminar el usuario pendiente.');
+    }
+    return response.json();
+}

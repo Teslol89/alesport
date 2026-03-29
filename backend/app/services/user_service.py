@@ -1,3 +1,12 @@
+# --- ELIMINAR USUARIO POR EMAIL (no verificado) ---
+def delete_pending_user_by_email(db: Session, email: str) -> bool:
+    """Elimina un usuario no verificado por email. Devuelve True si se eliminó, False si no existe o ya está verificado."""
+    user = db.query(User).filter(User.email == email).first()
+    if not user or user.is_verified:
+        return False
+    db.delete(user)
+    db.commit()
+    return True
 # --- SERVICIOS DE USUARIOS ---
 # Estos servicios encapsulan la lógica de negocio relacionada con los usuarios,
 # como la creación de nuevos usuarios, la recuperación de usuarios por email o ID,

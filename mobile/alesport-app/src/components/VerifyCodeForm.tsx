@@ -1,14 +1,30 @@
 import React, { useState } from "react";
+import { deletePendingUser } from "../api/auth";
 import { IonInput, IonButton, IonToast, IonItem, IonLabel } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import "./VerifyCodeForm.css";
 
 const VerifyCodeForm: React.FC = () => {
-    const [email, setEmail] = useState("");
+    const history = useHistory();
+    const [email, setEmail] = useState(() => localStorage.getItem("pendingVerificationEmail") || "");
+    const emailFromStorage = localStorage.getItem("pendingVerificationEmail") || "";
+    React.useEffect(() => {
+        const pendingEmail = localStorage.getItem("pendingVerificationEmail");
+        if (!pendingEmail) {
+            history.replace("/login");
+            return;
+        }
+        // Llamar al backend para eliminar usuario pendiente (si existe y no está verificado)
+        deletePendingUser(pendingEmail)
+            .finally(() => {
+                // Limpiar localStorage y redirigir a login siempre, para forzar registro desde cero
+                localStorage.removeItem("pendingVerificationEmail");
+                history.replace("/login");
+            });
+    }, [history]);
     const [code, setCode] = useState("");
     const [loading, setLoading] = useState(false);
     const [toast, setToast] = useState<{ show: boolean, message: string, color?: string }>({ show: false, message: "" });
-    const history = useHistory();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,6 +40,8 @@ const VerifyCodeForm: React.FC = () => {
             const data = await res.json();
             if (res.ok) {
                 setToast({ show: true, message: data.message || "¡Email verificado!", color: "success" });
+                // Limpiar el email de localStorage al verificar correctamente
+                localStorage.removeItem("pendingVerificationEmail");
                 setTimeout(() => {
                     history.push("/login");
                 }, 1800);
@@ -40,7 +58,7 @@ const VerifyCodeForm: React.FC = () => {
     return (
         <div className="verify-code-container">
             <h2 className="verify-code-title">Verifica tu correo</h2>
-            <p className="verify-code-description">Introduce el email y el código recibido en el correo para activar tu cuenta.</p>
+            <p className="verify-code-description">Introduce código recibido en el email para activar tu cuenta.</p>
             <form onSubmit={handleSubmit}>
                 <input
                     className="verify-code-input"
@@ -50,6 +68,7 @@ const VerifyCodeForm: React.FC = () => {
                     onChange={e => setEmail(e.target.value)}
                     required
                     autoComplete="email"
+                    disabled={email === emailFromStorage && !!emailFromStorage}
                 />
                 <input
                     className="verify-code-input"

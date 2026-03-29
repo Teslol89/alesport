@@ -73,7 +73,7 @@
 /* Título principal */
 /* ---------------- */
 .register-title {
-    color: #016875;
+    color: #0089a6;
     /* Azul "TEAL" */
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
     font-size: 2rem;
@@ -128,8 +128,8 @@
 
 /* Input enfocado */
 .register-input:focus {
-    border: 2px solid #007d94;
-    background: #f0fbff;
+    border: 2px solid #0089a6;
+    background: rgba(0, 137, 166, 0.08);
     outline: none;
 }
 
@@ -201,7 +201,7 @@
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
     font-size: 1.2rem;
     margin-bottom: 12px;
-    color: #007d94;
+    color: #0089a6;
 }
 
 /* Contenedor del texto con scroll */
@@ -217,7 +217,7 @@
 
 /* Botones del modal */
 .modal-accept-btn {
-    --background: #006875;
+    --background: #0089a6;
     /* Azul "TEAL" */
     --color: #fff;
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
@@ -240,7 +240,7 @@
 /* Estilos base para el botón de registro */
 .register-btn {
     width: 100%;
-    background: #006875;
+    background: #0089a6;
     /* Azul "TEAL" */
     color: #fff;
     border: none;

@@ -69,7 +69,7 @@
 }
 
 .verify-code-title {
-    color: #016875;
+    color: #0089a6;
     /* Azul "TEAL" */
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
     font-size: 2rem;
@@ -102,8 +102,8 @@
 }
 
 .verify-code-input:focus {
-    border: 2px solid #007d94;
-    background: #f0fbff;
+    border: 2px solid #0089a6;
+    background: rgba(0, 137, 166, 0.08);
     outline: none;
 }
 
@@ -112,7 +112,7 @@
 /* ----------------------------*/
 .verify-code-btn {
     width: 100%;
-    background: #006875;
+    background: #0089a6;
     /* Azul "TEAL" */
     color: #fff;
     border: none;

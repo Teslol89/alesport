@@ -125,17 +125,17 @@ const RegisterForm: React.FC = () => {
 
     try {
       await registerUser(name, email, password);
-      setToastMsg("Registro exitoso. Revisa tu correo para verificar tu cuenta.");
+      setToastMsg("Registro exitoso. Revisa tu correo para activar tu cuenta.");
       setToastColor("toast-success-register");
       setShowToast(true);
       setName("");
       setEmail("");
       setPassword("");
       setAcceptedTerms(false);
-      // Mostrar el toast durante 4.5 segundos y luego redirigir a /login
+      // Mostrar el toast durante 3.5 segundos y luego redirigir a /verify-code
       setTimeout(() => {
-        history.push("/login");
-      }, 4500); // 4.5 segundos para que el usuario vea el toast
+        history.push("/verify-code");
+      }, 3500); // 3.5 segundos para que el usuario vea el toast
     } catch (err: any) {
       let msg = "No se pudo registrar el usuario.";
       let color = "toast-error-register";

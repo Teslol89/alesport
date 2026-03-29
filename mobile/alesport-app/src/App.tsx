@@ -25,7 +25,9 @@ import Tab3 from './pages/Tab3';
 import SplashPage from './pages/SplashPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
-import VerifyEmail from './pages/VerifyEmail';
+
+// import VerifyEmail from './pages/VerifyEmail';
+import VerifyCode from './pages/VerifyCode';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -76,23 +78,24 @@ const App: React.FC = () => {
   useEffect(() => {
     const handler = ({ url }: { url: string }) => {
       if (url) {
-        // Deep link: alesport://verify-email?token=...
-        if (url.startsWith('alesport://verify-email')) {
+        // Deep link: alesport://verify-code?email=...&code=...
+        if (url.startsWith('alesport://verify-code')) {
           try {
             const parsed = new URL(url);
-            const token = parsed.searchParams.get('token');
-            if (token) {
-              history.push(`/verify-email?token=${token}`);
+            const email = parsed.searchParams.get('email');
+            const code = parsed.searchParams.get('code');
+            if (email && code) {
+              history.push(`/verify-code?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`);
             } else {
-              history.push('/verify-email');
+              history.push('/verify-code');
             }
           } catch {
-            history.push('/verify-email');
+            history.push('/verify-code');
           }
         }
         // Fallback: si viene de web
-        else if (url.includes('/verify-email')) {
-          history.push('/login');
+        else if (url.includes('/verify-code')) {
+          history.push('/verify-code');
         }
       }
     };
@@ -123,7 +126,7 @@ function MainRoutes() {
       <IonRouterOutlet>
         <Route exact path="/login" component={Login} />
         <Route exact path="/register" component={Register} />
-        <Route exact path="/verify-email" component={VerifyEmail} />
+        <Route exact path="/verify-code" component={VerifyCode} />
         <Route exact path="/" component={RootRedirect} />
       </IonRouterOutlet>
     );

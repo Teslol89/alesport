@@ -133,32 +133,27 @@ from email.message import EmailMessage
 from app.config import settings
 
 
-async def send_verification_email(email: str, token: str):
-    subject = "Verifica tu cuenta en Alesport"
-    verify_url = f"https://www.verdeguerlabs.es/verify-email?token={token}"
-    # Email HTML con botón web y fallback de texto
+async def send_verification_email(email: str, code: str):
+    subject = "Tu código de verificación para Alesport"
     html_body = f"""
 <html>
 <body>
 <p>Hola,</p>
-<p>Gracias por registrarte en Alesport. Para activar tu cuenta, pulsa el siguiente botón:</p>
+<p>Gracias por registrarte en Alesport. Para activar tu cuenta, introduce el siguiente código en la app:</p>
 <div style='text-align:center;margin:32px 0;'>
-  <a href="{verify_url}" style="background:#2dd36f;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:18px;display:inline-block;">Verificar email</a>
+    <span style="background:#2dd36f;color:#fff;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:28px;letter-spacing:4px;display:inline-block;">{code}</span>
 </div>
-<p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
-<p style='word-break:break-all;font-family:monospace;font-size:15px'>{verify_url}</p>
 <p>Si no has solicitado esta cuenta, ignora este correo.</p>
 <p>Un saludo,<br>El equipo de Alesport</p>
 </body>
 </html>
 """
-    # También añade versión solo texto por compatibilidad
     text_body = f"""
 Hola,
 
-Gracias por registrarte en Alesport. Para activar tu cuenta, abre este enlace en tu navegador:
+Gracias por registrarte en Alesport. Para activar tu cuenta, introduce este código en la app:
 
-{verify_url}
+{code}
 
 Si no has solicitado esta cuenta, ignora este correo.
 
@@ -173,10 +168,8 @@ El equipo de Alesport
     msg.add_alternative(html_body, subtype="html")
 
     print(f"[LOG] Intentando enviar email de verificación a: {email}")
-    print(
-        f"[LOG] SMTP_HOST: {settings.SMTP_HOST}, SMTP_PORT: {settings.SMTP_PORT}, SMTP_USER: {settings.SMTP_USER}, SMTP_FROM: {settings.SMTP_FROM}"
-    )
-    print(f"[LOG] Enlace de verificación: {verify_url}")
+    print(f"[LOG] SMTP_HOST: {settings.SMTP_HOST}, SMTP_PORT: {settings.SMTP_PORT}, SMTP_USER: {settings.SMTP_USER}, SMTP_FROM: {settings.SMTP_FROM}")
+    print(f"[LOG] Código de verificación: {code}")
     try:
         result = await aiosmtplib.send(
             msg,
@@ -203,7 +196,9 @@ async def create_user(db: Session, user_in: UserCreate) -> User:
     if db.query(User).filter(User.email == user_in.email).first():
         print(f"[LOG] Registro fallido: el email {user_in.email} ya está registrado.")
         raise ValueError("El email ya está registrado")
-    verification_token = secrets.token_urlsafe(32)
+    import string
+    code_charset = string.ascii_uppercase + string.digits
+    verification_code = ''.join(secrets.choice(code_charset) for _ in range(6))
     user = User(
         name=user_in.name,
         email=user_in.email,
@@ -212,14 +207,14 @@ async def create_user(db: Session, user_in: UserCreate) -> User:
         is_active=True,
         membership_active=True,
         is_verified=False,
-        verification_token=verification_token,
+        verification_code=verification_code,
     )
     db.add(user)
     try:
         db.commit()
         db.refresh(user)
         print(f"[LOG] Usuario creado correctamente en la base de datos: {user.email}")
-        await send_verification_email(user.email, verification_token)
+        await send_verification_email(user.email, verification_code)
     except IntegrityError as e:
         db.rollback()
         print(f"[ERROR] Error de integridad al crear usuario: {e}")

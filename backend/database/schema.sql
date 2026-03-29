@@ -22,14 +22,11 @@ CREATE TABLE IF NOT EXISTS users (
         CHECK (role IN ('admin','trainer','client')),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     membership_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    verification_code VARCHAR(12),
     last_login TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
--- MIGRACIÓN: verificación de email
-ALTER TABLE users
-  ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS verification_token VARCHAR(128);
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);

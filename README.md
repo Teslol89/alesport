@@ -1,3 +1,80 @@
+# Guía de desarrollo y autenticación (2026)
+
+Esta guía describe paso a paso cómo funciona y cómo mantener el flujo de registro, login y persistencia de sesión en la app Alesport, tanto en web como en móvil (Ionic/Capacitor), con advertencias y buenas prácticas para el futuro.
+
+## 1. Estructura y dependencias clave
+
+- **Backend:** FastAPI, PostgreSQL, JWT, roles.
+- **Frontend:** React, Ionic, React Router, localStorage para persistencia de sesión.
+- **Móvil:** Capacitor (sin Secure Storage, solo localStorage para máxima compatibilidad y menos problemas).
+
+## 2. Registro de usuario (UX y validaciones)
+
+1. El usuario rellena el formulario de registro (`RegisterForm.tsx`).
+2. Validaciones en tiempo real: nombre, email, contraseña y aceptación de términos.
+3. Errores de campo se muestran bajo el input, nunca en toast (excepto errores globales).
+4. Si todo es correcto, se envía al backend (`/auth/register`).
+5. Si el registro es exitoso, se muestra un toast de éxito y se redirige automáticamente a login.
+6. Si hay errores (email duplicado, etc.), se muestran de forma clara y priorizada.
+
+## 3. Login y persistencia de sesión
+
+1. El usuario inicia sesión desde el formulario de login (`LoginForm.tsx`).
+2. Si las credenciales son correctas, el backend devuelve un JWT.
+3. El token se guarda en localStorage y en el contexto global (`AuthContext`).
+4. Mientras el token esté en localStorage, la sesión persiste aunque se cierre la app o el navegador.
+5. Al cerrar sesión, el token se elimina de ambos sitios.
+6. Si el token expira o es inválido, el backend responde 401 y la app fuerza logout.
+
+**Nota:** No se usa Secure Storage en móvil para evitar problemas de compatibilidad y build. Si en el futuro se quiere máxima seguridad en móvil, revisar la integración de plugins Cordova/Capacitor y asegurarse de que `cordova.js` esté presente y el plugin funcione en todos los dispositivos.
+
+## 4. Rutas protegidas y control de acceso
+
+- El contexto `AuthContext` expone `isAuthenticated`, `token`, `setToken` y `logout`.
+- Las rutas privadas usan `PrivateRoute` y solo son accesibles si hay token válido.
+- El backend valida el token en cada petición y aplica control de roles.
+
+## 5. Desarrollo, build y despliegue
+
+### Web y móvil (Ionic/React)
+
+1. Instala dependencias:
+   ```bash
+   cd mobile/alesport-app
+   npm install
+   ```
+2. Para desarrollo web:
+   ```bash
+   npm run dev
+   ```
+3. Para build de producción:
+   ```bash
+   npm run build
+   ```
+4. Para móvil (Android/iOS):
+   - Sincroniza con Capacitor:
+     ```bash
+     npx cap sync
+     ```
+   - Abre en Android Studio:
+     ```bash
+     npx cap open android
+     ```
+   - Compila y prueba en dispositivo/emulador.
+
+**Importante:**
+- Si necesitas almacenamiento seguro en móvil, revisa la integración de Secure Storage y asegúrate de que `<script src="cordova.js"></script>` esté en el index.html fuente (no solo en el build).
+- Si tienes problemas de sesión en móvil, primero prueba solo con localStorage (como está ahora) para máxima estabilidad.
+
+## 6. Troubleshooting y restauración
+
+- Si la sesión no persiste en móvil, revisa que localStorage esté disponible y que no haya restricciones del sistema.
+- Si el login o registro falla, revisa los logs del backend y los mensajes de error en frontend.
+- Si necesitas restaurar usuarios de prueba, ejecuta `seed.py` en el backend.
+- Si el build móvil no reconoce Cordova/Capacitor, revisa la presencia de `cordova.js` y la instalación de plugins.
+
+---
+
 # Alesport
 
 

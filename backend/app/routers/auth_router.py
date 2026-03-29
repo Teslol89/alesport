@@ -123,20 +123,25 @@ async def register_user(payload: UserCreate, db: Session = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# Endpoint de verificación de email
-@router.get("/verify-email")
-async def verify_email(token: str, db: Session = Depends(get_db)):
-    """Verifica el email del usuario usando el token enviado por correo."""
-    user = db.query(User).filter(User.verification_token == token).first()
-    if user:
-        if user.is_verified:
-            return {"message": "¡Email verificado correctamente! Ya puedes iniciar sesión."}
+
+# Nuevo endpoint para verificación por código
+from pydantic import BaseModel, EmailStr
+
+class VerifyEmailCodeRequest(BaseModel):
+    email: EmailStr
+    code: str
+
+@router.post("/verify-email-code")
+async def verify_email_code(payload: VerifyEmailCodeRequest, db: Session = Depends(get_db)):
+    """Verifica el email del usuario usando el código recibido por correo."""
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if user.is_verified:
+        return {"message": "¡Email ya verificado!"}
+    if user.verification_code and user.verification_code.strip().upper() == payload.code.strip().upper():
         user.is_verified = True
-        user.verification_token = None
+        user.verification_code = None
         db.commit()
         return {"message": "¡Email verificado correctamente! Ya puedes iniciar sesión."}
-    # Si no se encuentra el token, buscar por si hay un usuario ya verificado con ese token previamente usado
-    user_verified = db.query(User).filter(User.is_verified == True, User.verification_token == None).first()
-    if user_verified:
-        return {"message": "¡Email verificado correctamente! Ya puedes iniciar sesión."}
-    raise HTTPException(status_code=400, detail="Token de verificación inválido o expirado")
+    raise HTTPException(status_code=400, detail="Código de verificación inválido o expirado")

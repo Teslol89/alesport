@@ -18,7 +18,6 @@ import { ellipse, square, triangle } from 'ionicons/icons';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
-import RegisterForm from './components/RegisterForm';
 import Tab1 from './pages/Tab1';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
@@ -26,6 +25,7 @@ import SplashPage from './pages/SplashPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import { getPendingUser, deletePendingUser } from './api/auth';
+import CustomToast from './components/CustomToast';
 
 // import VerifyEmail from './pages/VerifyEmail';
 import VerifyCode from './pages/VerifyCode';
@@ -73,6 +73,7 @@ function RootRedirect() {
 const App: React.FC = () => {
 
   const [splashDone, setSplashDone] = useState(false);
+  const [showToast, setShowToast] = useState<{ show: boolean; message: string }>({ show: false, message: "" });
   const history = useHistory();
 
   // Al abrir la app, si hay un email pendiente de verificación y no hay sesión,
@@ -81,16 +82,18 @@ const App: React.FC = () => {
     const checkAndCleanPendingUser = async () => {
       const pendingEmail = localStorage.getItem("pendingVerificationEmail");
       const isAuthenticated = !!localStorage.getItem("token");
+      //
       if (pendingEmail && !isAuthenticated) {
         try {
           const user = await getPendingUser(pendingEmail);
           if (user) {
-            // El usuario sigue pendiente, lo eliminamos
             await deletePendingUser(pendingEmail);
             localStorage.removeItem("pendingVerificationEmail");
-            alert("Tu registro anterior no fue verificado y ha sido eliminado. Por favor, regístrate de nuevo.");
+            setShowToast({
+              show: true,
+              message: "Tu registro anterior no fue verificado y ha sido eliminado. Por favor, regístrate de nuevo."
+            });
           } else {
-            // Ya no está pendiente, limpiar localStorage
             localStorage.removeItem("pendingVerificationEmail");
           }
         } catch (err) {
@@ -144,6 +147,12 @@ const App: React.FC = () => {
           <MainRoutes />
         </AuthProvider>
       </IonReactRouter>
+      <CustomToast
+        show={showToast.show}
+        message={showToast.message}
+        onClose={() => setShowToast({ show: false, message: "" })}
+        type="danger"
+      />
     </IonApp>
   );
 

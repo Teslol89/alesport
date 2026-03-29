@@ -10,20 +10,32 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [token, setTokenState] = useState<string | null>(null);
   const history = useHistory();
 
   useEffect(() => {
+    setTokenState(localStorage.getItem('token'));
+  }, []);
+
+  useEffect(() => {
     if (token) {
-      localStorage.setItem("token", token);
+      localStorage.setItem('token', token);
     } else {
-      localStorage.removeItem("token");
+      localStorage.removeItem('token');
     }
   }, [token]);
 
+  const setToken = (t: string | null) => {
+    setTokenState(t);
+  };
+
   const logout = () => {
-    setToken(null);
+    setTokenState(null);
     history.replace("/login");
   };
 

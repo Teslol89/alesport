@@ -32,8 +32,8 @@ class User(Base):
     membership_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     # Indica si el email ha sido verificado
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    # Token de verificación de email (puede ser nulo tras verificar)
-    verification_token: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    # Código de verificación de email (puede ser nulo tras verificar)
+    verification_code: Mapped[Optional[str]] = mapped_column(String(12), nullable=True)
     # Última vez que el usuario inició sesión; nulo si nunca ha entrado
     last_login: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     # Fecha de creación, generada automáticamente por la base de datos

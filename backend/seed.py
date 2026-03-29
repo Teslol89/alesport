@@ -30,8 +30,8 @@ with engine.begin() as conn:
     for u in USERS:
         res = conn.execute(
             text("""
-            INSERT INTO users (name, email, password_hash, role, is_active, membership_active)
-            VALUES (:name, :email, :password_hash, :role, true, true)
+            INSERT INTO users (name, email, password_hash, role, is_active, membership_active, is_verified, verification_code)
+            VALUES (:name, :email, :password_hash, :role, true, true, true, NULL)
             RETURNING id
             """),
             dict(name=u["name"], email=u["email"], password_hash=hash_pwd(u["password"]), role=u["role"])

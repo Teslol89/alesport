@@ -1,79 +1,165 @@
+/* ---------------------------------------------------- */
+/* Estilos para el formulario de verificación de código */
+/* ---------------------------------------------------- */
+@media (max-width: 400px) {
+    .verify-code-container {
+        width: 90%;
+        padding: 24px 16px;
+    }
 
-.verify-code-center-wrapper {
-  min-height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    .verify-code-title {
+        font-size: 1.3rem;
+    }
+
+    .verify-code-description {
+        font-size: 0.9rem;
+    }
+
+    .verify-code-input {
+        font-size: 1rem;
+        padding: 10px 12px;
+    }
+
+    .verify-code-btn {
+        font-size: 1rem;
+        padding: 10px 0;
+    }
 }
 
+/* ---------------------------------- */
+/* Animación de sacudida para errores */
+/* ---------------------------------- */
+@keyframes shake {
+
+    10%,
+    90% {
+        transform: translateX(-2px);
+    }
+
+    20%,
+    80% {
+        transform: translateX(4px);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translateX(-8px);
+    }
+
+    40%,
+    60% {
+        transform: translateX(8px);
+    }
+}
+
+/* --------------------------------- */
+/* Contenedor principal del registro */
+/* --------------------------------- */
 .verify-code-container {
-  max-width: 400px;
-  margin: 40px auto;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 32px 24px 24px 24px;
-  text-align: center;
+    width: 90%;
+    height: 50vh;
+    margin: auto;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 1.04);
+    padding: 24px 16px 18px 16px;
+    text-align: center;
 }
 
 .verify-code-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 18px;
-  color: #222;
+    color: #016875;
+    /* Azul "TEAL" */
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
 }
 
 .verify-code-description {
-  color: #444;
-  margin-bottom: 24px;
-  font-size: 1rem;
+    color: #000000;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
 }
 
-.verify-code-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
+/* ------------------------------------------- */
+/* Input de texto (email y código) */
+/* ------------------------------------------- */
+/* Estilos para el input de texto */
 .verify-code-input {
-  font-size: 1.1rem;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  padding: 12px 14px;
-  outline: none;
-  transition: border 0.2s;
+    width: 100%;
+    border: 2px solid transparent;
+    background: #f5f7fa;
+    border-radius: 12px;
+    padding: 12px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    color: #000000;
+    outline: none;
+    margin-top: 16px;
+    box-sizing: border-box;
 }
 
 .verify-code-input:focus {
-  border: 1.5px solid #3880ff;
+    border: 2px solid #007d94;
+    background: #f0fbff;
+    outline: none;
 }
 
+/* ----------------------------*/
+/* Botón principal de verificación */
+/* ----------------------------*/
 .verify-code-btn {
-  margin-top: 18px;
-  font-size: 1.1rem;
-  border-radius: 8px;
-  background: #3880ff;
-  color: #fff;
-  font-weight: 500;
-  padding: 12px 0;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s;
+    width: 100%;
+    background: #006875;
+    /* Azul "TEAL" */
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 36px;
+    margin-bottom: 14px;
+    transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }
 
-.verify-code-btn:disabled {
-  background: #b3c6ff;
-  cursor: not-allowed;
+.verify-code-btn:active {
+    background: #77b154;
+    /* Verde "FOREST GREEN" */
+    transform: scale(0.97);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) inset;
 }
 
 .verify-code-toast-success {
-  --background: #2dd36f;
-  --color: #fff;
-  --ion-toast-position: top;
+    --max-width: 300px;
+    --background: #77b154;
+    /* Verde "FOREST GREEN" */
+    --color: #ffffff;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    text-align: center;
+    border-radius: 12px;
+    border: 1.5px solid #a5d6a7;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.15);
 }
 
 .verify-code-toast-error {
-  --background: #eb445a;
-  --color: #fff;
-  --ion-toast-position: top;
+    --max-width: 300px;
+    --background: #901726;
+    /* Rojo "CRIMSON" */
+    --color: #ffffff;
+    animation: shake 0.4s;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    text-align: center;
+    border-radius: 12px;
+    border: 1.5px solid #ffe58f;
+    font-weight: 600;
+    letter-spacing: 0.01em;
 }

@@ -53,8 +53,6 @@
     animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
 }
 
-
-
 /* --------------------------------- */
 /* Contenedor principal del registro */
 /* --------------------------------- */
@@ -109,7 +107,6 @@
     text-decoration: underline;
     cursor: pointer;
 }
-
 
 /* ------------------------------------------- */
 /* Input de texto (nombre, correo, contraseña) */

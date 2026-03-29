@@ -125,6 +125,8 @@ const RegisterForm: React.FC = () => {
 
     try {
       await registerUser(name, email, password);
+      // Guardar el email en localStorage para el flujo de verificación
+      localStorage.setItem("pendingVerificationEmail", email);
       setToastMsg("Registro exitoso. Revisa tu correo para activar tu cuenta.");
       setToastColor("toast-success-register");
       setShowToast(true);
@@ -270,18 +272,20 @@ const RegisterForm: React.FC = () => {
 
       <form onSubmit={handleSubmit}>
         <input
+          className="register-input"
           type="text"
           placeholder="Nombre"
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={handleNameBlur}
           ref={nameInputRef}
-          className="register-input"
+
         />
         {nameError && (
           <div className={`input-error-msg${shakeName ? ' ' + shakeClass : ''}`}>{nameError.replace(/^Nombre: /, "")}</div>
         )}
         <input
+          className="register-input"
           type="email"
           placeholder="Correo electrónico"
           value={email}
@@ -289,7 +293,6 @@ const RegisterForm: React.FC = () => {
           onFocus={handleEmailFocus}
           onBlur={handleEmailBlur}
           ref={emailInputRef}
-          className="register-input"
           disabled={!!validateName(name)}
         />
         {emailError && (
@@ -297,6 +300,7 @@ const RegisterForm: React.FC = () => {
         )}
         <div className="password-wrapper">
           <input
+            className="register-input"
             type={showPassword ? "text" : "password"}
             placeholder="Contraseña"
             value={password}
@@ -304,7 +308,6 @@ const RegisterForm: React.FC = () => {
             onFocus={handlePasswordFocus}
             onBlur={handlePasswordBlur}
             ref={passwordInputRef2}
-            className="register-input"
             autoComplete="new-password"
             disabled={!!validateName(name) || !!validateEmail(email)}
           />

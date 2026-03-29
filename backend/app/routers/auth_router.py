@@ -17,11 +17,28 @@ from app.auth.security import create_access_token, get_current_user, verify_pass
 from app.database.db import get_db
 from app.models.user import User
 from app.schemas.auth import LoginRequest, LoginResponse
+
 from app.schemas.user import UserCreate, UserResponse
+
+
+from pydantic import EmailStr
 from app.services.user_service import create_user
 
 # ─ RUTAS DE AUTENTICACIÓN ─────────────────────────────────────────────────────
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# --- Endpoint para eliminar usuario pendiente (no verificado) ---
+@router.delete("/delete-pending-user")
+def delete_pending_user(email: EmailStr, db: Session = Depends(get_db)):
+    """Elimina un usuario no verificado por email. Si el usuario está verificado, no lo elimina."""
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if user.is_verified:
+        raise HTTPException(status_code=400, detail="El usuario ya está verificado y no puede eliminarse por este endpoint")
+    db.delete(user)
+    db.commit()
+    return {"message": "Usuario pendiente eliminado correctamente"}
 
 
 # ── Login con email y contraseña ─────────────────────────────────────────────

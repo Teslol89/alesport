@@ -7,10 +7,12 @@ import { useHistory } from "react-router-dom";
 import { IonToast } from "@ionic/react";
 
 
+
 import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
 import appleLogo from '../icons/appleLogo.svg';
 import googleLogo from '../icons/googleLogo.svg';
+import alesportLogoHori from '../assets/img/alesportLogoHori.png';
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {
@@ -68,8 +70,7 @@ const LoginForm: React.FC = () => {
 
     return (
         <div className="login-container">
-            <h2 className="login-title">Iniciar sesión</h2>
-            <p className="login-description">Introduce tu correo electrónico y contraseña para acceder a tu cuenta.</p>
+            <img src={alesportLogoHori} alt="Logo" className="login-logo" />            
             <div className="login-socials">
                 <button className="social-btn">
                     <img src={appleLogo} alt="Apple" className="social-icon" /> Apple

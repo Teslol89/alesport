@@ -50,14 +50,8 @@
 /* ---------------- */
 /* Título principal */
 /* ---------------- */
-.login-title {
-    color: #016875;
-    /* Azul "TEAL" */
-    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-
+.login-logo {
+    margin-bottom: 48px;
 }
 
 /* ----------------------------- */
@@ -155,7 +149,7 @@
 
 /* Input enfocado */
 .login-input:focus {
-    border: 2px solid #007d94;
+    border: 2px solid #0089a6;
     background: #f0fbff;
     outline: none;
 }
@@ -211,8 +205,7 @@
 /* Botón de login principal */
 .login-btn {
     width: 100%;
-    background: #006875;
-    /* Azul "TEAL" */
+    background: #0089a6;
     color: #fff;
     border: none;
     border-radius: 12px;

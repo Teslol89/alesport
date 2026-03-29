@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { deletePendingUser } from "../api/auth";
-import { IonInput, IonButton, IonToast, IonItem, IonLabel } from "@ionic/react";
+// import { deletePendingUser } from "../api/auth";
+import { IonToast } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import "./VerifyCodeForm.css";
 
@@ -14,12 +14,18 @@ const VerifyCodeForm: React.FC = () => {
             history.replace("/login");
             return;
         }
-        // Llamar al backend para eliminar usuario pendiente (si existe y no está verificado)
-        deletePendingUser(pendingEmail)
-            .finally(() => {
-                // Limpiar localStorage y redirigir a login siempre, para forzar registro desde cero
-                localStorage.removeItem("pendingVerificationEmail");
-                history.replace("/login");
+        // Comprobar en el backend si el usuario pendiente existe
+        const apiUrl = import.meta.env.VITE_API_BASE_URL || "/api";
+        fetch(`${apiUrl}/auth/check-user-exists?email=${encodeURIComponent(pendingEmail)}`)
+            .then(res => {
+                if (res.status === 404) {
+                    localStorage.removeItem("pendingVerificationEmail");
+                    history.replace("/login");
+                }
+                // Si 200, todo ok, no hacer nada
+            })
+            .catch(() => {
+                // Si hay error de red, opcional: mostrar toast o redirigir a login
             });
     }, [history]);
     const [code, setCode] = useState("");

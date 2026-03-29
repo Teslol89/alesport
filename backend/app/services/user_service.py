@@ -16,24 +16,21 @@ import aiosmtplib
 from email.message import EmailMessage
 from app.config import settings
 
-# Envío real de email de verificación
-import asyncio
 
 async def send_verification_email(email: str, token: str):
     subject = "Verifica tu cuenta en Alesport"
-    verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
-    deep_link = f"alesport://verify-email?token={token}"
-    # Email HTML con botón y fallback de texto
+    verify_url = f"https://www.verdeguerlabs.es/verify-email?token={token}"
+    # Email HTML con botón web y fallback de texto
     html_body = f"""
 <html>
 <body>
 <p>Hola,</p>
-<p>Gracias por registrarte en Alesport. Para activar tu cuenta, pulsa el siguiente botón desde tu móvil:</p>
-<p style='text-align:center;margin:32px 0;'>
-  <a href="{deep_link}" style="background:#2dd36f;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:18px;display:inline-block;">Abrir en la app</a>
-</p>
-<p>Si el botón no funciona, copia y pega este enlace en tu navegador móvil:</p>
-<p style='word-break:break-all;font-family:monospace;font-size:15px'>{deep_link}</p>
+<p>Gracias por registrarte en Alesport. Para activar tu cuenta, pulsa el siguiente botón:</p>
+<div style='text-align:center;margin:32px 0;'>
+  <a href="{verify_url}" style="background:#2dd36f;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:18px;display:inline-block;">Verificar email</a>
+</div>
+<p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+<p style='word-break:break-all;font-family:monospace;font-size:15px'>{verify_url}</p>
 <p>Si no has solicitado esta cuenta, ignora este correo.</p>
 <p>Un saludo,<br>El equipo de Alesport</p>
 </body>
@@ -43,9 +40,9 @@ async def send_verification_email(email: str, token: str):
     text_body = f"""
 Hola,
 
-Gracias por registrarte en Alesport. Para activar tu cuenta, abre este enlace desde tu móvil:
+Gracias por registrarte en Alesport. Para activar tu cuenta, abre este enlace en tu navegador:
 
-{deep_link}
+{verify_url}
 
 Si no has solicitado esta cuenta, ignora este correo.
 
@@ -60,8 +57,10 @@ El equipo de Alesport
     msg.add_alternative(html_body, subtype="html")
 
     print(f"[LOG] Intentando enviar email de verificación a: {email}")
-    print(f"[LOG] SMTP_HOST: {settings.SMTP_HOST}, SMTP_PORT: {settings.SMTP_PORT}, SMTP_USER: {settings.SMTP_USER}, SMTP_FROM: {settings.SMTP_FROM}")
-    print(f"[LOG] Enlace de verificación: {deep_link}")
+    print(
+        f"[LOG] SMTP_HOST: {settings.SMTP_HOST}, SMTP_PORT: {settings.SMTP_PORT}, SMTP_USER: {settings.SMTP_USER}, SMTP_FROM: {settings.SMTP_FROM}"
+    )
+    print(f"[LOG] Enlace de verificación: {verify_url}")
     try:
         result = await aiosmtplib.send(
             msg,

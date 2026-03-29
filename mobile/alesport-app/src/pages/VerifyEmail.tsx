@@ -75,7 +75,17 @@ const VerifyEmail: React.FC = () => {
                 {status === "success" ? "¡Verificado con éxito!" : "Error"}
               </h2>
               <p style={{ color: '#222', marginBottom: 24 }}>{message}</p>
-              <IonButton expand="block" onClick={() => history.push("/login")}>Ir a iniciar sesión</IonButton>
+              <IonButton
+                expand="block"
+                onClick={() => {
+                  window.close();
+                  setTimeout(() => {
+                    history.push("/login");
+                  }, 500);
+                }}
+              >
+                Ir a iniciar sesión
+              </IonButton>
             </>
           )}
         </div>

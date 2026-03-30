@@ -13,7 +13,6 @@ import ojoCerrado from "../icons/ojoCerrado.svg";
 import appleLogo from '../icons/appleLogo.svg';
 import googleLogo from '../icons/googleLogo.svg';
 import alesportLogoHori from '../assets/img/alesportLogoHori.png';
-import "./CustomToast.css";
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {

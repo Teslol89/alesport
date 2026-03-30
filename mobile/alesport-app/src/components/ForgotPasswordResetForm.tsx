@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import { useHistory } from "react-router-dom";
 import CustomToast from "./CustomStyles";
 import "./ForgotPasswordResetForm.css";
+import atrasIcon from "../icons/atras.svg";
 
 const ForgotPasswordResetForm: React.FC = () => {
+  const history = useHistory();
   const [email] = useState(() => localStorage.getItem("pendingPasswordResetEmail") || "");
   const [code] = useState(() => localStorage.getItem("pendingPasswordResetCode") || "");
   const [password, setPassword] = useState("");
@@ -42,7 +45,15 @@ const ForgotPasswordResetForm: React.FC = () => {
   };
 
   return (
-    <div className="forgot-password-container">
+    <div className="forgot-password-container" style={{ position: 'relative' }}>
+      <button
+        className="fp-back-btn"
+        type="button"
+        aria-label="Volver"
+        onClick={() => history.goBack()}
+      >
+        <img src={atrasIcon} alt="Atrás" className="fp-back-icon" />
+      </button>
       <h2 className="forgot-password-title">Nueva contraseña</h2>
       <p className="forgot-password-description">Introduce tu nueva contraseña para {email && <b>{email}</b>}.</p>
       <form onSubmit={handleSubmit}>

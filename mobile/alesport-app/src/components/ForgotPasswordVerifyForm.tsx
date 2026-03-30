@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import { useHistory } from "react-router-dom";
 import CustomToast from "./CustomStyles";
 import "./ForgotPasswordVerifyForm.css";
+import atrasIcon from "../icons/atras.svg";
 
 const ForgotPasswordVerifyForm: React.FC = () => {
+  const history = useHistory();
   const [email] = useState(() => localStorage.getItem("pendingPasswordResetEmail") || "");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,7 +38,15 @@ const ForgotPasswordVerifyForm: React.FC = () => {
   };
 
   return (
-    <div className="forgot-password-container">
+    <div className="forgot-password-container" style={{ position: 'relative' }}>
+      <button
+        className="fp-back-btn"
+        type="button"
+        aria-label="Volver"
+        onClick={() => history.goBack()}
+      >
+        <img src={atrasIcon} alt="Atrás" className="fp-back-icon" />
+      </button>
       <h2 className="forgot-password-title">Verifica tu código</h2>
       <p className="forgot-password-description">
         Hemos enviado un código a <b>{email}</b>.<br />Introduce el código recibido para continuar.

@@ -36,11 +36,8 @@ const ForgotPasswordRequestForm: React.FC = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email })
             });
-            setToastMsg("Si el email existe, te hemos enviado un código para restablecer tu contraseña.");
-            setToastType("success");
-            setShowToast(true);
-            setEmail("");
-            setEmailError("");
+            localStorage.setItem("pendingPasswordResetEmail", email);
+            history.push("/forgot-password/verify");
         } catch {
             setToastMsg("Error de red o servidor");
             setToastType("danger");

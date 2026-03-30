@@ -1,3 +1,13 @@
+def force_verify_user(email):
+    """Fuerza la verificación del usuario (solo para pruebas)."""
+    # Buscar el usuario por email (requiere endpoint de admin o acceso especial)
+    # Aquí se asume un endpoint de test o admin PATCH /users/verify-email
+    r = requests.patch(f"{BASE_URL}/users/verify-email", json={"email": email})
+    if r.status_code == 200:
+        print(f"Usuario {email} verificado forzadamente para test.")
+    else:
+        print(f"No se pudo forzar la verificación de {email}: {r.status_code} {r.text}")
+
 import requests
 from datetime import datetime
 
@@ -19,7 +29,12 @@ def run_tests(token, role):
     print(f"\n===== TESTS for {role.upper()} =====")
     headers = {"Authorization": f"Bearer {token}"}
 
-    # 1. /auth/mee
+    # 0. Forzar verificación de usuario de test (solo para pruebas)
+    test_user = next((u for u in USERS if u["role"] == role), None)
+    if test_user:
+        force_verify_user(test_user["email"])
+
+    # 1. /auth/me
     r1 = requests.get(f"{BASE_URL}/auth/me", headers=headers)
     assert r1.status_code == 200, f"/auth/me failed for {role}"
     user_id = r1.json().get("id")

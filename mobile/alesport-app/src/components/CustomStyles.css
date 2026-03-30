@@ -149,6 +149,7 @@
 /* --------------------------------------- */
 .fp-back-btn {
     position: absolute;
+    
     background: none;
     border: none;
     cursor: pointer;

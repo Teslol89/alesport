@@ -35,6 +35,9 @@ const ForgotPasswordVerifyForm: React.FC = () => {
         setToast({ show: true, message: "Código verificado. Ahora puedes cambiar tu contraseña.", type: "success" });
         localStorage.setItem("pendingPasswordResetCode", code);
         // Aquí deberías redirigir a la página de nueva contraseña
+        setTimeout(() => {
+          history.push("/forgot-password-reset");
+        }, 1800);
       } else {
         setToast({ show: true, message: data.detail || "Código incorrecto", type: "danger" });
       }

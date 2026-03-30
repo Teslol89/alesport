@@ -312,19 +312,20 @@ const RegisterForm: React.FC = () => {
             autoComplete="new-password"
             disabled={!!validateName(name) || !!validateEmail(email)}
           />
-          <span
+          <button
+            type="button"
             className="toggle-password-register"
             onClick={() => setShowPassword((v) => !v)}
-            tabIndex={0}
-            role="button"
             aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            tabIndex={0}
+            style={{ background: 'transparent', border: 'none', padding: 0 }}
           >
             <img
               src={showPassword ? ojoCerrado : ojoAbierto}
               alt={showPassword ? "Ojo cerrado" : "Ojo abierto"}
               style={{ width: 24, height: 24 }}
             />
-          </span>
+          </button>
         </div>
         {passwordError && (
           <div className={`input-error-msg${shakePassword ? ' ' + shakeClass : ''}`}>{(passwordError || "").replace(/^Contraseña: /, "")}</div>

@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import ojoAbierto from "../icons/ojoAbierto.svg";
+import ojoCerrado from "../icons/ojoCerrado.svg";
 import { useHistory } from "react-router-dom";
 import CustomToast from "./CustomStyles";
 import "./ForgotPasswordResetForm.css";
@@ -10,6 +12,8 @@ const ForgotPasswordResetForm: React.FC = () => {
   const [code] = useState(() => localStorage.getItem("pendingPasswordResetCode") || "");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "danger" }>({ show: false, message: "", type: "success" });
 
@@ -45,7 +49,7 @@ const ForgotPasswordResetForm: React.FC = () => {
   };
 
   return (
-    <div className="forgot-password-container" style={{ position: 'relative' }}>
+    <div className="fpreset-container" style={{ position: 'relative' }}>
       <button
         className="fp-back-btn"
         type="button"
@@ -54,29 +58,56 @@ const ForgotPasswordResetForm: React.FC = () => {
       >
         <img src={atrasIcon} alt="Atrás" className="fp-back-icon" />
       </button>
-      <h2 className="forgot-password-title">Nueva contraseña</h2>
-      <p className="forgot-password-description">Introduce tu nueva contraseña para {email && <b>{email}</b>}.</p>
-      <form onSubmit={handleSubmit}>
-        <input
-          className="forgot-password-input"
-          type="password"
-          placeholder="Nueva contraseña"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        />
-        <input
-          className="forgot-password-input"
-          type="password"
-          placeholder="Repite la contraseña"
-          value={confirm}
-          onChange={e => setConfirm(e.target.value)}
-          required
-        />
-        <button className="forgot-password-btn" type="submit" disabled={loading}>
+      <h2 className="fpreset-title">Nueva <br /> contraseña</h2>
+      <p className="fpreset-description">Si recuerdas tu contraseña actual, retrocede sin aplicar cambios.</p>
+      <form onSubmit={handleSubmit} style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
+          <input
+            className="fpreset-input"
+            type={showPassword ? "text" : "password"}
+            placeholder="Nueva contraseña"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            className="toggle-password-reset"
+            tabIndex={-1}
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            onClick={() => setShowPassword(v => !v)}
+          >
+            <img src={showPassword ? ojoAbierto : ojoCerrado} alt={showPassword ? "Ocultar" : "Mostrar"} />
+          </button>
+        </div>
+        <div style={{ position: 'relative' }}>
+          <input
+            className="fpreset-input"
+            type={showConfirm ? "text" : "password"}
+            placeholder="Repite la contraseña"
+            value={confirm}
+            onChange={e => setConfirm(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            className="toggle-password-reset"
+            tabIndex={-1}
+            aria-label={showConfirm ? "Ocultar contraseña" : "Mostrar contraseña"}
+            onClick={() => setShowConfirm(v => !v)}
+          >
+            <img src={showConfirm ? ojoAbierto : ojoCerrado} alt={showConfirm ? "Ocultar" : "Mostrar"} />
+          </button>
+        </div>
+        <button className="fpreset-btn" type="submit" disabled={loading}>
           {loading ? "Cambiando..." : "Cambiar contraseña"}
         </button>
       </form>
+      <div className="fp-steps-indicator">
+        <span className="fp-step">―</span>
+        <span className="fp-step">―</span>
+        <span className="fp-step fp-step-active">―</span>
+      </div>
       <CustomToast
         show={toast.show}
         message={toast.message}

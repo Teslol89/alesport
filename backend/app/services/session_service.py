@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.models.session import SessionModel
 
@@ -57,12 +58,12 @@ def get_sessions(db: Session) -> list[SessionModel]:
 
 
 def get_sessions_by_date_range(db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None) -> list[SessionModel]:
-    """Devuelve las sesiones en un rango de fechas (por start_time)."""
+    """Devuelve las sesiones en un rango de fechas (por start_time, solo la parte de fecha)."""
     query = db.query(SessionModel)
     if start_date:
-        query = query.filter(SessionModel.start_time >= start_date)
+        query = query.filter(func.date(SessionModel.start_time) >= start_date)
     if end_date:
-        query = query.filter(SessionModel.start_time <= end_date)
+        query = query.filter(func.date(SessionModel.start_time) <= end_date)
     return query.all()
 
 

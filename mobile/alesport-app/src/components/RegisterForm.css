@@ -231,20 +231,3 @@
     transform: scale(0.97);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) inset;
 }
-
-/* ------------------------------- */
-/* Mensaje de errores de Registros */
-/* ------------------------------- */
-
-
-/* --------------------------------------- */
-/* Animación shake para inputs de registro */
-/* --------------------------------------- */
-.input-error-msg {
-    color: #de0a0d;
-    /* Rojo "BERMELLÓN" */
-    text-align: left;
-    font-size: 0.95em;
-    margin-bottom: 4px;
-    margin-left: 2px;
-}

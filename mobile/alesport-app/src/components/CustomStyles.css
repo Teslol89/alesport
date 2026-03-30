@@ -4,24 +4,17 @@
   top: 48px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  z-index: 99999 !important;
   min-width: 300px;
-  max-width: 350
-  vw;
+  max-width: 350px;
   padding: 16px 32px 16px 20px;
   border-radius: 16px;
   color: #fff;
   font-size: 1rem;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
-  display: flex;
+  display: block !important;
   align-items: center;
   justify-content: center;
-  /* Centrar el texto del mensaje dentro del toast */
-  .custom-toast > span {
-    width: 100%;
-    text-align: center;
-    display: block;
-  }
   background-clip: padding-box;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   text-align: center;
@@ -74,6 +67,15 @@
 
 .custom-toast__close:hover {
   opacity: 1;
+}
+
+.input-error-msg {
+    color: #de0a0d;
+    /* Rojo "BERMELLÓN" */
+    text-align: left;
+    font-size: 0.95em;
+    margin-bottom: 4px;
+    margin-left: 2px;
 }
 
 @keyframes fadeInShake {

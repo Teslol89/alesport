@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
 import { IonModal, IonButton } from "@ionic/react";
-import CustomToast from "./CustomToast";
+import CustomToast from "./CustomStyles";
 import { registerUser } from "../api/auth";
 import { LegalText } from "../utils/legalText";
 import "./RegisterForm.css";

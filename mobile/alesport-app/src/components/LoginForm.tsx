@@ -4,7 +4,7 @@ import { loginUser } from "../api/auth";
 import { loginWithGoogle } from "../api/auth";
 import { useAuth } from "./AuthContext";
 import { useHistory } from "react-router-dom";
-import CustomToast from "./CustomToast";
+import CustomToast from "./CustomStyles";
 
 
 
@@ -124,7 +124,13 @@ const LoginForm: React.FC = () => {
                     </span>
                 </div>
                 <div className="login-options">
-                    <span className="forgot-password">¿Recuperar contraseña?</span>
+                    <span
+                        className="forgot-password"
+                        style={{ cursor: 'pointer', color: '#3dc2ff', textDecoration: 'underline' }}
+                        onClick={() => history.push('/forgot-password-request')}
+                    >
+                        ¿Recuperar contraseña?
+                    </span>
                 </div>
                 <button type="submit" className="login-btn">Iniciar sesión</button>
             </form>

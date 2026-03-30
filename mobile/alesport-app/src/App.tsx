@@ -16,8 +16,13 @@ import { IonReactRouter } from '@ionic/react-router';
 import { ellipse, square, triangle } from 'ionicons/icons';
 
 
+
+
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPasswordRequest from './pages/ForgotPasswordRequest';
+import ForgotPasswordVerify from './pages/ForgotPasswordVerify';
+import ForgotPasswordReset from './pages/ForgotPasswordReset';
 import Tab1 from './pages/Tab1';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
@@ -25,9 +30,8 @@ import SplashPage from './pages/SplashPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import { getPendingUser, deletePendingUser } from './api/auth';
-import CustomToast from './components/CustomToast';
+import CustomToast from './components/CustomStyles';
 
-// import VerifyEmail from './pages/VerifyEmail';
 import VerifyCode from './pages/VerifyCode';
 
 /* Core CSS required for Ionic components to work properly */
@@ -152,6 +156,7 @@ const App: React.FC = () => {
         message={showToast.message}
         onClose={() => setShowToast({ show: false, message: "" })}
         type="danger"
+        duration={3000}
       />
     </IonApp>
   );
@@ -165,6 +170,9 @@ const App: React.FC = () => {
           <Route exact path="/login" component={Login} />
           <Route exact path="/register" component={Register} />
           <Route exact path="/verify-code" component={VerifyCode} />
+          <Route exact path="/forgot-password-request" component={ForgotPasswordRequest} />
+          <Route exact path="/forgot-password-verify" component={ForgotPasswordVerify} />
+          <Route exact path="/forgot-password-reset" component={ForgotPasswordReset} />
           <Route exact path="/" component={RootRedirect} />
         </IonRouterOutlet>
       );

@@ -17,16 +17,16 @@ from app.auth.security import create_access_token, get_current_user, verify_pass
 from app.database.db import get_db
 from app.models.user import User
 from app.schemas.auth import LoginRequest, LoginResponse
-
+from app.schemas.password_reset import PasswordResetRequest, PasswordResetVerifyRequest
 from app.schemas.user import UserCreate, UserResponse
-
-
-from pydantic import EmailStr
 from app.services.user_service import create_user
+from pydantic import EmailStr
+import random
+import string
+
 
 # ─ RUTAS DE AUTENTICACIÓN ─────────────────────────────────────────────────────
 router = APIRouter(prefix="/auth", tags=["auth"])
-
 
 
 # ── Login con email y contraseña ─────────────────────────────────────────────
@@ -118,6 +118,7 @@ def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
 
 # ── Registro de usuario ──────────────────────────────────────────────────────
 
+
 # Registro de usuario (async)
 @router.post("/register", response_model=UserResponse, status_code=201)
 async def register_user(payload: UserCreate, db: Session = Depends(get_db)):
@@ -132,21 +133,78 @@ async def register_user(payload: UserCreate, db: Session = Depends(get_db)):
 # Nuevo endpoint para verificación por código
 from pydantic import BaseModel, EmailStr
 
+
 class VerifyEmailCodeRequest(BaseModel):
     email: EmailStr
     code: str
 
+
 @router.post("/verify-email-code")
-async def verify_email_code(payload: VerifyEmailCodeRequest, db: Session = Depends(get_db)):
+async def verify_email_code(
+    payload: VerifyEmailCodeRequest, db: Session = Depends(get_db)
+):
     """Verifica el email del usuario usando el código recibido por correo."""
     user = db.query(User).filter(User.email == payload.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     if user.is_verified:
         return {"message": "¡Email ya verificado!"}
-    if user.verification_code and user.verification_code.strip().upper() == payload.code.strip().upper():
+    if (
+        user.verification_code
+        and user.verification_code.strip().upper() == payload.code.strip().upper()
+    ):
         user.is_verified = True
         user.verification_code = None
         db.commit()
         return {"message": "¡Email verificado correctamente! Ya puedes iniciar sesión."}
-    raise HTTPException(status_code=400, detail="Código de verificación inválido o expirado")
+    raise HTTPException(
+        status_code=400, detail="Código de verificación inválido o expirado"
+    )
+
+
+# ── Recuperación de contraseña ───────────────────────────────────────────────
+from app.services.user_service import send_password_reset_email
+
+
+@router.post("/request-password-reset")
+async def request_password_reset(
+    payload: PasswordResetRequest, db: Session = Depends(get_db)
+):
+    """Inicia el flujo de recuperación de contraseña: genera y envía un código al email."""
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        # No revelar si el email existe o no
+        return {
+            "message": "Si el email existe, se ha enviado un código de recuperación."
+        }
+    # Generar código de 6 dígitos
+    code = "".join(random.choices(string.digits, k=6))
+    user.verification_code = code
+    db.commit()
+    # Enviar email de recuperación
+    await send_password_reset_email(user.email, code)
+    return {"message": "Si el email existe, se ha enviado un código de recuperación."}
+
+
+# ── Verificar código de recuperación ─────────────────────────────────────────
+@router.post("/verify-password-reset-code")
+async def verify_password_reset_code(
+    payload: PasswordResetVerifyRequest, db: Session = Depends(get_db)
+):
+    """Verifica el código de recuperación enviado al email."""
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if (
+        not user.verification_code
+        or user.verification_code.strip() != payload.code.strip()
+    ):
+        raise HTTPException(status_code=400, detail="Código incorrecto o expirado")
+    return {"message": "Código verificado correctamente"}
+
+
+from app.schemas.user import UserCreate, UserResponse
+from pydantic import EmailStr
+from app.services.user_service import create_user
+import random
+import string

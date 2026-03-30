@@ -37,7 +37,7 @@
 /* ------------------------------ */
 .login-container {
     width: 90%;
-    height: 75vh;
+    height: 70vh;
     margin: auto;
     overflow-y: auto;
     background: #fff;
@@ -259,43 +259,4 @@
 .signup-link:active {
     color: #0d265c;
     transform: scale(0.90);
-}
-
-/* ------------------------- */
-/* Mensaje de error de login */
-/* ------------------------- */
-@keyframes shake {
-    0% {
-        transform: translateX(0);
-    }
-
-    20% {
-        transform: translateX(-8px);
-    }
-
-    40% {
-        transform: translateX(8px);
-    }
-
-    60% {
-        transform: translateX(-6px);
-    }
-
-    80% {
-        transform: translateX(6px);
-    }
-
-    100% {
-        transform: translateX(0);
-    }
-}
-
-.toast-error {
-    --max-width: 190px;
-    --background: #901726;
-    --color: #ffffff;
-    animation: shake 0.4s;
-    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
-    font-size: 1rem;
-    text-align: center;
 }

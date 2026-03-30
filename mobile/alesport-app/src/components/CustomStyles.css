@@ -1,4 +1,6 @@
+/* -----------------------------------------*/
 /* Toast base centrado en la parte superior */
+/* -----------------------------------------*/
 .custom-toast {
   position: fixed;
   top: 48px;
@@ -78,6 +80,59 @@
   margin-left: 2px;
 }
 
+/* -------------------------------------------------- */
+/* Indicador de pasos para recuperación de contraseña */
+/* -------------------------------------------------- */
+.fp-steps-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  margin-bottom: 0;
+}
+
+.fp-step {
+  display: inline-block;
+  width: 60px;
+  height: 4px;
+  margin-top: 120px;
+  border-radius: 12px;
+  background: #d1d5db;
+  /* gris claro por defecto */
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.fp-step-active {
+  background: #0089a6 !important;
+  /* color activo (teal) */
+  box-shadow: 0 2px 8px rgba(0, 137, 166, 0.12);
+}
+
+/* --------------------------------------- */
+/* Botón de ir atrás arriba a la izquierda */
+/* --------------------------------------- */
+.back-btn {
+    position: absolute;
+    
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.back-icon {
+    width: 32px;
+    height: 32px;
+    display: block;
+}
+
+/* --------------------------------------------------- */
+/* Animación de entrada para el toast (fadeIn + shake) */
+/* --------------------------------------------------- */
 @keyframes fadeInShake {
   0% {
     opacity: 0;
@@ -115,52 +170,3 @@
   }
 }
 
-/* -------------------------------------------------- */
-/* Indicador de pasos para recuperación de contraseña */
-/* -------------------------------------------------- */
-.fp-steps-indicator {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin-top: auto;
-  margin-bottom: 0;
-}
-
-.fp-step {
-  display: inline-block;
-  width: 60px;
-  height: 4px;
-  margin-top: 120px;
-  border-radius: 12px;
-  background: #d1d5db;
-  /* gris claro por defecto */
-  transition: background 0.2s, box-shadow 0.2s;
-}
-
-.fp-step-active {
-  background: #0089a6 !important;
-  /* color activo (teal) */
-  box-shadow: 0 2px 8px rgba(0, 137, 166, 0.12);
-}
-
-/* --------------------------------------- */
-/* Botón de ir atrás arriba a la izquierda */
-/* --------------------------------------- */
-.fp-back-btn {
-    position: absolute;
-    
-    background: none;
-    border: none;
-    cursor: pointer;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.fp-back-icon {
-    width: 32px;
-    height: 32px;
-    display: block;
-}

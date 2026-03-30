@@ -126,7 +126,6 @@ const LoginForm: React.FC = () => {
                 <div className="login-options">
                     <span
                         className="forgot-password"
-                        style={{ cursor: 'pointer', color: '#3dc2ff', textDecoration: 'underline' }}
                         onClick={() => history.push('/forgot-password-request')}
                     >
                         ¿Recuperar contraseña?

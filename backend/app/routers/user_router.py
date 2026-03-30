@@ -1,9 +1,41 @@
 
 # --- IMPORTS ORDENADOS Y COMPLETOS ---
+import os
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Body, Query
+from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from app.auth.security import get_current_user
+from app.database.db import get_db
+from app.models.user import User, User as UserModel
+from app.schemas.user import UserResponse
+from app.services.user_service import get_all_users
+
+# --- INICIALIZAR ROUTER ANTES DE USARLO ---
+router = APIRouter(prefix="/users", tags=["users"])
+# --- ENDPOINT SOLO PARA TEST/CI: Forzar verificación de usuario ---
+class ForceVerifyEmailRequest(BaseModel):
+    email: str
+
+@router.patch("/verify-email", tags=["users"])
+def force_verify_email(
+    payload: ForceVerifyEmailRequest = Body(...),
+    db: Session = Depends(get_db),
+):
+    """Endpoint SOLO para test/CI: fuerza la verificación de un usuario por email. Protegido por variable de entorno."""
+    if os.environ.get("ALESPORT_ENV") not in ("test", "ci", "dev", "development"):
+        raise HTTPException(status_code=403, detail="No permitido en este entorno")
+    user = db.query(UserModel).filter(UserModel.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    user.is_verified = True
+    db.commit()
+    db.refresh(user)
+    return {"message": f"Usuario {user.email} verificado forzadamente"}
+
+# --- IMPORTS ORDENADOS Y COMPLETOS ---
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-
 from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.user import User, User as UserModel

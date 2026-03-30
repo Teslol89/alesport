@@ -63,18 +63,10 @@ const VerifyCodeForm: React.FC = () => {
     return (
         <div className="verify-code-container">
             <h2 className="verify-code-title">Verifica tu correo</h2>
-            <p className="verify-code-description">Introduce código recibido en el email para activar tu cuenta.</p>
+            <p className="verify-code-description">
+                Hemos enviado un código a <b>{email}</b>.<br />Introdúcelo para activar tu cuenta.
+            </p>
             <form onSubmit={handleSubmit}>
-                <input
-                    className="verify-code-input"
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                    autoComplete="email"
-                    disabled={email === emailFromStorage && !!emailFromStorage}
-                />
                 <input
                     className="verify-code-input"
                     type="text"

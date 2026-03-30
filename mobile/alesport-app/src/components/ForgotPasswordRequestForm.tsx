@@ -31,13 +31,17 @@ const ForgotPasswordRequestForm: React.FC = () => {
         setShowToast(false);
         try {
             const apiUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-            await fetch(`${apiUrl}/auth/request-password-reset`, {
+            const res = await fetch(`${apiUrl}/auth/request-password-reset`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email })
             });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.detail || "No se pudo iniciar el proceso de recuperación");
+            }
             localStorage.setItem("pendingPasswordResetEmail", email);
-            history.push("/forgot-password/verify");
+            history.push("/forgot-password-verify");
         } catch {
             setToastMsg("Error de red o servidor");
             setToastType("danger");

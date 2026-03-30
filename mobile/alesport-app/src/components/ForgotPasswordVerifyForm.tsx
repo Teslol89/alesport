@@ -4,12 +4,20 @@ import CustomToast from "./CustomStyles";
 import "./ForgotPasswordVerifyForm.css";
 import atrasIcon from "../icons/atras.svg";
 
+
 const ForgotPasswordVerifyForm: React.FC = () => {
   const history = useHistory();
   const [email] = useState(() => localStorage.getItem("pendingPasswordResetEmail") || "");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "danger" }>({ show: false, message: "", type: "success" });
+
+  React.useEffect(() => {
+    if (!email) {
+      setToast({ show: true, message: "Debes iniciar el proceso de recuperación desde el principio.", type: "danger" });
+      setTimeout(() => history.replace("/"), 2000);
+    }
+  }, [email, history]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +35,9 @@ const ForgotPasswordVerifyForm: React.FC = () => {
         setToast({ show: true, message: "Código verificado. Ahora puedes cambiar tu contraseña.", type: "success" });
         localStorage.setItem("pendingPasswordResetCode", code);
         // Aquí deberías redirigir a la página de nueva contraseña
+        setTimeout(() => {
+          history.push("/forgot-password-reset");
+        }, 1800);
       } else {
         setToast({ show: true, message: data.detail || "Código incorrecto", type: "danger" });
       }
@@ -37,8 +48,23 @@ const ForgotPasswordVerifyForm: React.FC = () => {
     }
   };
 
+  if (!email) {
+    return (
+      <div className="fpverify-container" style={{ position: 'relative', textAlign: 'center', padding: '48px' }}>
+        <p>Redirigiendo al inicio del proceso de recuperación...</p>
+        <CustomToast
+          show={toast.show}
+          message={toast.message}
+          onClose={() => setToast({ ...toast, show: false })}
+          type={toast.type}
+          duration={3000}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="forgot-password-container" style={{ position: 'relative' }}>
+    <div className="fpverify-container" style={{ position: 'relative' }}>
       <button
         className="fp-back-btn"
         type="button"
@@ -47,13 +73,13 @@ const ForgotPasswordVerifyForm: React.FC = () => {
       >
         <img src={atrasIcon} alt="Atrás" className="fp-back-icon" />
       </button>
-      <h2 className="forgot-password-title">Verifica tu código</h2>
-      <p className="forgot-password-description">
-        Hemos enviado un código a <b>{email}</b>.<br />Introduce el código recibido para continuar.
+      <h2 className="fpverify-title">Verificar OTP</h2>
+      <p className="fpverify-description">
+        Hemos enviado un código a <b>{email}</b>.<br />Introdúcelo para continuar.
       </p>
       <form onSubmit={handleSubmit}>
         <input
-          className="forgot-password-input"
+          className="fpverify-input"
           type="text"
           placeholder="Código de verificación"
           value={code}
@@ -62,10 +88,15 @@ const ForgotPasswordVerifyForm: React.FC = () => {
           maxLength={6}
           inputMode="text"
         />
-        <button className="forgot-password-btn" type="submit" disabled={loading}>
+        <button className="fpverify-btn" type="submit" disabled={loading}>
           {loading ? "Verificando..." : "Verificar código"}
         </button>
       </form>
+      <div className="fp-steps-indicator">
+        <span className="fp-step">―</span>
+        <span className="fp-step fp-step-active">―</span>
+        <span className="fp-step">―</span>
+      </div>
       <CustomToast
         show={toast.show}
         message={toast.message}

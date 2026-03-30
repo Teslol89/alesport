@@ -17,10 +17,13 @@ from app.auth.security import create_access_token, get_current_user, verify_pass
 from app.database.db import get_db
 from app.models.user import User
 from app.schemas.auth import LoginRequest, LoginResponse
-from app.schemas.password_reset import PasswordResetRequest, PasswordResetVerifyRequest
+from app.schemas.password_reset import PasswordResetRequest, PasswordResetVerifyRequest, PasswordResetPerformRequest
 from app.schemas.user import UserCreate, UserResponse
-from app.services.user_service import create_user
+from app.services.user_service import create_user, send_password_reset_email
+from app.auth.security import hash_password
 from pydantic import EmailStr
+import random
+import string
 import random
 import string
 
@@ -203,8 +206,22 @@ async def verify_password_reset_code(
     return {"message": "Código verificado correctamente"}
 
 
-from app.schemas.user import UserCreate, UserResponse
-from pydantic import EmailStr
-from app.services.user_service import create_user
-import random
-import string
+@router.post("/reset-password")
+async def reset_password(
+    payload: PasswordResetPerformRequest, db: Session = Depends(get_db)
+):
+    """
+    Cambia la contraseña del usuario si el código de recuperación es válido.
+    """
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if (
+        not user.verification_code
+        or user.verification_code.strip() != payload.code.strip()
+    ):
+        raise HTTPException(status_code=400, detail="Código incorrecto o expirado")
+    user.password_hash = hash_password(payload.new_password)
+    user.verification_code = None  # Invalida el código tras el cambio
+    db.commit()
+    return {"message": "Contraseña cambiada correctamente"}

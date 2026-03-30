@@ -14,16 +14,13 @@ import {
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { ellipse, square, triangle } from 'ionicons/icons';
-
-
-
+import AdminCalendarPage from './pages/AdminCalendarPage';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPasswordRequest from './pages/ForgotPasswordRequest';
 import ForgotPasswordVerify from './pages/ForgotPasswordVerify';
 import ForgotPasswordReset from './pages/ForgotPasswordReset';
-import Tab1 from './pages/Tab1';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
 import SplashPage from './pages/SplashPage';
@@ -31,7 +28,6 @@ import { AuthProvider, useAuth } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import { getPendingUser, deletePendingUser } from './api/auth';
 import CustomToast from './components/CustomStyles';
-
 import VerifyCode from './pages/VerifyCode';
 
 /* Core CSS required for Ionic components to work properly */
@@ -71,7 +67,7 @@ setupIonicReact();
 // Componente dedicado para la redirección de la ruta raíz
 function RootRedirect() {
   const { isAuthenticated } = useAuth();
-  return <Redirect to={isAuthenticated ? "/tab1" : "/login"} />;
+  return <Redirect to={isAuthenticated ? "/admin-calendar" : "/login"} />;
 }
 
 const App: React.FC = () => {
@@ -180,15 +176,15 @@ const App: React.FC = () => {
     return (
       <IonTabs>
         <IonRouterOutlet>
-          <PrivateRoute exact path="/tab1" component={Tab1} />
+          <PrivateRoute exact path="/admin-calendar" component={AdminCalendarPage} />
           <PrivateRoute exact path="/tab2" component={Tab2} />
           <PrivateRoute path="/tab3" component={Tab3} />
           <Route exact path="/" component={RootRedirect} />
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
-          <IonTabButton tab="tab1" href="/tab1">
+          <IonTabButton tab="admin-calendar" href="/admin-calendar">
             <IonIcon aria-hidden="true" icon={triangle} />
-            <IonLabel>Tab 1</IonLabel>
+            <IonLabel>Agenda</IonLabel>
           </IonTabButton>
           <IonTabButton tab="tab2" href="/tab2">
             <IonIcon aria-hidden="true" icon={ellipse} />

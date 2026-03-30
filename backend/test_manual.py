@@ -214,18 +214,19 @@ def run_tests(token, role):
         r_solap = requests.post(f"{BASE_URL}/schedule/", headers=headers, json=solapado_payload)
         assert r_solap.status_code in (400, 409), "No debe permitir horario solapado"
 
-    # 17. Login con usuario inactivo
+    # 17. Login con usuario inactivo (solo afecta a usuarios de prueba)
     if role == "admin":
         r_users = requests.get(f"{BASE_URL}/users/", headers=headers)
-        client = next((u for u in r_users.json() if u["role"] == "client"), None)
+        # Solo desactivar usuarios cuyo email contenga 'demo' o 'test'
+        client = next((u for u in r_users.json() if u["role"] == "client" and ("demo" in u["email"] or "test" in u["email"])), None)
         if client:
             client_id = client["id"]
             r_deact = requests.patch(f"{BASE_URL}/users/{client_id}", headers=headers, json={"is_active": False})
-            assert r_deact.status_code == 200, "Admin debe poder desactivar usuario"
-            r_login = requests.post(f"{BASE_URL}/auth/login", json={"email": "cliente@demo.com", "password": "cliente123"})
-            assert r_login.status_code in (401, 403), "Usuario inactivo no debe poder loguear"
+            assert r_deact.status_code == 200, "Admin debe poder desactivar usuario de prueba"
+            r_login = requests.post(f"{BASE_URL}/auth/login", json={"email": client["email"], "password": "cliente123"})
+            assert r_login.status_code in (401, 403), "Usuario inactivo de prueba no debe poder loguear"
             r_react = requests.patch(f"{BASE_URL}/users/{client_id}", headers=headers, json={"is_active": True})
-            assert r_react.status_code == 200, "Admin debe poder reactivar usuario"
+            assert r_react.status_code == 200, "Admin debe poder reactivar usuario de prueba"
 
     # 18. Endpoints sin token o con token inválido
     r_no_token = requests.get(f"{BASE_URL}/sessions/")

@@ -64,7 +64,7 @@ def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
 
 
 def get_sessions(db: Session) -> list[SessionModel]:
-    """Devuelve todas las sesiones registradas en la base de datos."""
+    logger.debug("¡Logger activo! Entrando en get_sessions")
     return db.query(SessionModel).all()
 
 

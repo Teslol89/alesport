@@ -8,9 +8,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.models.session import SessionModel
+import logging
 
+from app.utils.utils import get_logger
 
 LOCAL_TIMEZONE = ZoneInfo("Europe/Madrid")
+logger = get_logger(__name__)
 
 
 def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
@@ -18,7 +21,11 @@ def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
     prepared_patch = dict(patch)
     session_timezone = session.start_time.tzinfo or LOCAL_TIMEZONE
 
-    if "start_time" in prepared_patch and hasattr(prepared_patch["start_time"], "hour") and not hasattr(prepared_patch["start_time"], "date"):
+    if (
+        "start_time" in prepared_patch
+        and hasattr(prepared_patch["start_time"], "hour")
+        and not hasattr(prepared_patch["start_time"], "date")
+    ):
         session_date = session.start_time.date()
         prepared_patch["start_time"] = datetime.combine(
             session_date,
@@ -26,7 +33,11 @@ def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
             tzinfo=session_timezone,
         )
 
-    if "end_time" in prepared_patch and hasattr(prepared_patch["end_time"], "hour") and not hasattr(prepared_patch["end_time"], "date"):
+    if (
+        "end_time" in prepared_patch
+        and hasattr(prepared_patch["end_time"], "hour")
+        and not hasattr(prepared_patch["end_time"], "date")
+    ):
         session_date = session.start_time.date()
         prepared_patch["end_time"] = datetime.combine(
             session_date,
@@ -57,17 +68,23 @@ def get_sessions(db: Session) -> list[SessionModel]:
     return db.query(SessionModel).all()
 
 
-def get_sessions_by_date_range(db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None) -> list[SessionModel]:
+def get_sessions_by_date_range(
+    db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None
+) -> list[SessionModel]:
     """Devuelve las sesiones en un rango de fechas (por start_time, solo la parte de fecha)."""
+    logger.info(f"[DEBUG] start_date: {start_date}, end_date: {end_date}")
     query = db.query(SessionModel)
     if start_date:
         query = query.filter(func.date(SessionModel.start_time) >= start_date)
     if end_date:
         query = query.filter(func.date(SessionModel.start_time) <= end_date)
+    logger.info(f"[DEBUG] SQL: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
     return query.all()
 
 
-def update_session(db: Session, session_id: int, update_data, current_user) -> SessionModel:
+def update_session(
+    db: Session, session_id: int, update_data, current_user
+) -> SessionModel:
     """Permite al entrenador o admin ajustar manualmente una sesión concreta.
 
     Solo se actualizan los campos enviados (PATCH parcial).

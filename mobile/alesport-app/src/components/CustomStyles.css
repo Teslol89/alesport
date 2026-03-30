@@ -1,4 +1,6 @@
+/* -----------------------------------------*/
 /* Toast base centrado en la parte superior */
+/* -----------------------------------------*/
 .custom-toast {
   position: fixed;
   top: 48px;

@@ -16,6 +16,7 @@ from app.services.schedule_service import (
     get_weekly_schedule,
 )
 
+# Rutas para gestionar horarios semanales y generación de sesiones a partir de ellos. Solo accesibles por admins.
 router = APIRouter(prefix="/schedule", tags=["schedule"])
 
 

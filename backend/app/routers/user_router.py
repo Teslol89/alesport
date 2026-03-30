@@ -1,4 +1,3 @@
-
 # --- IMPORTS ORDENADOS Y COMPLETOS ---
 import os
 from fastapi import APIRouter, Depends, HTTPException, status, Path, Body, Query

@@ -30,14 +30,16 @@ const ForgotPasswordResetForm: React.FC = () => {
       const res = await fetch(`${apiUrl}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code, password })
+        body: JSON.stringify({ email, code, new_password: password })
       });
       const data = await res.json();
       if (res.ok) {
         setToast({ show: true, message: "Contraseña cambiada con éxito. Ya puedes iniciar sesión.", type: "success" });
         localStorage.removeItem("pendingPasswordResetEmail");
         localStorage.removeItem("pendingPasswordResetCode");
-        // Aquí deberías redirigir a login tras unos segundos
+        setTimeout(() => {
+          history.replace("/login");
+        }, 1800); // Redirige tras 1.8 segundos para que el usuario vea el toast
       } else {
         setToast({ show: true, message: data.detail || "No se pudo cambiar la contraseña", type: "danger" });
       }
@@ -51,12 +53,12 @@ const ForgotPasswordResetForm: React.FC = () => {
   return (
     <div className="fpreset-container" style={{ position: 'relative' }}>
       <button
-        className="fp-back-btn"
+        className="back-btn"
         type="button"
         aria-label="Volver"
         onClick={() => history.goBack()}
       >
-        <img src={atrasIcon} alt="Atrás" className="fp-back-icon" />
+        <img src={atrasIcon} alt="Atrás" className="back-icon" />
       </button>
       <h2 className="fpreset-title">Nueva <br /> contraseña</h2>
       <p className="fpreset-description">Si recuerdas tu contraseña actual, retrocede sin aplicar cambios.</p>

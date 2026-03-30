@@ -54,12 +54,12 @@ const ForgotPasswordRequestForm: React.FC = () => {
     return (
         <div className="fprequest-container">
             <button
-                className="fp-back-btn"
+                className="back-btn"
                 type="button"
                 aria-label="Volver"
                 onClick={() => history.goBack()}
             >
-                <img src={atrasIcon} alt="Atrás" className="fp-back-icon" />
+                <img src={atrasIcon} alt="Atrás" className="back-icon" />
             </button>
             <h2 className="fprequest-title">Recuperar contraseña</h2>
             <p className="fprequest-description">Introduce tu email y te enviaremos un código para restablecer tu contraseña.</p>

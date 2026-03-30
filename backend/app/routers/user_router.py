@@ -3,7 +3,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-
 from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.user import User, User as UserModel

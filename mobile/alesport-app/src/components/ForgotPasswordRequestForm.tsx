@@ -37,7 +37,7 @@ const ForgotPasswordRequestForm: React.FC = () => {
                 body: JSON.stringify({ email })
             });
             localStorage.setItem("pendingPasswordResetEmail", email);
-            history.push("/forgot-password/verify");
+            history.push("/forgot-password-verify");
         } catch {
             setToastMsg("Error de red o servidor");
             setToastType("danger");

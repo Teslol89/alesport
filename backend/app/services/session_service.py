@@ -71,14 +71,14 @@ def get_sessions(db: Session) -> list[SessionModel]:
 def get_sessions_by_date_range(
     db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None
 ) -> list[SessionModel]:
-    """Devuelve las sesiones en un rango de fechas (por start_time, solo la parte de fecha)."""
-    logger.info(f"[DEBUG] start_date: {start_date}, end_date: {end_date}")
+    logger.debug("¡Logger activo! Entrando en get_sessions_by_date_range")
+    logger.debug(f"[DEBUG] start_date: {start_date}, end_date: {end_date}")
     query = db.query(SessionModel)
     if start_date:
         query = query.filter(func.date(SessionModel.start_time) >= start_date)
     if end_date:
         query = query.filter(func.date(SessionModel.start_time) <= end_date)
-    logger.info(f"[DEBUG] SQL: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+    logger.debug(f"[DEBUG] SQL: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
     return query.all()
 
 

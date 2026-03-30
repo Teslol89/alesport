@@ -152,6 +152,7 @@ const App: React.FC = () => {
         message={showToast.message}
         onClose={() => setShowToast({ show: false, message: "" })}
         type="danger"
+        duration={3000}
       />
     </IonApp>
   );

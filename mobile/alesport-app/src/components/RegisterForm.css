@@ -22,37 +22,6 @@
     }
 }
 
-/* ---------------------------------- */
-/* Animación de sacudida para errores */
-/* ---------------------------------- */
-@keyframes shake {
-
-    10%,
-    90% {
-        transform: translateX(-2px);
-    }
-
-    20%,
-    80% {
-        transform: translateX(4px);
-    }
-
-    30%,
-    50%,
-    70% {
-        transform: translateX(-8px);
-    }
-
-    40%,
-    60% {
-        transform: translateX(8px);
-    }
-}
-
-.shake-anim {
-    animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
-}
-
 /* --------------------------------- */
 /* Contenedor principal del registro */
 /* --------------------------------- */
@@ -266,47 +235,7 @@
 /* ------------------------------- */
 /* Mensaje de errores de Registros */
 /* ------------------------------- */
-.toast-error-register {
-    --max-width: 300px;
-    --background: #901726;
-    /* Rojo "CRIMSON" */
-    --color: #ffffff;
-    animation: shake 0.4s;
-    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
-    font-size: 1rem;
-    text-align: center;
-}
 
-/* Toast de error de validación (contraseña, email, etc) */
-.toast-validation-error {
-    --max-width: 300px;
-    --background: #901726;
-    /* Rojo "CRIMSON" */
-    --color: #ffffff;
-    animation: shake 0.4s;
-    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
-    font-size: 1rem;
-    text-align: center;
-    border-radius: 12px;
-    border: 1.5px solid #ffe58f;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-}
-
-.toast-success-register {
-    --max-width: 300px;
-    --background: #77b154;
-    /* Verde "FOREST GREEN" */
-    --color: #ffffff;
-    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
-    font-size: 1rem;
-    text-align: center;
-    border-radius: 12px;
-    border: 1.5px solid #a5d6a7;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.15);
-}
 
 /* --------------------------------------- */
 /* Animación shake para inputs de registro */

@@ -3,7 +3,8 @@ import { useHistory } from "react-router-dom";
 import { Link } from "react-router-dom";
 import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
-import { IonModal, IonButton, IonToast } from "@ionic/react";
+import { IonModal, IonButton } from "@ionic/react";
+import CustomToast from "./CustomToast";
 import { registerUser } from "../api/auth";
 import { LegalText } from "../utils/legalText";
 import "./RegisterForm.css";
@@ -52,7 +53,7 @@ const RegisterForm: React.FC = () => {
   const [canAccept, setCanAccept] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
-  const [toastColor, setToastColor] = useState("toast-error-register");
+  const [toastType, setToastType] = useState<"success" | "danger" | "info">("danger");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -74,7 +75,7 @@ const RegisterForm: React.FC = () => {
     if (!name && !email && !password) {
       setIsSubmitting(false);
       setToastMsg("Formulario incompleto");
-      setToastColor("toast-validation-error");
+      setToastType("danger");
       setShowToast(true);
       return;
     }
@@ -90,7 +91,7 @@ const RegisterForm: React.FC = () => {
     if (!eErr && (!email || email.trim() === "")) {
       setIsSubmitting(false);
       setToastMsg("Formulario incompleto");
-      setToastColor("toast-validation-error");
+      setToastType("danger");
       setShowToast(true);
       return;
     }
@@ -104,7 +105,7 @@ const RegisterForm: React.FC = () => {
     if (!pErr && (!password || password.trim() === "")) {
       setIsSubmitting(false);
       setToastMsg("Formulario incompleto");
-      setToastColor("toast-validation-error");
+      setToastType("danger");
       setShowToast(true);
       return;
     }
@@ -118,7 +119,7 @@ const RegisterForm: React.FC = () => {
     if (!acceptedTerms) {
       setIsSubmitting(false);
       setToastMsg("Debes aceptar los términos y condiciones para crear una cuenta.");
-      setToastColor("toast-error-register");
+      setToastType("danger");
       setShowToast(true);
       return;
     }
@@ -128,7 +129,7 @@ const RegisterForm: React.FC = () => {
       // Guardar el email en localStorage para el flujo de verificación
       localStorage.setItem("pendingVerificationEmail", email);
       setToastMsg("Registro exitoso. Revisa tu correo para activar tu cuenta.");
-      setToastColor("toast-success-register");
+      setToastType("success");
       setShowToast(true);
       setName("");
       setEmail("");
@@ -171,7 +172,7 @@ const RegisterForm: React.FC = () => {
           }
         });
         msg = errorLines.join("\n");
-        color = "toast-validation-error";
+        color = "danger";
       } else if (typeof err.message === "string") {
         if (err.message.toLowerCase().includes("email")) {
           msg = "El email ya está registrado. Usa otro o inicia sesión.";
@@ -182,7 +183,7 @@ const RegisterForm: React.FC = () => {
         console.error("Error inesperado:", err);
       }
       setToastMsg(msg);
-      setToastColor(color);
+      // setToastColor eliminado
       setShowToast(true);
     } finally {
       setIsSubmitting(false);
@@ -355,16 +356,16 @@ const RegisterForm: React.FC = () => {
           <IonButton expand="block" fill="clear" className="modal-cancel-btn" onClick={() => setShowModal(false)}>Cancelar</IonButton>
         </div>
       </IonModal>
-      <IonToast
-        isOpen={showToast}
-        onDidDismiss={() => setShowToast(false)}
+      {/* Toast fuera del flujo del formulario para evitar desplazamiento */}
+      <CustomToast
+        show={showToast}
         message={toastMsg}
+        onClose={() => setShowToast(false)}
+        type={toastType}
         duration={3000}
-        position="top"
-        cssClass={toastColor}
       />
     </div>
   );
-};
+}
 
 export default RegisterForm;

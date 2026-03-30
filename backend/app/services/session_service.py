@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
+from typing import Optional
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -55,19 +56,29 @@ def get_sessions(db: Session) -> list[SessionModel]:
     return db.query(SessionModel).all()
 
 
+def get_sessions_by_date_range(db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None) -> list[SessionModel]:
+    """Devuelve las sesiones en un rango de fechas (por start_time)."""
+    query = db.query(SessionModel)
+    if start_date:
+        query = query.filter(SessionModel.start_time >= start_date)
+    if end_date:
+        query = query.filter(SessionModel.start_time <= end_date)
+    return query.all()
+
+
 def update_session(db: Session, session_id: int, update_data, current_user) -> SessionModel:
-    """Permite al entrenador o admin ajustar manualmente una sesion concreta.
+    """Permite al entrenador o admin ajustar manualmente una sesión concreta.
 
     Solo se actualizan los campos enviados (PATCH parcial).
     Los trainers solo pueden modificar sus propias sesiones.
     Los admins pueden modificar cualquier sesión.
     """
-    # Verificar que la sesion existe
+    # Verificar que la sesión existe
     session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Sesion no encontrada",
+            detail="Sesión no encontrada",
         )
 
     # Admin puede modificar cualquier sesión; trainer solo las suyas

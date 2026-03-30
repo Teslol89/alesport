@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import Query
 from sqlalchemy.orm import Session
+from datetime import date
+from typing import Optional
 
 from app.database.db import get_db
 from app.auth.security import get_current_user
@@ -7,19 +10,26 @@ from app.models.user import User
 from app.schemas.session import SessionResponse, SessionUpdate, SessionWeekUpdate
 from app.services.session_service import (
     get_sessions,
+    get_sessions_by_date_range,
     update_session,
     update_sessions_in_week,
 )
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
-
+# Rutas para gestionar sesiones de entrenamiento. Solo accesibles por entrenadores y admins.
 @router.get("/", response_model=list[SessionResponse])
 def read_sessions(
+    start_date: Optional[date] = Query(
+        None, description="Fecha de inicio (YYYY-MM-DD)"
+    ),
+    end_date: Optional[date] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Devuelve todas las sesiones registradas."""
+    """Devuelve todas las sesiones registradas, opcionalmente filtradas por rango de fechas."""
+    if start_date or end_date:
+        return get_sessions_by_date_range(db, start_date, end_date)
     return get_sessions(db)
 
 
@@ -58,7 +68,7 @@ def patch_session(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Permite al entrenador o admin ajustar manualmente una sesion concreta (PATCH parcial).
+    """Permite al entrenador o admin ajustar manualmente una sesión concreta (PATCH parcial).
     Los trainers solo pueden modificar sus propias sesiones.
     Los admins pueden modificar cualquiera.
     """

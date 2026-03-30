@@ -4,6 +4,16 @@ from sqlalchemy.orm import Session
 
 from app.models.booking import Booking
 from app.models.session import SessionModel
+
+def get_bookings_by_session(db: Session, session_id: int) -> list[Booking]:
+    """Devuelve todas las reservas de una sesión concreta."""
+    session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sesión no encontrada",
+        )
+    return db.query(Booking).filter(Booking.session_id == session_id).all()
 from app.models.user import User
 
 

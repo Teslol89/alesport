@@ -4,7 +4,7 @@ import { loginUser } from "../api/auth";
 import { loginWithGoogle } from "../api/auth";
 import { useAuth } from "./AuthContext";
 import { useHistory } from "react-router-dom";
-import { IonToast } from "@ionic/react";
+import CustomToast from "./CustomToast";
 
 
 
@@ -13,6 +13,7 @@ import ojoCerrado from "../icons/ojoCerrado.svg";
 import appleLogo from '../icons/appleLogo.svg';
 import googleLogo from '../icons/googleLogo.svg';
 import alesportLogoHori from '../assets/img/alesportLogoHori.png';
+import "./CustomToast.css";
 import "./LoginForm.css";
 
 const LoginForm: React.FC = () => {
@@ -132,13 +133,13 @@ const LoginForm: React.FC = () => {
                     onClick={() => history.push('/register')}>Regístrate
                 </button>
             </div>
-            <IonToast
-                isOpen={!!error}
-                onDidDismiss={() => setError(null)}
+            <CustomToast
+                show={!!error}
                 message={error || ''}
+                onClose={() => setError(null)}
+                type="danger"
                 duration={3000}
-                position="top"
-                cssClass="toast-error" />
+            />
         </div>
     );
 };

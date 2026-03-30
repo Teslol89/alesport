@@ -1,32 +1,47 @@
-/* Toast centrado en pantalla, no fijo arriba */
+/* Toast base centrado en la parte superior */
 .custom-toast {
-  position: absolute;
-  top: 50%;
+  position: fixed;
+  top: 32px;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   z-index: 9999;
-  min-width: 280px;
+  min-width: 190px;
   max-width: 90vw;
   padding: 16px 32px 16px 20px;
   border-radius: 8px;
   color: #fff;
   font-size: 1rem;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  animation: fadeInCenter 0.3s;
   background-clip: padding-box;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  text-align: center;
 }
+
+/* ------------------------------------------- */
+/* Estilos específicos para cada tipo de toast */
+/* ------------------------------------------- */
+/* Toast de error */
 .custom-toast--danger {
-  background: #eb445a;
+  background: #901726 !important;
+  color: #ffffff !important;
+  animation: fadeInShake 0.4s;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  text-align: center;
+  opacity: 1 !important;
 }
+
 .custom-toast--success {
   background: #2dd36f;
 }
+
 .custom-toast--info {
   background: #3dc2ff;
 }
+
 .custom-toast__close {
   background: none;
   border: none;
@@ -37,10 +52,37 @@
   opacity: 0.8;
   transition: opacity 0.2s;
 }
+
 .custom-toast__close:hover {
   opacity: 1;
 }
-@keyframes fadeInCenter {
-  from { opacity: 0; transform: translate(-50%, -60%); }
-  to   { opacity: 1; transform: translate(-50%, -50%); }
+
+@keyframes fadeInShake {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0);
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) translateX(-24px);
+  }
+  25% {
+    transform: translateX(-50%) translateY(0) translateX(24px);
+  }
+  40% {
+    transform: translateX(-50%) translateY(0) translateX(-12px);
+  }
+  55% {
+    transform: translateX(-50%) translateY(0) translateX(12px);
+  }
+  70% {
+    transform: translateX(-50%) translateY(0) translateX(-6px);
+  }
+  85% {
+    transform: translateX(-50%) translateY(0) translateX(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) translateX(0);
+  }
 }

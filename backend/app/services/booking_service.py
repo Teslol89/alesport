@@ -52,6 +52,7 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
         )
 
     # Solo se puede reservar en sesiones activas
+    print(f"[DEBUG] Estado de la sesión {session.id}: '{session.status}'")
     if session.status != "active":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

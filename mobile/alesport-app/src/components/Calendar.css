@@ -10,6 +10,13 @@
   margin-right: 4px;
 }
 /* Layout para el título de la sesión */
+.session-title-row-flex {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+}
+
 .session-title-row {
   display: flex;
   align-items: center;
@@ -21,9 +28,12 @@
   margin-right: 4px;
 }
 .session-title-trainer {
-  margin-left: 8px;
-  font-weight: 400;
+  text-align: right;
+  margin-left: 16px;
+  font-weight: 500;
   font-size: 1em;
+  color: #000000;
+  white-space: nowrap;
 }
 /* ------------------------------------------------------- */
 /* Calendar.css - Estilos para el componente de calendario */

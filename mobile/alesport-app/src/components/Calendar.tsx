@@ -119,13 +119,15 @@ const Calendar: React.FC = () => {
               <IonCard key={session.id} className={cardClass}>
                 <IonCardHeader>
                   <IonCardTitle>
-                    <span className="session-title-custom session-title-row">
-                      <img src={horaIcon} alt="Hora" className="session-title-icon" />
-                      {formatHour(session.start_time, session.session_date)} - {formatHour(session.end_time, session.session_date)}
+                    <div className="session-title-row-flex">
+                      <span className="session-title-custom session-title-row">
+                        <img src={horaIcon} alt="Hora" className="session-title-icon" />
+                        {formatHour(session.start_time, session.session_date)} - {formatHour(session.end_time, session.session_date)}
+                      </span>
                       {session.trainer_name ? (
-                        <span className="session-title-trainer">| Entrenador {session.trainer_name}</span>
+                        <span className="session-title-trainer">{session.trainer_name}</span>
                       ) : null}
-                    </span>
+                    </div>
                   </IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>

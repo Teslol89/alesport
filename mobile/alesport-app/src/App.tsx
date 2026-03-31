@@ -14,6 +14,9 @@ import {
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { ellipse, square, triangle } from 'ionicons/icons';
+import agendaIcon from './icons/agenda.svg';
+import masIcon from './icons/mas.svg';
+import configIcon from './icons/config.svg';
 import AdminCalendarPage from './pages/AdminCalendarPage';
 
 import Login from './pages/Login';
@@ -183,16 +186,16 @@ const App: React.FC = () => {
         </IonRouterOutlet>
         <IonTabBar className="tabbar-glass" slot="bottom" >
           <IonTabButton tab="admin-calendar" href="/admin-calendar">
-            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={triangle} />
+            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={agendaIcon} />
             <IonLabel>Agenda</IonLabel>
           </IonTabButton>
           <IonTabButton tab="tab2" href="/tab2">
-            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={ellipse} />
-            <IonLabel>Tab 2</IonLabel>
+            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={masIcon} />
+            <IonLabel>Añadir</IonLabel>
           </IonTabButton>
           <IonTabButton tab="tab3" href="/tab3">
-            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={square} />
-            <IonLabel>Tab 3</IonLabel>
+            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={configIcon} />
+            <IonLabel>Configuración</IonLabel>
           </IonTabButton>
         </IonTabBar>
       </IonTabs>

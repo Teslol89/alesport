@@ -1,2 +1,28 @@
-/* Global app styles */
-/* Puedes añadir aquí estilos globales personalizados */
+ion-tab-bar {
+    border: none !important;
+    box-shadow: none;
+}
+/* ================= IonTabBar Custom Styles ================= */
+/* Glassmorphism (translúcido, desenfoque) para uso opcional por clase */
+ion-tab-bar.tabbar-glass {
+    --background: transparent;
+    background: rgba(0, 0, 0, 0.1) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+ion-tab-button {
+    color: #111;
+    font-size: 0.75rem;
+}
+
+ion-tab-button ion-icon {
+    /* Tamaño de iconos y color personalizado */
+    color: #000000;
+    font-size: 1.5rem;
+}
+
+/* Solo iconos, sin texto */
+.tabbar-icons-only ion-tab-button span {
+    display: none;
+}

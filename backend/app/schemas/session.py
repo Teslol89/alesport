@@ -9,6 +9,7 @@ class SessionResponse(BaseModel):
 
     id: int
     trainer_id: int
+    trainer_name: str
     start_datetime: datetime = Field(validation_alias="start_time", exclude=True)
     end_datetime: datetime = Field(validation_alias="end_time", exclude=True)
     capacity: int

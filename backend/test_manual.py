@@ -2,11 +2,25 @@ def force_verify_user(email):
     """Fuerza la verificación del usuario (solo para pruebas)."""
     # Buscar el usuario por email (requiere endpoint de admin o acceso especial)
     # Aquí se asume un endpoint de test o admin PATCH /users/verify-email
-    r = requests.patch(f"{BASE_URL}/users/verify-email", json={"email": email})
-    if r.status_code == 200:
-        print(f"Usuario {email} verificado forzadamente para test.")
+    # Buscar el user_id por email usando el token de admin
+    admin_token = login("admin@demo.com", "admin123")
+    headers = {"Authorization": f"Bearer {admin_token}"} if admin_token else {}
+    r_users = requests.get(f"{BASE_URL}/users/", headers=headers)
+    if r_users.status_code == 200:
+        users = r_users.json()
+        user = next((u for u in users if u["email"] == email), None)
+        if user:
+            user_id = user["id"]
+            patch_data = {"is_active": True, "is_verified": True}
+            r = requests.patch(f"{BASE_URL}/users/{user_id}", json=patch_data, headers=headers)
+            if r.status_code == 200:
+                print(f"Usuario {email} activado y verificado para test.")
+            else:
+                print(f"No se pudo activar/verificar {email}: {r.status_code} {r.text}")
+        else:
+            print(f"Usuario {email} no encontrado en la base de datos.")
     else:
-        print(f"No se pudo forzar la verificación de {email}: {r.status_code} {r.text}")
+        print(f"No se pudo obtener la lista de usuarios: {r_users.status_code} {r_users.text}")
 
 import requests
 from datetime import datetime
@@ -109,13 +123,25 @@ def run_tests(token, role):
 
     # 8. PATCH /sessions/{session_id} (caso límite: modificar sesión ajena)
     if sessions:
-        session_id = sessions[0]["id"] if isinstance(sessions[0], dict) else sessions[0]
-        patch_payload = {"capacity": 8}
-        r8 = requests.patch(f"{BASE_URL}/sessions/{session_id}", headers=headers, json=patch_payload)
-        if role in ("admin", "trainer"):
-            assert r8.status_code == 200, f"/sessions/{{session_id}} (patch) should be allowed for {role}"
+        # Para trainer, solo modificar sus propias sesiones
+        session_to_patch = None
+        if role == "trainer" and trainer_id:
+            for s in sessions:
+                if isinstance(s, dict) and s.get("trainer_id") == trainer_id:
+                    session_to_patch = s
+                    break
         else:
-            assert r8.status_code == 403, f"/sessions/{{session_id}} (patch) should be forbidden for {role}"
+            session_to_patch = sessions[0] if isinstance(sessions[0], dict) else None
+        if session_to_patch:
+            session_id = session_to_patch["id"]
+            patch_payload = {"capacity": 8}
+            r8 = requests.patch(f"{BASE_URL}/sessions/{session_id}", headers=headers, json=patch_payload)
+            if role in ("admin", "trainer"):
+                assert r8.status_code == 200, f"/sessions/{{session_id}} (patch) should be allowed for {role}"
+            else:
+                assert r8.status_code == 403, f"/sessions/{{session_id}} (patch) should be forbidden for {role}"
+        else:
+            print("No hay sesiones propias para modificar con PATCH para este trainer.")
 
     # 9. PATCH /sessions/week (caso límite: client no puede, admin debe poner trainer_id)
     if sessions:

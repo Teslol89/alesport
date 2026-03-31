@@ -1,20 +1,19 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+/* Page para el calendario del admin, con filtros, barra superior, etc. */
+import { IonContent, IonPage } from '@ionic/react';
+
+import './AdminCalendarPage.css';
 import Calendar from '../components/Calendar';
 
+
 const AdminCalendarPage: React.FC = () => {
-  return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Panel de Agenda</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent fullscreen>
-        {/* Aquí irán filtros, barra superior, etc. */}
-        <Calendar />
-      </IonContent>
-    </IonPage>
-  );
+    return (
+        <IonPage className="admin-calendar-page">
+            <IonContent fullscreen>
+                {/* Aquí irán filtros, barra superior, etc. */}
+                <Calendar />
+            </IonContent>
+        </IonPage>
+    );
 };
 
 export default AdminCalendarPage;

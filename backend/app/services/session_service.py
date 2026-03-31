@@ -172,6 +172,9 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
         "created_at": session.created_at,
         # Campo extra para compatibilidad con tests/manual: session_date
         "session_date": session.start_time.date() if session.start_time else None,
+        # Campos requeridos por el schema (solo hora, sin tz)
+        "start_time": session.start_time.timetz().replace(tzinfo=None) if session.start_time else None,
+        "end_time": session.end_time.timetz().replace(tzinfo=None) if session.end_time else None,
     }
     return session_dict
 

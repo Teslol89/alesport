@@ -7,14 +7,17 @@ import { getSessionsByDateRange } from '../api/sessions';
 function formatFullDateES(dateStr: string) {
   const date = new Date(dateStr);
   const optionsDay: Intl.DateTimeFormatOptions = { weekday: 'long' };
-  const optionsDate: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-  // Español
+  // Formato personalizado: "Marzo 31, 2026"
   const day = date.toLocaleDateString('es-ES', optionsDay);
-  const fullDate = date.toLocaleDateString('es-ES', optionsDate);
-  // Capitalizar la primera letra
+  const month = date.toLocaleDateString('es-ES', { month: 'long' });
+  const dayNum = date.getDate();
+  const year = date.getFullYear();
+  // Capitalizar mes
+  const monthCap = month.charAt(0).toUpperCase() + month.slice(1);
+  const fullDate = `${monthCap} ${dayNum}, ${year}`;
   return {
     day: day.charAt(0).toUpperCase() + day.slice(1),
-    fullDate: fullDate.charAt(0).toUpperCase() + fullDate.slice(1),
+    fullDate,
   };
 }
 
@@ -124,7 +127,9 @@ const Calendar: React.FC = () => {
                     Estado: {session.status} <br />
                     Aforo: {session.capacity}
                     <br />
-                    <button className="calendar-details-btn">Ver detalles</button>
+                    <div className='calendar-details-btn-container'>
+                      <button className="calendar-details-btn">Ver detalles</button>
+                    </div>
                   </span>
                 </IonCardContent>
               </IonCard>

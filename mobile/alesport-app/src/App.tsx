@@ -181,7 +181,7 @@ const App: React.FC = () => {
           <PrivateRoute path="/tab3" component={Tab3} />
           <Route exact path="/" component={RootRedirect} />
         </IonRouterOutlet>
-        <IonTabBar slot="bottom">
+        <IonTabBar slot="bottom" className='tabbar-glass'>
           <IonTabButton tab="admin-calendar" href="/admin-calendar">
             <IonIcon aria-hidden="true" icon={triangle} />
             <IonLabel>Agenda</IonLabel>

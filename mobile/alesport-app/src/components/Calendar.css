@@ -1,3 +1,9 @@
+/* Contenedor para alinear el botón de detalles a la derecha */
+.calendar-details-btn-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
 /* Fondo general color tiza */
 .calendar-container {
   background: #f8f6f2;
@@ -173,15 +179,21 @@
 }
 
 .session-card .ion-card-content {
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   font-size: 0.95rem;
 }
 
-.calendar-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  gap: 1rem;
+.calendar-details-btn {
+  background: #0089a6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 1.2rem;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
 .calendar-selected-date {
@@ -189,21 +201,21 @@
   flex-direction: column;
   align-items: flex-start;
   font-size: 1.2rem;
-  font-weight: 500;
-  color: #222;
+  font-weight: 400;
+  color: #000000;
   text-transform: capitalize;
   white-space: nowrap;
 }
 
 .calendar-selected-day {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 400;
   color: #000000;
   margin-bottom: 0.1rem;
 }
 
 .calendar-selected-fulldate {
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: 400;
   color: #000000;
 }
@@ -213,6 +225,7 @@
 }
 
 .session-small-tittle-custom {
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   color: #1a1a1a !important;
 }
 
@@ -224,8 +237,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
   padding-top: max(env(safe-area-inset-top), 1.1rem);
   padding-right: 1rem;
   padding-bottom: 0.7rem;

@@ -148,7 +148,19 @@ def update_session(
         )
 
     db.refresh(session)
-    return session
+    # Recargar la sesión con join a User para incluir trainer_name
+    session_with_trainer = (
+        db.query(SessionModel, User.name)
+        .join(User, SessionModel.trainer_id == User.id)
+        .filter(SessionModel.id == session_id)
+        .first()
+    )
+    if session_with_trainer is None:
+        return session  # fallback
+    session_obj, trainer_name = session_with_trainer
+    session_dict = session_obj.__dict__.copy()
+    session_dict["trainer_name"] = trainer_name
+    return session_dict
 
 
 def update_sessions_in_week(

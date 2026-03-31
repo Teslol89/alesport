@@ -57,8 +57,27 @@ const Calendar: React.FC = () => {
       .finally(() => setLoading(false));
   }, [startDate, endDate]);
 
-  // Filtra sesiones por fecha seleccionada
-  const sessionsForDate = sessions.filter(s => s.session_date === selectedDate);
+  // Filtra y ordena sesiones por fecha seleccionada y hora de inicio
+  const sessionsForDate = sessions
+    .filter(s => s.session_date === selectedDate)
+    .sort((a, b) => {
+      // a.start_time y b.start_time pueden ser 'HH:mm:ss' o Date
+      const getTime = (session: any) => {
+        if (typeof session.start_time === 'string') {
+          // Si es solo hora, combínala con la fecha
+          if (/^\d{2}:\d{2}:\d{2}$/.test(session.start_time) && session.session_date) {
+            return new Date(`${session.session_date}T${session.start_time}`).getTime();
+          }
+          // Si es string tipo ISO
+          return new Date(session.start_time).getTime();
+        }
+        if (session.start_time instanceof Date) {
+          return session.start_time.getTime();
+        }
+        return 0;
+      };
+      return getTime(a) - getTime(b);
+    });
 
   const fechaES = formatFullDateES(selectedDate);
 

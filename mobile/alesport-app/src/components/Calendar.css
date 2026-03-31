@@ -42,7 +42,7 @@
   box-shadow: none;
 }
 .session-title-icon-btn:focus {
-  outline: 2px solid #0089a6;
+  outline: none;
 }
 
 .session-title-trainer {

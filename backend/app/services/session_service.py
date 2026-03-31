@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.models.session import SessionModel
+from app.models.user import User
 import logging
 
 from app.utils.utils import get_logger
@@ -65,7 +66,19 @@ def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
 
 def get_sessions(db: Session) -> list[SessionModel]:
     logger.debug("¡Logger activo! Entrando en get_sessions")
-    return db.query(SessionModel).all()
+    # Join con User para obtener el nombre del entrenador
+    results = (
+        db.query(SessionModel, User.name)
+        .join(User, SessionModel.trainer_id == User.id)
+        .all()
+    )
+    # Convertir a lista de dicts con trainer_name
+    sessions = []
+    for session_obj, trainer_name in results:
+        session_dict = session_obj.__dict__.copy()
+        session_dict["trainer_name"] = trainer_name
+        sessions.append(session_dict)
+    return sessions
 
 
 def get_sessions_by_date_range(
@@ -73,13 +86,19 @@ def get_sessions_by_date_range(
 ) -> list[SessionModel]:
     logger.debug("¡Logger activo! Entrando en get_sessions_by_date_range")
     logger.debug(f"[DEBUG] start_date: {start_date}, end_date: {end_date}")
-    query = db.query(SessionModel)
+    query = db.query(SessionModel, User.name).join(User, SessionModel.trainer_id == User.id)
     if start_date:
         query = query.filter(func.date(SessionModel.start_time) >= start_date)
     if end_date:
         query = query.filter(func.date(SessionModel.start_time) <= end_date)
     logger.debug(f"[DEBUG] SQL: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
-    return query.all()
+    results = query.all()
+    sessions = []
+    for session_obj, trainer_name in results:
+        session_dict = session_obj.__dict__.copy()
+        session_dict["trainer_name"] = trainer_name
+        sessions.append(session_dict)
+    return sessions
 
 
 def update_session(

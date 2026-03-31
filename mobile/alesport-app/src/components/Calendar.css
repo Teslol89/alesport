@@ -1,3 +1,30 @@
+/* Layout para aforo con icono */
+.session-aforo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.session-aforo-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+}
+/* Layout para el título de la sesión */
+.session-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.session-title-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+}
+.session-title-trainer {
+  margin-left: 8px;
+  font-weight: 400;
+  font-size: 1em;
+}
 /* ------------------------------------------------------- */
 /* Calendar.css - Estilos para el componente de calendario */
 /* ------------------------------------------------------- */

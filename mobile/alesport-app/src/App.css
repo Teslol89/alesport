@@ -1,20 +1,25 @@
+ion-tab-bar {
+    border: none !important;
+    box-shadow: none;
+}
 /* ================= IonTabBar Custom Styles ================= */
 /* Glassmorphism (translúcido, desenfoque) para uso opcional por clase */
 ion-tab-bar.tabbar-glass {
     --background: transparent;
-    background: rgba(0, 0, 0, 0.7) !important;
+    background: rgba(0, 0, 0, 0.1) !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
 
 ion-tab-button {
-    color:#ffffff;
-    font-size: 0.9rem;
+    color: #111;
+    font-size: 0.75rem;
 }
 
 ion-tab-button ion-icon {
-    /* Tamaño de iconos */
-    font-size: 1.7rem;
+    /* Tamaño de iconos y color personalizado */
+    color: #000000;
+    font-size: 1.5rem;
 }
 
 /* Solo iconos, sin texto */

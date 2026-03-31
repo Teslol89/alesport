@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner } from '@ionic/react';
 import './Calendar.css';
+import horaIcon from '../icons/hora.svg';
+import aforoIcon from '../icons/aforo.svg';
 import { getCurrentWeekDays, getMonthDays } from '../utils/funcionesGeneral';
 import { getSessionsByDateRange } from '../api/sessions';
 
@@ -117,16 +119,19 @@ const Calendar: React.FC = () => {
               <IonCard key={session.id} className={cardClass}>
                 <IonCardHeader>
                   <IonCardTitle>
-                    <span className="session-title-custom">
-                      {formatHour(session.start_time, session.session_date)} - {formatHour(session.end_time, session.session_date)} | {session.trainer_id ? `Entrenador ${session.trainer_id}` : ''}
+                    <span className="session-title-custom session-title-row">
+                      <img src={horaIcon} alt="Hora" className="session-title-icon" />
+                      {formatHour(session.start_time, session.session_date)} - {formatHour(session.end_time, session.session_date)}
+                      {session.trainer_name ? (
+                        <span className="session-title-trainer">| Entrenador {session.trainer_name}</span>
+                      ) : null}
                     </span>
                   </IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
-                  <span className='session-small-title-custom'>
-                    Estado: {session.status} <br />
-                    Aforo: {session.capacity}
-                    <br />
+                  <span className='session-small-title-custom session-aforo-row'>
+                    <img src={aforoIcon} alt="Aforo" className="session-aforo-icon" />
+                    {session.capacity}
                     <div className='calendar-details-btn-container'>
                       <button className="calendar-details-btn">Detalles</button>
                     </div>

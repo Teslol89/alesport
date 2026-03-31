@@ -156,10 +156,24 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
         )
 
     db.refresh(session)
-    # Añadir trainer_name como atributo dinámico al objeto ORM
+    # Obtener el nombre del entrenador
     trainer = db.query(User).filter(User.id == session.trainer_id).first()
-    setattr(session, "trainer_name", trainer.name if trainer else "")
-    return session
+    trainer_name = trainer.name if trainer else ""
+
+    # Construir dict compatible con SessionResponse
+    session_dict = {
+        "id": session.id,
+        "trainer_id": session.trainer_id,
+        "trainer_name": trainer_name,
+        "start_datetime": session.start_time,
+        "end_datetime": session.end_time,
+        "capacity": session.capacity,
+        "status": session.status,
+        "created_at": session.created_at,
+        # Campo extra para compatibilidad con tests/manual: session_date
+        "session_date": session.start_time.date() if session.start_time else None,
+    }
+    return session_dict
 
 
 def update_sessions_in_week(

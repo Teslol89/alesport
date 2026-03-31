@@ -1,3 +1,4 @@
+# services/session_service.py
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 from typing import Optional
@@ -86,12 +87,16 @@ def get_sessions_by_date_range(
 ) -> list[SessionModel]:
     logger.debug("¡Logger activo! Entrando en get_sessions_by_date_range")
     logger.debug(f"[DEBUG] start_date: {start_date}, end_date: {end_date}")
-    query = db.query(SessionModel, User.name).join(User, SessionModel.trainer_id == User.id)
+    query = db.query(SessionModel, User.name).join(
+        User, SessionModel.trainer_id == User.id
+    )
     if start_date:
         query = query.filter(func.date(SessionModel.start_time) >= start_date)
     if end_date:
         query = query.filter(func.date(SessionModel.start_time) <= end_date)
-    logger.debug(f"[DEBUG] SQL: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+    logger.debug(
+        f"[DEBUG] SQL: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}"
+    )
     results = query.all()
     sessions = []
     for session_obj, trainer_name in results:
@@ -101,9 +106,12 @@ def get_sessions_by_date_range(
     return sessions
 
 
-def update_session(
-    db: Session, session_id: int, update_data, current_user
-) -> SessionModel:
+def update_session(db: Session, session_id: int, update_data, current_user) -> dict:
+    print(f"[DEBUG] PATCH session_id: {session_id}")
+    print(
+        f"[DEBUG] current_user: id={getattr(current_user, 'id', None)}, role={getattr(current_user, 'role', None)}"
+    )
+    print(f"[DEBUG] update_data: {update_data}")
     """Permite al entrenador o admin ajustar manualmente una sesión concreta.
 
     Solo se actualizan los campos enviados (PATCH parcial).
@@ -148,7 +156,24 @@ def update_session(
         )
 
     db.refresh(session)
-    return session
+    # Obtener el nombre del entrenador
+    trainer = db.query(User).filter(User.id == session.trainer_id).first()
+    trainer_name = trainer.name if trainer else ""
+
+    # Construir dict compatible con SessionResponse
+    session_dict = {
+        "id": session.id,
+        "trainer_id": session.trainer_id,
+        "trainer_name": trainer_name,
+        "start_datetime": session.start_time,
+        "end_datetime": session.end_time,
+        "capacity": session.capacity,
+        "status": session.status,
+        "created_at": session.created_at,
+        # Campo extra para compatibilidad con tests/manual: session_date
+        "session_date": session.start_time.date() if session.start_time else None,
+    }
+    return session_dict
 
 
 def update_sessions_in_week(

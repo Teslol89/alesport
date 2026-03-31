@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner } from '@ionic/react';
 import './Calendar.css';
-import horaIcon from '../icons/hora.svg';
-import aforoIcon from '../icons/aforo.svg';
+import horaIcon from '../icons/horaColor.webp';
+import aforoIcon from '../icons/aforo.webp';
+import infoIcon from '../icons/detallesColor.svg';
 import { getCurrentWeekDays, getMonthDays } from '../utils/funcionesGeneral';
-import { getSessionsByDateRange } from '../api/sessions';
+import { getSessionsByDateRange, patchSessionHour } from '../api/sessions';
+import { getUserProfile } from '../api/user';
 
 function formatFullDateES(dateStr: string) {
   const date = new Date(dateStr);
@@ -31,6 +33,11 @@ const Calendar: React.FC = () => {
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Estado para controlar el modal y la sesión seleccionada
+  const [showHourModal, setShowHourModal] = useState(false);
+  const [editingSession, setEditingSession] = useState<any | null>(null);
+  const [newStartTime, setNewStartTime] = useState('');
+  const [newEndTime, setNewEndTime] = useState('');
 
   // Para el modal mensual
   const today = new Date();
@@ -54,6 +61,40 @@ const Calendar: React.FC = () => {
   const sessionsForDate = sessions.filter(s => s.session_date === selectedDate);
 
   const fechaES = formatFullDateES(selectedDate);
+
+  // Función para abrir el modal de edición de hora
+  function handleEditHour(session: any) {
+    setEditingSession(session);
+    setNewStartTime(session.start_time?.slice(0,5) || '');
+    setNewEndTime(session.end_time?.slice(0,5) || '');
+    setShowHourModal(true);
+  }
+
+  // Función para guardar la nueva hora (aquí solo actualiza el estado local, deberías llamar a la API real)
+  async function handleSaveHour() {
+    if (editingSession) {
+      try {
+        await patchSessionHour(editingSession.id, newStartTime, newEndTime);
+        setSessions(prev => prev.map(s => s.id === editingSession.id ? {
+          ...s,
+          start_time: newStartTime + ':00',
+          end_time: newEndTime + ':00',
+        } : s));
+      } catch (err) {
+        alert('Error al guardar la hora en el servidor');
+      }
+    }
+    setShowHourModal(false);
+    setEditingSession(null);
+  }
+
+  // Obtener perfil del usuario
+  const [userRole, setUserRole] = useState<string | null>(null);
+  useEffect(() => {
+    getUserProfile(() => {}).then(profile => {
+      setUserRole(profile.role || null);
+    }).catch(() => setUserRole(null));
+  }, []);
 
   return (
     <div className="calendar-container">
@@ -119,13 +160,21 @@ const Calendar: React.FC = () => {
               <IonCard key={session.id} className={cardClass}>
                 <IonCardHeader>
                   <IonCardTitle>
-                    <span className="session-title-custom session-title-row">
-                      <img src={horaIcon} alt="Hora" className="session-title-icon" />
-                      {formatHour(session.start_time, session.session_date)} - {formatHour(session.end_time, session.session_date)}
+                    <div className="session-title-row-flex">
+                      <span className="session-title-custom session-title-row">
+                        {userRole === 'admin' ? (
+                          <button type="button" className="session-title-icon-btn" onClick={() => handleEditHour(session)} title="Editar hora">
+                            <img src={horaIcon} alt="Hora" className="session-title-icon" />
+                          </button>
+                        ) : (
+                          <img src={horaIcon} alt="Hora" className="session-title-icon" />
+                        )}
+                        {formatHour(session.start_time, session.session_date)} - {formatHour(session.end_time, session.session_date)}
+                      </span>
                       {session.trainer_name ? (
-                        <span className="session-title-trainer">| Entrenador {session.trainer_name}</span>
+                        <span className="session-title-trainer">{session.trainer_name}</span>
                       ) : null}
-                    </span>
+                    </div>
                   </IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
@@ -133,7 +182,9 @@ const Calendar: React.FC = () => {
                     <img src={aforoIcon} alt="Aforo" className="session-aforo-icon" />
                     {session.capacity}
                     <div className='calendar-details-btn-container'>
-                      <button className="calendar-details-btn">Detalles</button>
+                      <button className="calendar-details-btn" title="Detalles">
+                        <img src={infoIcon} alt="Detalles" className="calendar-details-btn-icon" />
+                      </button>
                     </div>
                   </span>
                 </IonCardContent>
@@ -164,6 +215,26 @@ const Calendar: React.FC = () => {
           <button className="calendar-close-modal-btn" onClick={() => setShowMonthModal(false)}>
             Cerrar
           </button>
+        </div>
+      </IonModal>
+      {/* Modal de edición de hora */}
+      <IonModal isOpen={showHourModal} onDidDismiss={() => setShowHourModal(false)}>
+        <div className="calendar-hour-modal">
+          <h3>Editar hora de la sesión</h3>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
+            <label>
+              Inicio:
+              <input type="time" value={newStartTime} onChange={e => setNewStartTime(e.target.value)} />
+            </label>
+            <label>
+              Fin:
+              <input type="time" value={newEndTime} onChange={e => setNewEndTime(e.target.value)} />
+            </label>
+          </div>
+          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <button onClick={handleSaveHour} className="calendar-hour-modal-save">Guardar</button>
+            <button onClick={() => setShowHourModal(false)} className="calendar-hour-modal-cancel">Cancelar</button>
+          </div>
         </div>
       </IonModal>
     </div>

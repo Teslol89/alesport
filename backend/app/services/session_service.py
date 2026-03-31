@@ -103,7 +103,10 @@ def get_sessions_by_date_range(
 
 def update_session(
     db: Session, session_id: int, update_data, current_user
-) -> SessionModel:
+) -> dict:
+    print(f"[DEBUG] PATCH session_id: {session_id}")
+    print(f"[DEBUG] current_user: id={getattr(current_user, 'id', None)}, role={getattr(current_user, 'role', None)}")
+    print(f"[DEBUG] update_data: {update_data}")
     """Permite al entrenador o admin ajustar manualmente una sesión concreta.
 
     Solo se actualizan los campos enviados (PATCH parcial).
@@ -148,6 +151,9 @@ def update_session(
         )
 
     db.refresh(session)
+    trainer = db.query(User).filter(User.id == session.trainer_id).first()
+    # Añadir trainer_name como atributo dinámico al objeto ORM
+    setattr(session, "trainer_name", trainer.name if trainer else "")
     return session
 
 

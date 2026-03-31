@@ -123,12 +123,12 @@ const Calendar: React.FC = () => {
                   </IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
-                  <span className='session-small-tittle-custom'>
+                  <span className='session-small-title-custom'>
                     Estado: {session.status} <br />
                     Aforo: {session.capacity}
                     <br />
                     <div className='calendar-details-btn-container'>
-                      <button className="calendar-details-btn">Ver detalles</button>
+                      <button className="calendar-details-btn">Detalles</button>
                     </div>
                   </span>
                 </IonCardContent>

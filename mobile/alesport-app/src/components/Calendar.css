@@ -4,11 +4,13 @@
   align-items: center;
   gap: 0.5rem;
 }
+
 .session-aforo-icon {
   width: 20px;
   height: 20px;
   margin-right: 4px;
 }
+
 /* Layout para el título de la sesión */
 .session-title-row-flex {
   display: flex;
@@ -22,11 +24,27 @@
   align-items: center;
   gap: 0.5rem;
 }
+
 .session-title-icon {
   width: 20px;
   height: 20px;
   margin-right: 4px;
 }
+
+.session-title-icon-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 4px 0 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: none;
+}
+.session-title-icon-btn:focus {
+  outline: 2px solid #0089a6;
+}
+
 .session-title-trainer {
   text-align: right;
   margin-left: 16px;
@@ -35,6 +53,7 @@
   color: #000000;
   white-space: nowrap;
 }
+
 /* ------------------------------------------------------- */
 /* Calendar.css - Estilos para el componente de calendario */
 /* ------------------------------------------------------- */
@@ -59,11 +78,32 @@ body,
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
 }
 
-/* Contenedor para alinear el botón de detalles a la derecha */
+/* --------------------------- */
+/* Botón de detalles con icono */
+/* --------------------------- */
 .calendar-details-btn-container {
   display: flex;
   justify-content: flex-end;
   width: 100%;
+}
+
+
+.calendar-details-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+}
+
+.calendar-details-btn-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
 /* Fondo general color tiza */
@@ -244,18 +284,6 @@ body,
   font-size: 0.95rem;
 }
 
-.calendar-details-btn {
-  background: #0089a6;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.4rem 1.2rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
 .calendar-selected-date {
   display: flex;
   flex-direction: column;
@@ -307,6 +335,54 @@ body,
   top: 0;
   z-index: 10;
 
+}
+
+.calendar-hour-modal {
+  padding: 2rem 1.5rem;
+  background: #fff;
+  border-radius: 16px;
+  max-width: 350px;
+  margin: 2rem auto;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+  text-align: center;
+}
+
+.calendar-hour-modal input[type="time"] {
+  font-size: 1.1em;
+  padding: 0.3em 0.6em;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-left: 0.5em;
+}
+
+.calendar-hour-modal-save {
+  background: #0089a6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5em 1.2em;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.calendar-hour-modal-save:hover {
+  background: #005f6b;
+}
+
+.calendar-hour-modal-cancel {
+  background: #eee;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5em 1.2em;
+  font-size: 1em;
+  cursor: pointer;
+  margin-left: 0.5em;
+}
+
+.calendar-hour-modal-cancel:hover {
+  background: #ccc;
 }
 
 @media (max-width: 600px) {

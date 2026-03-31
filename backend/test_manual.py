@@ -2,7 +2,10 @@ def force_verify_user(email):
     """Fuerza la verificación del usuario (solo para pruebas)."""
     # Buscar el usuario por email (requiere endpoint de admin o acceso especial)
     # Aquí se asume un endpoint de test o admin PATCH /users/verify-email
-    r = requests.patch(f"{BASE_URL}/users/verify-email", json={"email": email})
+    # Intenta usar el token de admin si está disponible
+    admin_token = login("admin@demo.com", "admin123")
+    headers = {"Authorization": f"Bearer {admin_token}"} if admin_token else {}
+    r = requests.patch(f"{BASE_URL}/users/verify-email", json={"email": email}, headers=headers)
     if r.status_code == 200:
         print(f"Usuario {email} verificado forzadamente para test.")
     else:

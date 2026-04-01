@@ -41,8 +41,10 @@ const Calendar: React.FC = () => {
     status: string;
   };
 
-  const weekDays = getCurrentWeekDays();
-  const todayDate = weekDays.find((d: any) => d.isToday)?.date || weekDays[0].date;
+  const initialWeekDays = getCurrentWeekDays();
+  const todayDate = initialWeekDays.find((d: any) => d.isToday)?.date || initialWeekDays[0].date;
+  const [weekAnchorDate, setWeekAnchorDate] = useState(todayDate);
+  const weekDays = useMemo(() => getCurrentWeekDays(weekAnchorDate), [weekAnchorDate]);
   const [selectedDate, setSelectedDate] = useState(todayDate);
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
@@ -73,8 +75,30 @@ const Calendar: React.FC = () => {
   const dayButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   // Para el modal mensual
-  const today = new Date();
-  const monthDays = getMonthDays(today.getFullYear(), today.getMonth());
+  const selectedDateObj = useMemo(() => {
+    const parsed = new Date(`${selectedDate}T00:00:00`);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  }, [selectedDate]);
+  const [monthCursor, setMonthCursor] = useState(() => new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), 1));
+  const monthDays = useMemo(
+    () => getMonthDays(monthCursor.getFullYear(), monthCursor.getMonth()),
+    [monthCursor],
+  );
+  const monthCursorLabel = useMemo(() => {
+    const monthLabel = monthCursor.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    return monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+  }, [monthCursor]);
+
+  useEffect(() => {
+    if (!showMonthModal) {
+      return;
+    }
+    setMonthCursor(new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), 1));
+  }, [showMonthModal, selectedDateObj]);
+
+  function moveMonthCursor(monthOffset: number) {
+    setMonthCursor(prev => new Date(prev.getFullYear(), prev.getMonth() + monthOffset, 1));
+  }
 
   // Obtener rango de la semana actual
   const startDate = weekDays[0].date;
@@ -396,6 +420,25 @@ const Calendar: React.FC = () => {
       <IonModal className="calendar-month-modal-wrapper" isOpen={showMonthModal} onDidDismiss={() => setShowMonthModal(false)}>
         <div className="calendar-month-modal">
           <h3>Selecciona un día del mes</h3>
+          <div className="calendar-month-nav" aria-label="Selector de mes">
+            <button
+              type="button"
+              className="calendar-month-nav-btn"
+              onClick={() => moveMonthCursor(-1)}
+              aria-label="Mes anterior"
+            >
+              ‹
+            </button>
+            <span className="calendar-month-nav-label">{monthCursorLabel}</span>
+            <button
+              type="button"
+              className="calendar-month-nav-btn"
+              onClick={() => moveMonthCursor(1)}
+              aria-label="Mes siguiente"
+            >
+              ›
+            </button>
+          </div>
           <p className="calendar-month-modal-subtitle">Pulsa un día para cambiar la fecha visible</p>
           <div className="calendar-month-grid">
             {monthDays.map((day: any) => (
@@ -403,6 +446,7 @@ const Calendar: React.FC = () => {
                 key={day.date}
                 className={`calendar-month-day-btn${selectedDate === day.date ? ' selected' : ''}`}
                 onClick={() => {
+                  setWeekAnchorDate(day.date);
                   setSelectedDate(day.date);
                   setShowMonthModal(false);
                 }}

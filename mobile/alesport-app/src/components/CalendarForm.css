@@ -32,7 +32,6 @@ body,
 .calendar-month-modal,
 .calendar-month-grid,
 .calendar-month-day-btn,
-.calendar-close-modal-btn,
 .session-card,
 .session-title-custom,
 .session-small-title-custom,
@@ -353,6 +352,49 @@ body,
   font-weight: 700;
 }
 
+.calendar-month-nav {
+  margin-top: 0.65rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.calendar-month-nav-label {
+  flex: 1;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #12404a;
+}
+
+.calendar-month-nav-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid #b7d6de;
+  background: #ffffff;
+  color: #0d5b69;
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+}
+
+.calendar-month-nav-btn:hover {
+  background: #edf8fb;
+  border-color: #8fbdc8;
+}
+
+.calendar-month-nav-btn:active {
+  transform: scale(0.96);
+}
+
 .calendar-month-modal-subtitle {
   margin: 0.45rem 0 1rem 0;
   color: #4c6970;
@@ -395,23 +437,6 @@ body,
   background: #0089a6;
   border-color: #0089a6;
   color: #fff;
-}
-
-.calendar-close-modal-btn {
-  background: #ffffff;
-  color: #35525a;
-  border: 1px solid #c9d8dd;
-  border-radius: 10px;
-  padding: 0.6em 1.15em;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.calendar-close-modal-btn:hover {
-  background: #f3f8fa;
-  border-color: #9cb8c1;
 }
 
 /* --------------------------------------- */
@@ -469,21 +494,27 @@ body,
 /* Campo pulsable que abre spinner de hora */
 .calendar-hour-picker-field {
   width: 100%;
-  font-size: 1rem;
-  padding: 0.58rem 0.6rem;
-  border-radius: 10px;
-  border: 1px solid #bfd5db;
-  background: #fff;
-  color: #10323a;
+  border: var(--app-input-border-width) solid var(--app-input-border-color);
+  background: var(--app-input-bg);
+  border-radius: var(--app-input-radius);
+  padding: var(--app-input-padding);
+  font-size: var(--app-input-font-size);
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  color: #000000;
   text-align: left;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
+  box-sizing: border-box;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .calendar-hour-picker-field:focus {
   outline: none;
-  border-color: #0089a6;
-  box-shadow: 0 0 0 3px rgba(0, 137, 166, 0.18);
+  border-color: var(--app-input-border-color-focus);
+  background: var(--app-input-bg-focus);
+  box-shadow: none;
 }
 
 /* Wrapper del modal secundario (spinner IonDatetime) */
@@ -508,6 +539,27 @@ body,
 
 .calendar-time-picker {
   width: 100%;
+  color-scheme: light;
+  --background: #f4f6f8;
+  --background-rgb: 244, 246, 248;
+  --wheel-highlight-background: #ffffff;
+  --wheel-fade-background-rgb: 244, 246, 248;
+  --title-color: #000000;
+  --color: #000000;
+  --ion-color-primary: #1f2f35;
+  --ion-text-color: #000000;
+  --ion-text-color-rgb: 0, 0, 0;
+  border-radius: 14px;
+}
+
+.calendar-time-picker::part(wheel-item) {
+  color: #000000;
+  opacity: 0.7;
+}
+
+.calendar-time-picker::part(wheel-item active) {
+  color: #000000;
+  opacity: 1;
 }
 
 /* Acciones compartidas (guardar / cancelar / aplicar) */
@@ -535,22 +587,7 @@ body,
   box-shadow: 0 8px 16px rgba(0, 113, 139, 0.28);
 }
 
-.calendar-hour-modal-cancel {
-  background: #ffffff;
-  color: #35525a;
-  border: 1px solid #c9d8dd;
-  border-radius: 10px;
-  padding: 0.6em 1.15em;
-  font-size: 1em;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
 
-.calendar-hour-modal-cancel:hover {
-  background: #f3f8fa;
-  border-color: #9cb8c1;
-}
 
 /* ------------------------------------------- */
 /* 8.1) Modal de detalles y alumnos por sesión */

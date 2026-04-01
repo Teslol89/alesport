@@ -5,14 +5,25 @@ function toLocalISODate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-// Función para obtener los días de la semana actual (lunes a domingo)
-export function getCurrentWeekDays() {
+// Función para obtener los días de la semana (lunes a domingo) basada en una fecha
+export function getCurrentWeekDays(baseDate?: string | Date) {
   const today = new Date();
+  const referenceDate =
+    typeof baseDate === 'string'
+      ? new Date(`${baseDate}T00:00:00`)
+      : baseDate instanceof Date
+        ? new Date(baseDate)
+        : new Date(today);
+
+  if (isNaN(referenceDate.getTime())) {
+    return getCurrentWeekDays();
+  }
+
   // Día de la semana (0=domingo, 1=lunes, ...)
-  const dayOfWeek = today.getDay();
+  const dayOfWeek = referenceDate.getDay();
   // Calcular el lunes de la semana actual
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7));
+  const monday = new Date(referenceDate);
+  monday.setDate(referenceDate.getDate() - ((dayOfWeek + 6) % 7));
   // Generar los 7 días de la semana
   const days = [];
   const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];

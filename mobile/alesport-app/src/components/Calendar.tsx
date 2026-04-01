@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner } from '@ionic/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner, IonDatetime } from '@ionic/react';
 import './Calendar.css';
 import horaIcon from '../icons/horaColor.webp';
 import aforoIcon from '../icons/aforo.webp';
@@ -26,6 +26,7 @@ function formatFullDateES(dateStr: string) {
 }
 
 const Calendar: React.FC = () => {
+  const TIME_PICKER_BASE_DATE = '1970-01-01';
   const weekDays = getCurrentWeekDays();
   const todayDate = weekDays.find((d: any) => d.isToday)?.date || weekDays[0].date;
   const [selectedDate, setSelectedDate] = useState(todayDate);
@@ -38,6 +39,10 @@ const Calendar: React.FC = () => {
   const [editingSession, setEditingSession] = useState<any | null>(null);
   const [newStartTime, setNewStartTime] = useState('');
   const [newEndTime, setNewEndTime] = useState('');
+  const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+  const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end' | null>(null);
+  const [timePickerValue, setTimePickerValue] = useState(`${TIME_PICKER_BASE_DATE}T08:00:00`);
+  const dayButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   // Para el modal mensual
   const today = new Date();
@@ -84,9 +89,39 @@ const Calendar: React.FC = () => {
   // Función para abrir el modal de edición de hora
   function handleEditHour(session: any) {
     setEditingSession(session);
-    setNewStartTime(session.start_time?.slice(0,5) || '');
-    setNewEndTime(session.end_time?.slice(0,5) || '');
+    setNewStartTime(session.start_time?.slice(0, 5) || '');
+    setNewEndTime(session.end_time?.slice(0, 5) || '');
     setShowHourModal(true);
+  }
+
+  function toPickerIso(hourValue: string) {
+    return `${TIME_PICKER_BASE_DATE}T${hourValue}:00`;
+  }
+
+  function fromPickerIsoToHm(isoValue: string) {
+    const match = isoValue.match(/T(\d{2}:\d{2})/);
+    return match ? match[1] : '';
+  }
+
+  function openTimePicker(target: 'start' | 'end') {
+    const currentValue = target === 'start' ? newStartTime : newEndTime;
+    setTimePickerTarget(target);
+    setTimePickerValue(currentValue ? toPickerIso(currentValue) : `${TIME_PICKER_BASE_DATE}T08:00:00`);
+    setShowTimePickerModal(true);
+  }
+
+  function applyPickedTime() {
+    const hourValue = fromPickerIsoToHm(timePickerValue);
+    if (!hourValue || !timePickerTarget) {
+      setShowTimePickerModal(false);
+      return;
+    }
+    if (timePickerTarget === 'start') {
+      setNewStartTime(hourValue);
+    } else {
+      setNewEndTime(hourValue);
+    }
+    setShowTimePickerModal(false);
   }
 
   // Función para guardar la nueva hora (aquí solo actualiza el estado local, deberías llamar a la API real)
@@ -110,10 +145,21 @@ const Calendar: React.FC = () => {
   // Obtener perfil del usuario
   const [userRole, setUserRole] = useState<string | null>(null);
   useEffect(() => {
-    getUserProfile(() => {}).then(profile => {
+    getUserProfile(() => { }).then(profile => {
       setUserRole(profile.role || null);
     }).catch(() => setUserRole(null));
   }, []);
+
+  useEffect(() => {
+    const selectedButton = dayButtonRefs.current[selectedDate];
+    if (selectedButton) {
+      selectedButton.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+    }
+  }, [selectedDate]);
 
   return (
     <div className="calendar-container">
@@ -132,6 +178,7 @@ const Calendar: React.FC = () => {
         {weekDays.map((day: any) => (
           <button
             key={day.date}
+            ref={(el) => { dayButtonRefs.current[day.date] = el; }}
             className={`calendar-day-btn${selectedDate === day.date ? ' selected' : ''}`}
             onClick={() => setSelectedDate(day.date)}
           >
@@ -212,10 +259,12 @@ const Calendar: React.FC = () => {
           })
         )}
       </div>
+
       {/* Modal de mes completo */}
-      <IonModal isOpen={showMonthModal} onDidDismiss={() => setShowMonthModal(false)}>
+      <IonModal className="calendar-month-modal-wrapper" isOpen={showMonthModal} onDidDismiss={() => setShowMonthModal(false)}>
         <div className="calendar-month-modal">
           <h3>Selecciona un día del mes</h3>
+          <p className="calendar-month-modal-subtitle">Pulsa un día para cambiar la fecha visible</p>
           <div className="calendar-month-grid">
             {monthDays.map((day: any) => (
               <button
@@ -236,23 +285,53 @@ const Calendar: React.FC = () => {
           </button>
         </div>
       </IonModal>
-      {/* Modal de edición de hora */}
-      <IonModal isOpen={showHourModal} onDidDismiss={() => setShowHourModal(false)}>
+
+      /* Modal de edición de hora */
+      <IonModal className="calendar-hour-modal-wrapper" isOpen={showHourModal} onDidDismiss={() => setShowHourModal(false)}>
         <div className="calendar-hour-modal">
           <h3>Editar hora de la sesión</h3>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
-            <label>
-              Inicio:
-              <input type="time" value={newStartTime} onChange={e => setNewStartTime(e.target.value)} />
+          <p className="calendar-hour-modal-subtitle">Selecciona la nueva franja horaria</p>
+          <div className="calendar-hour-modal-fields">
+            <label className="calendar-hour-modal-label">
+              <span>Inicio</span>
+              <button type="button" className="calendar-hour-picker-field" onClick={() => openTimePicker('start')}>
+                {newStartTime || '--:--'}
+              </button>
             </label>
-            <label>
-              Fin:
-              <input type="time" value={newEndTime} onChange={e => setNewEndTime(e.target.value)} />
+            <label className="calendar-hour-modal-label">
+              <span>Fin</span>
+              <button type="button" className="calendar-hour-picker-field" onClick={() => openTimePicker('end')}>
+                {newEndTime || '--:--'}
+              </button>
             </label>
           </div>
-          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <div className="calendar-hour-modal-actions">
             <button onClick={handleSaveHour} className="calendar-hour-modal-save">Guardar</button>
             <button onClick={() => setShowHourModal(false)} className="calendar-hour-modal-cancel">Cancelar</button>
+          </div>
+        </div>
+      </IonModal>
+
+      {/* Modal del time picker reutilizable para inicio y fin */}
+      <IonModal className="calendar-time-picker-modal-wrapper" isOpen={showTimePickerModal} onDidDismiss={() => setShowTimePickerModal(false)}>
+        <div className="calendar-time-picker-modal">
+          <h4>{timePickerTarget === 'start' ? 'Hora de inicio' : 'Hora de fin'}</h4>
+          <IonDatetime
+            className="calendar-time-picker"
+            presentation="time"
+            preferWheel={true}
+            minuteValues="0,30"
+            value={timePickerValue}
+            onIonChange={(e) => {
+              const nextValue = e.detail.value;
+              if (typeof nextValue === 'string') {
+                setTimePickerValue(nextValue);
+              }
+            }}
+          />
+          <div className="calendar-hour-modal-actions">
+            <button onClick={applyPickedTime} className="calendar-hour-modal-save">Aplicar</button>
+            <button onClick={() => setShowTimePickerModal(false)} className="calendar-hour-modal-cancel">Cancelar</button>
           </div>
         </div>
       </IonModal>

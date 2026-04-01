@@ -1,3 +1,10 @@
+function toLocalISODate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // Función para obtener los días de la semana actual (lunes a domingo)
 export function getCurrentWeekDays() {
   const today = new Date();
@@ -14,10 +21,10 @@ export function getCurrentWeekDays() {
     d.setDate(monday.getDate() + i);
     days.push({
       label: dayNames[i],
-      date: d.toISOString().slice(0, 10),
+      date: toLocalISODate(d),
       num: d.getDate(),
       isToday:
-        d.toISOString().slice(0, 10) === today.toISOString().slice(0, 10),
+        toLocalISODate(d) === toLocalISODate(today),
     });
   }
   return days;
@@ -33,7 +40,7 @@ export function getMonthDays(year: number, month: number) {
   for (let d = 1; d <= lastDay.getDate(); d++) {
     const dateObj = new Date(year, month, d);
     days.push({
-      date: dateObj.toISOString().slice(0, 10),
+      date: toLocalISODate(dateObj),
       num: d,
       label: dayNames[(dateObj.getDay() + 6) % 7],
     });

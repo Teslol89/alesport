@@ -22,6 +22,12 @@ ion-tab-button ion-icon {
     font-size: 1.5rem;
 }
 
+.tabbar-search-icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
 /* Solo iconos, sin texto */
 .tabbar-icons-only ion-tab-button span {
     display: none;

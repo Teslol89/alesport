@@ -13,8 +13,8 @@ import {
   setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
 import agendaIcon from './icons/agenda.svg';
+import buscarIcon from './icons/buscar.webp';
 import masIcon from './icons/mas.svg';
 import configIcon from './icons/config.svg';
 import AdminCalendarPage from './pages/AdminCalendarPage';
@@ -25,6 +25,7 @@ import ForgotPasswordRequest from './pages/ForgotPasswordRequest';
 import ForgotPasswordVerify from './pages/ForgotPasswordVerify';
 import ForgotPasswordReset from './pages/ForgotPasswordReset';
 import Tab2 from './pages/Tab2';
+import TabSearch from './pages/Buscar';
 import Tab3 from './pages/Tab3';
 import SplashPage from './pages/SplashPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
@@ -179,6 +180,7 @@ const App: React.FC = () => {
     return (
       <IonTabs>
         <IonRouterOutlet>
+          <PrivateRoute exact path="/tab-search" component={TabSearch} />
           <PrivateRoute exact path="/admin-calendar" component={AdminCalendarPage} />
           <PrivateRoute exact path="/tab2" component={Tab2} />
           <PrivateRoute path="/tab3" component={Tab3} />
@@ -188,6 +190,10 @@ const App: React.FC = () => {
           <IonTabButton tab="admin-calendar" href="/admin-calendar">
             <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={agendaIcon} />
             <IonLabel>Agenda</IonLabel>
+          </IonTabButton>
+          <IonTabButton tab="tab-search" href="/tab-search">
+            <img className="tabbar-search-icon" src={buscarIcon} alt="Buscar" aria-hidden="true" />
+            <IonLabel>Buscar</IonLabel>
           </IonTabButton>
           <IonTabButton tab="tab2" href="/tab2">
             <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={masIcon} />

@@ -548,6 +548,110 @@ body,
   border-color: #9cb8c1;
 }
 
+/* ------------------------------------------- */
+/* 8.1) Modal de detalles y alumnos por sesión */
+/* ------------------------------------------- */
+.calendar-bookings-modal-wrapper {
+  --width: min(92vw, 560px);
+  --height: auto;
+  --border-radius: 22px;
+  --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
+}
+
+.calendar-bookings-modal {
+  padding: 1.4rem 1.2rem 1.2rem 1.2rem;
+  background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
+  border-radius: 22px;
+  border: 1px solid rgba(0, 137, 166, 0.18);
+}
+
+.calendar-bookings-modal h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0b2d34;
+  font-weight: 700;
+}
+
+.calendar-bookings-modal-subtitle {
+  margin: 0.45rem 0 0.25rem 0;
+  color: #4c6970;
+  font-size: 0.92rem;
+}
+
+.calendar-bookings-modal-capacity {
+  margin: 0 0 0.9rem 0;
+  color: #1a4650;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.calendar-bookings-empty {
+  margin: 0.7rem 0;
+  color: #5e757c;
+}
+
+.calendar-bookings-list {
+  max-height: 48vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.calendar-booking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid #d7e4e8;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.calendar-booking-name {
+  font-weight: 600;
+  color: #0f3037;
+}
+
+.calendar-booking-email {
+  font-size: 0.85rem;
+  color: #60777d;
+}
+
+.calendar-booking-status {
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.calendar-booking-status.active {
+  color: #157a43;
+}
+
+.calendar-booking-status.cancelled {
+  color: #a14b4b;
+}
+
+.calendar-booking-action-cancel,
+.calendar-booking-action-reactivate {
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.calendar-booking-action-cancel {
+  background: #fceaea;
+  color: #9d2f2f;
+}
+
+.calendar-booking-action-reactivate {
+  background: #e8f7ec;
+  color: #1c7d44;
+}
+
 /* ------------------- */
 /* 9) Reglas responsive UI */
 /* ------------------- */
@@ -569,6 +673,10 @@ body,
   }
 
   .calendar-month-modal {
+    padding: 1.2rem 1rem 1rem 1rem;
+  }
+
+  .calendar-bookings-modal {
     padding: 1.2rem 1rem 1rem 1rem;
   }
 

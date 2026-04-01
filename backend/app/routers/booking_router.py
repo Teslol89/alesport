@@ -12,6 +12,7 @@ from app.services.booking_service import (
     get_all_bookings,
     get_bookings_by_user,
     get_bookings_by_session,
+    reactivate_booking,
 )
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
@@ -81,3 +82,13 @@ def cancel_booking_endpoint(
 ):
     """Cancela una reserva activa. No elimina el registro, cambia el estado a 'cancelled'."""
     return cancel_booking(db, booking_id, current_user)
+
+
+@router.patch("/{booking_id}/reactivate", response_model=BookingResponse)
+def reactivate_booking_endpoint(
+    booking_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Reactiva una reserva cancelada cuando la sesión está activa y hay cupo."""
+    return reactivate_booking(db, booking_id, current_user)

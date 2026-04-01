@@ -7,6 +7,32 @@ from app.models.session import SessionModel
 from app.models.user import User
 
 
+def _count_active_bookings(db: Session, session_id: int) -> int:
+    """Cuenta cuántas reservas activas tiene una sesión."""
+    return (
+        db.query(Booking)
+        .filter(Booking.session_id == session_id, Booking.status == "active")
+        .count()
+    )
+
+
+def _sync_session_status_with_capacity(
+    session: SessionModel, active_bookings_count: int
+) -> None:
+    """Mantiene el estado de sesión alineado con su ocupación.
+
+    - cancelled se respeta como cierre manual
+    - completed significa aforo completo
+    - active significa que aún admite reservas
+    """
+    if session.status == "cancelled":
+        return
+
+    session.status = (
+        "completed" if active_bookings_count >= session.capacity else "active"
+    )
+
+
 def _attach_user_data(db: Session, bookings: list[Booking]) -> list[dict]:
     """Añade user_name, user_email y session_start_time a cada booking para respuestas enriquecidas."""
     if not bookings:
@@ -98,22 +124,17 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
             detail="Sesión no encontrada",
         )
 
-    # Solo se puede reservar en sesiones activas
-    if session.status != "active":
+    # Solo se puede reservar en sesiones no canceladas.
+    # Si estaba marcada como 'completed' pero realmente tiene hueco,
+    # el estado se corrige automáticamente más abajo.
+    if session.status == "cancelled":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"No se puede reservar una sesión con estado '{session.status}'",
+            detail="No se puede reservar una sesión cancelada",
         )
 
     # Verificar que hay plazas disponibles
-    active_bookings_count = (
-        db.query(Booking)
-        .filter(
-            Booking.session_id == booking_data.session_id,
-            Booking.status == "active",
-        )
-        .count()
-    )
+    active_bookings_count = _count_active_bookings(db, booking_data.session_id)
     if active_bookings_count >= session.capacity:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -127,6 +148,7 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
         status="active",
     )
     db.add(booking)
+    _sync_session_status_with_capacity(session, active_bookings_count + 1)
     try:
         db.commit()
     except IntegrityError as exc:
@@ -160,6 +182,13 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
             detail="Reserva no encontrada",
         )
 
+    session = db.query(SessionModel).filter(SessionModel.id == booking.session_id).first()
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sesión no encontrada",
+        )
+
     # Autorización por rol
     if current_user.role == "admin":
         pass
@@ -170,14 +199,6 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
                 detail="No tienes permiso para cancelar esta reserva",
             )
     elif current_user.role == "trainer":
-        session = (
-            db.query(SessionModel).filter(SessionModel.id == booking.session_id).first()
-        )
-        if session is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Sesión no encontrada",
-            )
         if session.trainer_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -197,6 +218,9 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
         )
 
     booking.status = "cancelled"
+    db.flush()
+    active_bookings_count = _count_active_bookings(db, booking.session_id)
+    _sync_session_status_with_capacity(session, active_bookings_count)
     db.commit()
     db.refresh(booking)
     user = db.query(User).filter(User.id == booking.user_id).first()
@@ -249,17 +273,14 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
             detail=f"La reserva está '{booking.status}', no se puede reactivar",
         )
 
-    if session.status != "active":
+    if session.status == "cancelled":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"No se puede reactivar en una sesión con estado '{session.status}'",
+            detail="No se puede reactivar una reserva en una sesión cancelada",
         )
 
-    active_bookings_count = (
-        db.query(Booking)
-        .filter(Booking.session_id == booking.session_id, Booking.status == "active")
-        .count()
-    )
+    active_bookings_count = _count_active_bookings(db, booking.session_id)
+    _sync_session_status_with_capacity(session, active_bookings_count)
     if active_bookings_count >= session.capacity:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -267,6 +288,7 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
         )
 
     booking.status = "active"
+    _sync_session_status_with_capacity(session, active_bookings_count + 1)
     try:
         db.commit()
     except IntegrityError as exc:

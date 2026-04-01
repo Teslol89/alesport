@@ -12,10 +12,15 @@ export type BookingItem = {
   user_email?: string | null;
 };
 
+async function getResponseErrorDetail(response: Response, fallbackMessage: string): Promise<string> {
+  const data = await response.json().catch(() => ({}));
+  return data?.detail || fallbackMessage;
+}
+
 export async function getBookingsBySession(sessionId: number): Promise<BookingItem[]> {
   const response = await fetchWithAuth(`${baseApiUrl}/bookings/session/${sessionId}`);
   if (!response.ok) {
-    throw new Error('No se pudieron cargar las reservas de la sesión');
+    throw new Error(await getResponseErrorDetail(response, 'No se pudieron cargar las reservas de la sesión'));
   }
   return response.json();
 }
@@ -23,7 +28,7 @@ export async function getBookingsBySession(sessionId: number): Promise<BookingIt
 export async function getAllBookings(): Promise<BookingItem[]> {
   const response = await fetchWithAuth(`${baseApiUrl}/bookings/`);
   if (!response.ok) {
-    throw new Error('No se pudieron cargar todas las reservas');
+    throw new Error(await getResponseErrorDetail(response, 'No se pudieron cargar todas las reservas'));
   }
   return response.json();
 }
@@ -33,7 +38,7 @@ export async function cancelBooking(bookingId: number): Promise<BookingItem> {
     method: 'PATCH',
   });
   if (!response.ok) {
-    throw new Error('No se pudo cancelar la reserva');
+    throw new Error(await getResponseErrorDetail(response, 'No se pudo cancelar la reserva'));
   }
   return response.json();
 }
@@ -43,7 +48,7 @@ export async function reactivateBooking(bookingId: number): Promise<BookingItem>
     method: 'PATCH',
   });
   if (!response.ok) {
-    throw new Error('No se pudo reactivar la reserva');
+    throw new Error(await getResponseErrorDetail(response, 'No se pudo reactivar la reserva'));
   }
   return response.json();
 }

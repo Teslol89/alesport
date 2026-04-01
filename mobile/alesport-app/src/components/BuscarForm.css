@@ -147,8 +147,21 @@
 	--background: #f4f6f8;
 	--background-rgb: 244, 246, 248;
 	--title-color: #0f3037;
-	--color: #0f3037;
+	--color: #000000;
+	--ion-text-color: #000000;
+	--ion-text-color-rgb: 0, 0, 0;
+	--ion-color-step-850: #000000;
+	--ion-color-step-900: #000000;
+	--ion-color-step-950: #000000;
 	border-radius: 12px;
+}
+
+.search-form-date-calendar::part(calendar-day) {
+	color: #000000;
+}
+
+.search-form-date-calendar::part(calendar-day active) {
+	color: #ffffff;
 }
 
 .search-form-date-modal-actions {

@@ -223,8 +223,9 @@ const Calendar: React.FC = () => {
       await reactivateBooking(bookingId);
       setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: 'active' } : b)));
       setToast({ show: true, message: 'Reserva reactivada correctamente', type: 'success' });
-    } catch {
-      setToast({ show: true, message: 'No se pudo reactivar la reserva (puede que no haya cupo o la sesión no esté activa)', type: 'danger' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo reactivar la reserva';
+      setToast({ show: true, message, type: 'danger' });
     }
   }
 
@@ -391,7 +392,10 @@ const Calendar: React.FC = () => {
           <p>No hay sesiones para este día.</p>
         ) : (
           sessionsForDate.map(session => {
-            const cardClass = `session-card ion-color-${session.status === 'active' ? 'success' : 'danger'}`;
+            const occupancy = sessionOccupancy[session.id] ?? 0;
+            const isAtCapacity = occupancy >= session.capacity;
+            const colorClass = isAtCapacity ? 'danger' : 'success';
+            const cardClass = `session-card ion-color-${colorClass}`;
             return (
               <IonCard key={session.id} className={cardClass}>
                 <IonCardHeader>
@@ -416,7 +420,7 @@ const Calendar: React.FC = () => {
                 <IonCardContent>
                   <span className='session-small-title-custom session-aforo-row'>
                     <img src={aforoIcon} alt="Aforo" className="session-aforo-icon" />
-                    {`${sessionOccupancy[session.id] ?? 0}/${session.capacity}`}
+                    {`${occupancy}/${session.capacity}`}
                     <div className='calendar-details-btn-container'>
                       <button className="calendar-details-btn" title="Detalles" onClick={() => openDetailsModal(session)}>
                         <img src={infoIcon} alt="Detalles" className="calendar-details-btn-icon" />

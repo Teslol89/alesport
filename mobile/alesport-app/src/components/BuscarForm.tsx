@@ -45,38 +45,38 @@ const BuscarForm: React.FC = () => {
     }, [bookings, query]);
 
     return (
-        <div className="buscar-form-container">
+        <div className="search-form-container">
             <div className="search-top-bar">
                 <div className="search-top-title">Buscar reservas</div>
             </div>
-
-            <div className="buscar-form-content">
+            {/* Contenido principal de la búsqueda */}
+            <div className="search-form-content">
                 {userRole !== 'admin' ? (
-                    <p className="buscar-form-empty">Solo administradores pueden ver todas las reservas.</p>
+                    <p className="search-form-empty">Solo administradores pueden ver todas las reservas.</p>
                 ) : (
-                    <div className="buscar-form-body">
+                    <div className="search-form-body">
                         <input
-                            className="buscar-form-search-input"
+                            className="search-form-search-input"
                             placeholder="Buscar por alumno, email, user_id o session_id"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
 
                         {loading ? (
-                            <div className="buscar-form-loading">
+                            <div className="search-form-loading">
                                 <IonSpinner name="crescent" color="primary" />
                             </div>
                         ) : error ? (
-                            <p className="buscar-form-error">{error}</p>
+                            <p className="search-form-error">{error}</p>
                         ) : filteredBookings.length === 0 ? (
-                            <p className="buscar-form-empty">No se encontraron reservas.</p>
+                            <p className="search-form-empty">No se encontraron reservas.</p>
                         ) : (
-                            <div className="buscar-form-list">
+                            <div className="search-form-list">
                                 {filteredBookings.map((booking) => (
-                                    <div key={booking.id} className="buscar-form-item">
-                                        <div className="buscar-form-item-name">{booking.user_name || `Alumno #${booking.user_id}`}</div>
-                                        <div className="buscar-form-item-email">{booking.user_email || 'Sin email'}</div>
-                                        <div className="buscar-form-item-meta">
+                                    <div key={booking.id} className="search-form-item">
+                                        <div className="search-form-item-name">{booking.user_name || `Alumno #${booking.user_id}`}</div>
+                                        <div className="search-form-item-email">{booking.user_email || 'Sin email'}</div>
+                                        <div className="search-form-item-meta">
                                             Reserva #{booking.id} · Sesión #{booking.session_id} · Estado: {booking.status}
                                         </div>
                                     </div>

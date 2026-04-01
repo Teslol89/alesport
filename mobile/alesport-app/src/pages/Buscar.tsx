@@ -7,7 +7,7 @@ const TabSearch: React.FC = () => {
     <IonPage className="search-page">
       <IonHeader />
       <IonContent fullscreen scrollY={true} scrollEvents={true} forceOverscroll={true}>
-        <div className="buscar-center-wrapper">
+        <div className="search-center-wrapper">
           <BuscarForm />
         </div>
       </IonContent>

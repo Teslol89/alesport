@@ -1,10 +1,30 @@
-.buscar-form-container {
+/* --------------------------------------- */
+/* Estilos para el componente de búsqueda  */
+/* --------------------------------------- */
+
+/* Índice rápido de secciones
+ * 1) Contenedor principal
+ * 2) Top bar de búsqueda
+ * 3) Cuerpo del formulario
+ * 4) Input de búsqueda
+ * 5) Estados de carga y mensajes
+ * 6) Lista de resultados
+ * 7) Tarjeta de resultado
+ */
+
+/* -------------------------- */
+/* 1) Contenedor principal */
+/* -------------------------- */
+.search-form-container {
 	width: 100%;
 	min-height: 100%;
 	display: flex;
 	flex-direction: column;
 }
 
+/* ------------------------------- */
+/* 2) Top bar de búsqueda */
+/* ------------------------------- */
 .search-top-bar {
 	width: 100%;
 	display: flex;
@@ -27,68 +47,85 @@
 	color: #0f3037;
 }
 
-.buscar-form-content {
+/* ------------------------------- */
+/* 3) Cuerpo del formulario */
+/* ------------------------------- */
+.search-form-content {
 	padding: 1rem;
 }
 
-.buscar-form-body {
+.search-form-body {
 	width: 100%;
 }
 
-.buscar-form-search-input {
+/* ------------------------------- */
+/* 4) Input de búsqueda */
+/* ------------------------------- */
+.search-form-search-input {
 	width: 100%;
-	border: 1px solid #bfd5db;
-	border-radius: 12px;
+	--app-input-border-color: rgba(0, 0, 0, 0.08);
+	border: var(--app-input-border-width, 2px) solid var(--app-input-border-color, transparent);
+	background: var(--app-input-bg, #f5f7fa);
+	border-radius: var(--app-input-radius, 12px);
 	padding: 0.7rem 0.8rem;
 	font-size: 0.95rem;
 	margin-bottom: 0.9rem;
 }
 
-.buscar-form-search-input:focus {
+.search-form-search-input:focus {
 	outline: none;
-	border-color: #0089a6;
-	box-shadow: 0 0 0 3px rgba(0, 137, 166, 0.18);
+	border-color: var(--app-input-border-color-focus, #0089a6);
+	background: var(--app-input-bg-focus, rgba(0, 137, 166, 0.08));
 }
 
-.buscar-form-loading {
+/* ----------------------------------------- */
+/* 5) Estados de carga y mensajes */
+/* ----------------------------------------- */
+.search-form-loading {
 	display: flex;
 	justify-content: center;
 	margin-top: 2rem;
 }
 
-.buscar-form-list {
+.search-form-error {
+	color: #b43434;
+}
+
+.search-form-empty {
+	color: #587077;
+}
+
+/* ------------------------------- */
+/* 6) Lista de resultados */
+/* ------------------------------- */
+.search-form-list {
 	display: flex;
 	flex-direction: column;
 	gap: 0.6rem;
 }
 
-.buscar-form-item {
+/* ------------------------------- */
+/* 7) Tarjeta de resultado */
+/* ------------------------------- */
+.search-form-item {
 	background: #fff;
 	border: 1px solid #d8e5e9;
 	border-radius: 12px;
 	padding: 0.65rem 0.75rem;
 }
 
-.buscar-form-item-name {
+.search-form-item-name {
 	font-weight: 700;
 	color: #0f3037;
 }
 
-.buscar-form-item-email {
+.search-form-item-email {
 	font-size: 0.88rem;
 	color: #5d747b;
 }
 
-.buscar-form-item-meta {
+.search-form-item-meta {
 	font-size: 0.82rem;
 	color: #4a656c;
 	margin-top: 0.2rem;
-}
-
-.buscar-form-error {
-	color: #b43434;
-}
-
-.buscar-form-empty {
-	color: #587077;
 }

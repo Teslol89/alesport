@@ -14,3 +14,11 @@ export async function getUserProfile(logout: () => void) {
     throw err;
   }
 }
+
+export async function saveFcmToken(token: string): Promise<void> {
+  await fetchWithAuth(`${baseApiUrl}/users/me/fcm-token`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fcm_token: token }),
+  });
+}

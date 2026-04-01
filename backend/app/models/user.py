@@ -26,6 +26,10 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
     # Rol del usuario: 'admin', 'trainer' o 'client'
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="client")
+    # Teléfono de contacto (opcional)
+    phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    # Token FCM para push notifications (opcional, se actualiza al iniciar sesión en la app)
+    fcm_token: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     # Indica si la cuenta está activa (false = cuenta bloqueada)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     # Indica si la membresía está vigente (false = no puede reservar)

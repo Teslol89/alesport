@@ -1,47 +1,13 @@
 # --- IMPORTS ORDENADOS Y COMPLETOS ---
 import os
-from fastapi import APIRouter, Depends, HTTPException, status, Path, Body, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Body
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.user import User, User as UserModel
-from app.schemas.user import UserResponse
+from app.schemas.user import UserResponse, UserProfileUpdate
 from app.services.user_service import get_all_users
-
-# --- INICIALIZAR ROUTER ANTES DE USARLO ---
-router = APIRouter(prefix="/users", tags=["users"])
-# --- ENDPOINT SOLO PARA TEST/CI: Forzar verificación de usuario ---
-class ForceVerifyEmailRequest(BaseModel):
-    email: str
-
-@router.patch("/verify-email", tags=["users"])
-def force_verify_email(
-    payload: ForceVerifyEmailRequest = Body(...),
-    db: Session = Depends(get_db),
-):
-    """Endpoint SOLO para test/CI: fuerza la verificación de un usuario por email. Protegido por variable de entorno."""
-    if os.environ.get("ALESPORT_ENV") not in ("test", "ci", "dev", "development"):
-        raise HTTPException(status_code=403, detail="No permitido en este entorno")
-    user = db.query(UserModel).filter(UserModel.email == payload.email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    user.is_verified = True
-    db.commit()
-    db.refresh(user)
-    return {"message": f"Usuario {user.email} verificado forzadamente"}
-
-# --- IMPORTS ORDENADOS Y COMPLETOS ---
-from fastapi import APIRouter, Depends, HTTPException, status, Path
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
-from app.auth.security import get_current_user
-from app.database.db import get_db
-from app.models.user import User, User as UserModel
-from app.schemas.user import UserResponse
-from app.services.user_service import get_all_users
-from app.models.user import User as UserModel
-from fastapi import Query
 
 
 # --- INICIALIZAR ROUTER ANTES DE USARLO ---
@@ -111,3 +77,43 @@ def get_users(
             detail="Solo administradores pueden ver la lista de usuarios",
         )
     return get_all_users(db)
+
+
+@router.get("/me", response_model=UserResponse)
+def get_my_profile(
+    current_user: User = Depends(get_current_user),
+):
+    """Devuelve el perfil del usuario autenticado."""
+    return current_user
+
+
+@router.patch("/me", response_model=UserResponse)
+def update_my_profile(
+    update: UserProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Permite al usuario autenticado actualizar su nombre y/o teléfono."""
+    if update.name is not None:
+        current_user.name = update.name
+    if update.phone is not None:
+        current_user.phone = update.phone
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+class FcmTokenUpdate(BaseModel):
+    fcm_token: str
+
+
+@router.patch("/me/fcm-token", status_code=204)
+def update_fcm_token(
+    payload: FcmTokenUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Guarda o actualiza el token FCM del dispositivo del usuario autenticado."""
+    current_user.fcm_token = payload.fcm_token
+    db.commit()
+    return

@@ -12,6 +12,25 @@ export default defineConfig({
     legacy(),
     svgr()
   ],
+  build: {
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+
+          if (id.includes('@ionic/core')) return 'vendor-ionic-core';
+          if (id.includes('@ionic/react') || id.includes('@ionic/react-router') || id.includes('ionicons')) {
+            return 'vendor-ionic-react';
+          }
+          if (id.includes('firebase') || id.includes('@capacitor-firebase')) return 'vendor-firebase';
+          if (id.includes('@capacitor')) return 'vendor-capacitor';
+
+          return 'vendor';
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',

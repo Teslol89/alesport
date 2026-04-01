@@ -9,6 +9,7 @@ Requiere:
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Optional
 import firebase_admin
 from firebase_admin import credentials
@@ -17,6 +18,31 @@ from firebase_admin import credentials
 logger = logging.getLogger(__name__)
 
 _firebase_initialized = False
+
+
+def _resolve_credentials_path() -> Optional[Path]:
+    """Resuelve la ruta del JSON de Firebase por variable de entorno o autodetección."""
+    backend_root = Path(__file__).resolve().parents[2]
+    project_root = Path(__file__).resolve().parents[3]
+
+    env_value = os.environ.get("FIREBASE_CREDENTIALS_PATH")
+    if env_value:
+        raw = Path(env_value).expanduser()
+        candidates = [raw]
+        if not raw.is_absolute():
+            candidates.append(backend_root / raw)
+            candidates.append(project_root / raw)
+
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+
+    for base in (backend_root, project_root):
+        matches = sorted(base.glob("*firebase-adminsdk*.json"))
+        if matches:
+            return matches[0]
+
+    return None
 
 
 def _init_firebase() -> bool:
@@ -43,9 +69,9 @@ def _init_firebase() -> bool:
 
         # Opción 2: Ruta a fichero JSON
         if cred is None:
-            credentials_path = os.environ.get("FIREBASE_CREDENTIALS_PATH")
-            if credentials_path and os.path.exists(credentials_path):
-                cred = credentials.Certificate(credentials_path)
+            credentials_path = _resolve_credentials_path()
+            if credentials_path is not None:
+                cred = credentials.Certificate(str(credentials_path))
 
         if cred is None:
             logger.warning(
@@ -88,10 +114,27 @@ def send_push_notification(
     try:
         from firebase_admin import messaging
 
+        android_config = messaging.AndroidConfig(
+            priority="high",
+            notification=messaging.AndroidNotification(
+                channel_id="alesport_alerts",
+                sound="default",
+            ),
+        )
+
+        apns_config = messaging.APNSConfig(
+            headers={"apns-priority": "10"},
+            payload=messaging.APNSPayload(
+                aps=messaging.Aps(sound="default"),
+            ),
+        )
+
         messages = [
             messaging.Message(
                 notification=messaging.Notification(title=title, body=body),
                 data={k: str(v) for k, v in (data or {}).items()},
+                android=android_config,
+                apns=apns_config,
                 token=token,
             )
             for token in tokens

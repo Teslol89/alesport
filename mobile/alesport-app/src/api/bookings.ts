@@ -7,6 +7,7 @@ export type BookingItem = {
   session_id: number;
   status: 'active' | 'cancelled' | string;
   created_at: string;
+  session_start_time?: string | null;
   user_name?: string | null;
   user_email?: string | null;
 };
@@ -14,7 +15,7 @@ export type BookingItem = {
 export async function getBookingsBySession(sessionId: number): Promise<BookingItem[]> {
   const response = await fetchWithAuth(`${baseApiUrl}/bookings/session/${sessionId}`);
   if (!response.ok) {
-    throw new Error('No se pudieron cargar las reservas de la sesion');
+    throw new Error('No se pudieron cargar las reservas de la sesión');
   }
   return response.json();
 }

@@ -27,6 +27,20 @@ function formatFullDateES(dateStr: string) {
   };
 }
 
+function formatDateDdMmYy(dateStr: string) {
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}/${month}/${year.slice(-2)}`;
+  }
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yy = String(date.getFullYear()).slice(-2);
+  return `${dd}/${mm}/${yy}`;
+}
+
 const Calendar: React.FC = () => {
   const TIME_PICKER_BASE_DATE = '1970-01-01';
 
@@ -521,11 +535,11 @@ const Calendar: React.FC = () => {
       {/* Modal de detalles de sesión y alumnos */}
       <IonModal className="calendar-bookings-modal-wrapper" isOpen={showDetailsModal} onDidDismiss={() => setShowDetailsModal(false)}>
         <div className="calendar-bookings-modal">
-          <h3>Detalles de la sesión</h3>
+          <h3>Detalles de la clase</h3>
           {detailsSession ? (
             <>
               <p className="calendar-bookings-modal-subtitle">
-                {detailsSession.session_date} · {formatHour(detailsSession.start_time, detailsSession.session_date)} - {formatHour(detailsSession.end_time, detailsSession.session_date)}
+                {formatDateDdMmYy(detailsSession.session_date)} · {formatHour(detailsSession.start_time, detailsSession.session_date)} - {formatHour(detailsSession.end_time, detailsSession.session_date)}
               </p>
               <p className="calendar-bookings-modal-capacity">
                 Ocupación: {activeBookingsCount}/{detailsSession.capacity}
@@ -545,7 +559,7 @@ const Calendar: React.FC = () => {
                         <div className="calendar-booking-name">{booking.user_name || `Alumno #${booking.user_id}`}</div>
                         <div className="calendar-booking-email">{booking.user_email || 'Sin email disponible'}</div>
                         <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : 'cancelled'}`}>
-                          {booking.status === 'active' ? 'Activa' : 'Cancelada'}
+                          {booking.status === 'active' ? 'Activa' : 'Inactiva'}
                         </div>
                       </div>
                       {(userRole === 'admin' || userRole === 'trainer') ? (

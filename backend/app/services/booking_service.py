@@ -7,23 +7,40 @@ from app.models.session import SessionModel
 from app.models.user import User
 
 
-def _attach_user_data(db: Session, bookings: list[Booking]) -> list[Booking]:
-    """Añade user_name y user_email dinámicamente a cada booking para respuestas enriquecidas."""
+def _attach_user_data(db: Session, bookings: list[Booking]) -> list[dict]:
+    """Añade user_name, user_email y session_start_time a cada booking para respuestas enriquecidas."""
     if not bookings:
-        return bookings
+        return []
 
     user_ids = {booking.user_id for booking in bookings}
     users = db.query(User).filter(User.id.in_(user_ids)).all()
     user_map = {user.id: user for user in users}
 
+    session_ids = {booking.session_id for booking in bookings}
+    sessions = db.query(SessionModel).filter(SessionModel.id.in_(session_ids)).all()
+    session_map = {session.id: session for session in sessions}
+
+    enriched_bookings = []
     for booking in bookings:
         user = user_map.get(booking.user_id)
-        setattr(booking, "user_name", user.name if user else None)
-        setattr(booking, "user_email", user.email if user else None)
+        session = session_map.get(booking.session_id)
 
-    return bookings
+        booking_dict = {
+            "id": booking.id,
+            "user_id": booking.user_id,
+            "session_id": booking.session_id,
+            "status": booking.status,
+            "created_at": booking.created_at,
+            "session_start_time": session.start_time if session else None,
+            "user_name": user.name if user else None,
+            "user_email": user.email if user else None,
+        }
+        enriched_bookings.append(booking_dict)
 
-def get_bookings_by_session(db: Session, session_id: int) -> list[Booking]:
+    return enriched_bookings
+
+
+def get_bookings_by_session(db: Session, session_id: int) -> list[dict]:
     """Devuelve todas las reservas de una sesión concreta."""
     session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
     if session is None:
@@ -35,13 +52,13 @@ def get_bookings_by_session(db: Session, session_id: int) -> list[Booking]:
     return _attach_user_data(db, bookings)
 
 
-def get_all_bookings(db: Session) -> list[Booking]:
+def get_all_bookings(db: Session) -> list[dict]:
     """Devuelve todas las reservas registradas en la base de datos."""
     bookings = db.query(Booking).all()
     return _attach_user_data(db, bookings)
 
 
-def get_bookings_by_user(db: Session, user_id: int) -> list[Booking]:
+def get_bookings_by_user(db: Session, user_id: int) -> list[dict]:
     """Devuelve todas las reservas de un usuario concreto."""
     # Verificar que el usuario existe
     user = db.query(User).filter(User.id == user_id).first()
@@ -197,7 +214,9 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
             detail="Reserva no encontrada",
         )
 
-    session = db.query(SessionModel).filter(SessionModel.id == booking.session_id).first()
+    session = (
+        db.query(SessionModel).filter(SessionModel.id == booking.session_id).first()
+    )
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -84,7 +84,7 @@ CREATE INDEX IF NOT EXISTS idx_schedule_active ON weekly_schedule(is_active);
 -- Concrete session instances (specific date/time), based on weekly_schedule.
 -- Rules:
 --   - capacity: 1-10 attendees per session
---   - no overlaps: same trainer cannot have two active sessions overlapping
+--   - no overlaps: same trainer cannot have two non-cancelled sessions overlapping
 --   - status: can be active, cancelled, or completed
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -102,13 +102,13 @@ CREATE TABLE IF NOT EXISTS sessions (
     -- Temporal rules
     CHECK (end_time > start_time),
     
-    -- Prevent overlapping active sessions per trainer
+    -- Prevent overlapping non-cancelled sessions per trainer
     CONSTRAINT no_overlap_sessions
         EXCLUDE USING gist (
             trainer_id WITH =,
             tstzrange(start_time, end_time, '[)') WITH &&
         )
-        WHERE (status = 'active')
+        WHERE (status <> 'cancelled')
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_trainer ON sessions(trainer_id);

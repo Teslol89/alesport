@@ -6,16 +6,18 @@ const Tab2: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Tab 2</IonTitle>
+          <IonTitle>Añadir</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
         <IonHeader collapse="condense">
           <IonToolbar>
-            <IonTitle size="large">Tab 2</IonTitle>
+            <IonTitle size="large">Añadir</IonTitle>
           </IonToolbar>
         </IonHeader>
-        {/* Aquí puedes añadir contenido personalizado para Tab 2 */}
+        <div className="tab2-container">
+          <p className="tab2-empty">Espacio reservado para futuras acciones de alta.</p>
+        </div>
       </IonContent>
     </IonPage>
   );

@@ -1,0 +1,61 @@
+.tab2-container {
+	padding: 1rem;
+}
+
+.tab2-search-input {
+	width: 100%;
+	border: 1px solid #bfd5db;
+	border-radius: 12px;
+	padding: 0.7rem 0.8rem;
+	font-size: 0.95rem;
+	margin-bottom: 0.9rem;
+}
+
+.tab2-search-input:focus {
+	outline: none;
+	border-color: #0089a6;
+	box-shadow: 0 0 0 3px rgba(0, 137, 166, 0.18);
+}
+
+.tab2-loading {
+	display: flex;
+	justify-content: center;
+	margin-top: 2rem;
+}
+
+.tab2-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.tab2-item {
+	background: #fff;
+	border: 1px solid #d8e5e9;
+	border-radius: 12px;
+	padding: 0.65rem 0.75rem;
+}
+
+.tab2-item-name {
+	font-weight: 700;
+	color: #0f3037;
+}
+
+.tab2-item-email {
+	font-size: 0.88rem;
+	color: #5d747b;
+}
+
+.tab2-item-meta {
+	font-size: 0.82rem;
+	color: #4a656c;
+	margin-top: 0.2rem;
+}
+
+.tab2-error {
+	color: #b43434;
+}
+
+.tab2-empty {
+	color: #587077;
+}

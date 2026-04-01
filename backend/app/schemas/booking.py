@@ -22,6 +22,8 @@ class BookingResponse(BaseModel):
     # Estado de la reserva: 'active' o 'cancelled'
     status: str
     created_at: datetime
+    user_name: str | None = None
+    user_email: str | None = None
 
     # Permite a Pydantic leer datos directamente desde objetos ORM de SQLAlchemy
     model_config = {"from_attributes": True}

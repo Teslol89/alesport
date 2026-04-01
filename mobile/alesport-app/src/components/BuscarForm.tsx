@@ -1,3 +1,4 @@
+/* Buscador avanzado de reservas para admins, con filtros por texto y fecha, y resumen de resultados. */
 import { useEffect, useMemo, useState } from 'react';
 import { IonDatetime, IonModal, IonSpinner } from '@ionic/react';
 import { BookingItem, getAllBookings } from '../api/bookings';

@@ -48,26 +48,23 @@
 .custom-toast--success {
   background: #77b154;
   /* Verde "FOREST GREEN" */
-  color: #ffffff;
+  color: #ffffff !important;
   animation: fadeInShake 0.4s;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   font-size: 1rem;
   text-align: center;
-  border-radius: 12px;
-  border: 1.5px solid #a5d6a7;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.15);
+  opacity: 1 !important;
 }
 
 .custom-toast--info {
   background: #3dc2ff;
+  color: #ffffff !important;
 }
 
 .custom-toast__close {
   background: none;
   border: none;
-  color: #fff;
+  color: #ffffff !important;
   font-size: 1.3em;
   margin-left: 18px;
   cursor: pointer;
@@ -165,6 +162,11 @@
 
   --app-btn-link-color: #007efe;
   --app-btn-link-color-active: #0d265c;
+
+  --app-btn-danger-bg: #901726;
+  --app-btn-danger-bg-hover: #a61d2e;
+  --app-btn-danger-bg-active: #6e101c;
+  --app-btn-danger-text: #ffffff;
 }
 
 /* Clase utilitaria + mapeo de clases existentes de la app */
@@ -302,6 +304,42 @@
 
 .app-btn-link:disabled,
 .fpverify-resend-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Clase utilitaria + mapeo para botones de cierre/cancelar en modales */
+.app-btn-danger,
+.calendar-close-modal-btn,
+.calendar-hour-modal-cancel {
+  background: var(--app-btn-danger-bg);
+  color: var(--app-btn-danger-text);
+  border: none;
+  border-radius: 10px;
+  padding: 0.6em 1.15em;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+}
+
+.app-btn-danger:hover,
+.calendar-close-modal-btn:hover,
+.calendar-hour-modal-cancel:hover {
+  background: var(--app-btn-danger-bg-hover);
+}
+
+.app-btn-danger:active,
+.calendar-close-modal-btn:active,
+.calendar-hour-modal-cancel:active {
+  background: var(--app-btn-danger-bg-active);
+  transform: scale(0.97);
+}
+
+.app-btn-danger:disabled,
+.calendar-close-modal-btn:disabled,
+.calendar-hour-modal-cancel:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

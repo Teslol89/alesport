@@ -1,65 +1,31 @@
-/* Layout para aforo con icono */
-.session-aforo-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.session-aforo-icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 4px;
-}
-
-/* Layout para el título de la sesión */
-.session-title-row-flex {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.session-title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.session-title-icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 4px;
-}
-
-.session-title-icon-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0 4px 0 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  box-shadow: none;
-}
-.session-title-icon-btn:focus {
-  outline: none;
-}
-
-.session-title-trainer {
-  text-align: right;
-  margin-left: 16px;
-  font-weight: 500;
-  font-size: 1em;
-  color: #000000;
-  white-space: nowrap;
-}
-
 /* ------------------------------------------------------- */
 /* Calendar.css - Estilos para el componente de calendario */
 /* ------------------------------------------------------- */
+
+/* Índice rápido de secciones
+ * 1) Tipografía base
+ * 2) Contenedor principal
+ * 2.1) Cabecera legacy
+ * 3) Top bar (fecha + botón mes)
+ * 4) Scroll de días
+ * 5) Tarjetas de sesión
+ * 6) Encabezado interno de sesión
+ * 6.1) Aforo y botón detalles
+ * 7) Modal de mes
+ * 8) Modal de edición de hora + spinner
+ * 9) Responsive
+ */
+
+/* ----------------------------------------------------- */
+/* 1) Tipografía base aplicada a todos los bloques del view */
+/* ----------------------------------------------------- */
 body,
 .calendar-container,
 .calendar-header-section,
+.calendar-top-bar,
+.calendar-selected-date,
+.calendar-selected-day,
+.calendar-selected-fulldate,
 .calendar-days-scroll,
 .calendar-day-btn,
 .calendar-view-month-btn,
@@ -68,52 +34,23 @@ body,
 .calendar-month-day-btn,
 .calendar-close-modal-btn,
 .session-card,
-.calendar-details-btn,
-.calendar-selected-date,
-.calendar-selected-day,
-.calendar-selected-fulldate,
 .session-title-custom,
 .session-small-title-custom,
-.calendar-top-bar {
+.calendar-details-btn {
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
 }
 
-/* --------------------------- */
-/* Botón de detalles con icono */
-/* --------------------------- */
-.calendar-details-btn-container {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-}
-
-
-.calendar-details-btn {
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: none;
-}
-
-.calendar-details-btn-icon {
-  width: 24px;
-  height: 24px;
-  display: block;
-}
-
-/* Fondo general color tiza */
+/* ------------------------------- */
+/* 2) Contenedor principal calendario */
+/* ------------------------------- */
 .calendar-container {
   background: #f8f6f2;
-  /* color tiza, ajusta si tienes otro */
   min-height: 100vh;
 }
 
-/* Cabecera y scroll de días sin fondo blanco */
+/* --------------------------------------------------------- */
+/* 2.1) Cabecera legacy (si se usa en otras variantes de la vista) */
+/* --------------------------------------------------------- */
 .calendar-header-section {
   background: #fff;
   border-radius: 16px;
@@ -124,6 +61,86 @@ body,
   padding: 1.2rem 1rem 0.7rem 1rem;
 }
 
+/* ------------------------------- */
+/* 3) Top bar fija (fecha + botón mes) */
+/* ------------------------------- */
+.calendar-top-bar {
+  width: 100%;
+  left: 0;
+  right: 0;
+  transform: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  padding-top: max(env(safe-area-inset-top), 1.1rem);
+  padding-right: 1rem;
+  padding-bottom: 0.7rem;
+  padding-left: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.calendar-selected-date {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #000000;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.calendar-selected-day {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #000000;
+  margin-bottom: 0.1rem;
+}
+
+.calendar-selected-fulldate {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: #000000;
+}
+
+.calendar-view-month-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: transparent;
+  color: #0f5d6d;
+  border: 1px solid #b9d7df;
+  border-radius: 999px;
+  padding: 0.38rem 0.9rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.calendar-view-month-btn:hover {
+  background: #e9f5f8;
+  border-color: #93c2cc;
+  color: #0a4a57;
+}
+
+.calendar-view-month-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 137, 166, 0.2);
+}
+
+.calendar-view-month-btn:active {
+  background: #dff0f4;
+}
+
+/* ------------------------------- */
+/* 4) Scroll horizontal de días semana */
+/* ------------------------------- */
 .calendar-days-scroll {
   display: flex;
   overflow-x: auto;
@@ -174,77 +191,9 @@ body,
   font-weight: 600;
 }
 
-.calendar-view-month-btn {
-  background: #0089a6;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.4rem 1.2rem;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.calendar-view-month-btn:hover {
-  background: #005f73;
-}
-
-.calendar-month-modal {
-  padding: 2rem 1rem 1rem 1rem;
-  background: #eeeeee;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.calendar-month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
-  margin: 1rem 0 2rem 0;
-}
-
-.calendar-month-day-btn {
-  background: #fff;
-  border: none;
-  border-radius: 12px;
-  min-width: 44px;
-  min-height: 56px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-family: inherit;
-  font-size: 1rem;
-  color: #222;
-  cursor: pointer;
-  transition: box-shadow 0.2s, background 0.2s;
-  outline: none;
-}
-
-.calendar-month-day-btn.selected {
-  background: #0089a6;
-  color: #fff;
-}
-
-.calendar-close-modal-btn {
-  background: #e53e3e;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.4rem 1.2rem;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  margin-top: 1rem;
-}
-
-.calendar-close-modal-btn:hover {
-  background: #a81d1d;
-}
-
+/* ------------------------------------- */
+/* 5) Tarjetas de sesión (contenedor y estado) */
+/* ------------------------------------- */
 .session-card {
   margin-bottom: 1rem;
   border-radius: 16px;
@@ -256,22 +205,18 @@ body,
   overflow: hidden;
 }
 
-/* Fondo difuminado según estado */
 .session-card.ion-color-success {
   background: rgba(45, 211, 111, 0.10);
-  /* verde claro, homogéneo y semitransparente */
   border-left: 6px solid var(--ion-color-success, #2dd36f);
 }
 
 .session-card.ion-color-medium {
   background: rgba(146, 148, 156, 0.10);
-  /* gris medio, homogéneo y semitransparente */
   border-left: 6px solid var(--ion-color-medium, #92949c);
 }
 
 .session-card.ion-color-danger {
   background: rgba(235, 68, 90, 0.10);
-  /* rojo claro, homogéneo y semitransparente */
   border-left: 6px solid var(--ion-color-danger, #eb445a);
 }
 
@@ -284,30 +229,6 @@ body,
   font-size: 0.95rem;
 }
 
-.calendar-selected-date {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  font-size: 1.2rem;
-  font-weight: 400;
-  color: #000000;
-  text-transform: capitalize;
-  white-space: nowrap;
-}
-
-.calendar-selected-day {
-  font-size: 0.95rem;
-  font-weight: 400;
-  color: #000000;
-  margin-bottom: 0.1rem;
-}
-
-.calendar-selected-fulldate {
-  font-size: 1.25rem;
-  font-weight: 400;
-  color: #000000;
-}
-
 .session-title-custom {
   color: #1a1a1a !important;
 }
@@ -316,77 +237,347 @@ body,
   color: #1a1a1a !important;
 }
 
-.calendar-top-bar {
-  width: 100%;
-  left: 0;
-  right: 0;
-  transform: none;
+/* -------------------------------- */
+/* 6) Encabezado interno de cada sesión */
+/* -------------------------------- */
+.session-title-row-flex {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  background: #ffffff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
-  padding-top: max(env(safe-area-inset-top), 1.1rem);
-  padding-right: 1rem;
-  padding-bottom: 0.7rem;
-  padding-left: 1rem;
-
-  position: sticky;
-  top: 0;
-  z-index: 10;
-
+  width: 100%;
 }
 
-.calendar-hour-modal {
-  padding: 2rem 1.5rem;
-  background: #fff;
-  border-radius: 16px;
-  max-width: 350px;
-  margin: 2rem auto;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+.session-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.session-title-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+}
+
+.session-title-icon-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 4px 0 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: none;
+}
+
+.session-title-icon-btn:focus {
+  outline: none;
+}
+
+.session-title-trainer {
+  text-align: right;
+  margin-left: 16px;
+  font-weight: 500;
+  font-size: 1em;
+  color: #000000;
+  white-space: nowrap;
+}
+
+/* ----------------------------------- */
+/* 6.1) Fila de aforo y botón de detalles UI */
+/* ----------------------------------- */
+.session-aforo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.session-aforo-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+}
+
+.calendar-details-btn-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.calendar-details-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+}
+
+.calendar-details-btn-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+/* ----------------------------- */
+/* 7) Modal de selección de día (mes) */
+/* ----------------------------- */
+.calendar-month-modal-wrapper {
+  --width: min(92vw, 560px);
+  --height: auto;
+  --border-radius: 22px;
+  --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
+}
+
+.calendar-month-modal {
+  padding: 1.4rem 1.2rem 1.2rem 1.2rem;
+  background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
+  border-radius: 22px;
+  border: 1px solid rgba(0, 137, 166, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.calendar-month-modal h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0b2d34;
+  font-weight: 700;
+}
+
+.calendar-month-modal-subtitle {
+  margin: 0.45rem 0 1rem 0;
+  color: #4c6970;
+  font-size: 0.92rem;
   text-align: center;
 }
 
-.calendar-hour-modal input[type="time"] {
-  font-size: 1.1em;
-  padding: 0.3em 0.6em;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  margin-left: 0.5em;
+.calendar-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.45rem;
+  margin: 0.2rem 0 1.1rem 0;
+  width: 100%;
+}
+
+.calendar-month-day-btn {
+  background: #fff;
+  border: 1px solid #d7e4e8;
+  border-radius: 12px;
+  min-width: 44px;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 1rem;
+  color: #222;
+  cursor: pointer;
+  transition: box-shadow 0.2s, background 0.2s, border-color 0.2s;
+  outline: none;
+}
+
+.calendar-month-day-btn:hover {
+  background: #f6fbfd;
+  border-color: #b8d6dd;
+}
+
+.calendar-month-day-btn.selected {
+  background: #0089a6;
+  border-color: #0089a6;
+  color: #fff;
+}
+
+.calendar-close-modal-btn {
+  background: #ffffff;
+  color: #35525a;
+  border: 1px solid #c9d8dd;
+  border-radius: 10px;
+  padding: 0.6em 1.15em;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.calendar-close-modal-btn:hover {
+  background: #f3f8fa;
+  border-color: #9cb8c1;
+}
+
+/* --------------------------------------- */
+/* 8) Modal de selección de horas para sesión */
+/* --------------------------------------- */
+
+/* Wrapper del modal principal de edición de hora */
+.calendar-hour-modal-wrapper {
+  --width: min(90vw, 460px);
+  --height: auto;
+  --border-radius: 22px;
+  --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
+}
+
+/* Contenedor visual del modal principal */
+.calendar-hour-modal {
+  padding: 1.4rem 1.2rem 1.2rem 1.2rem;
+  background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
+  border-radius: 22px;
+  text-align: center;
+  border: 1px solid rgba(0, 137, 166, 0.18);
+}
+
+/* Título y subtítulo del modal principal */
+.calendar-hour-modal h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0b2d34;
+  font-weight: 700;
+}
+
+.calendar-hour-modal-subtitle {
+  margin: 0.45rem 0 1rem 0;
+  color: #4c6970;
+  font-size: 0.92rem;
+}
+
+/* Campos inicio/fin en layout de dos columnas */
+.calendar-hour-modal-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.calendar-hour-modal-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #1a4650;
+}
+
+/* Campo pulsable que abre spinner de hora */
+.calendar-hour-picker-field {
+  width: 100%;
+  font-size: 1rem;
+  padding: 0.58rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid #bfd5db;
+  background: #fff;
+  color: #10323a;
+  text-align: left;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calendar-hour-picker-field:focus {
+  outline: none;
+  border-color: #0089a6;
+  box-shadow: 0 0 0 3px rgba(0, 137, 166, 0.18);
+}
+
+/* Wrapper del modal secundario (spinner IonDatetime) */
+.calendar-time-picker-modal-wrapper {
+  --width: min(92vw, 420px);
+  --height: auto;
+  --border-radius: 20px;
+}
+
+/* Contenido visual del modal de spinner */
+.calendar-time-picker-modal {
+  border-radius: 20px;
+  padding: 1rem;
+  background: #ffffff;
+}
+
+.calendar-time-picker-modal h4 {
+  margin: 0 0 0.6rem 0;
+  text-align: center;
+  color: #0e3139;
+}
+
+.calendar-time-picker {
+  width: 100%;
+}
+
+/* Acciones compartidas (guardar / cancelar / aplicar) */
+.calendar-hour-modal-actions {
+  margin-top: 1.15rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
 }
 
 .calendar-hour-modal-save {
-  background: #0089a6;
+  background: linear-gradient(135deg, #0089a6 0%, #00718b 100%);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 0.5em 1.2em;
+  border-radius: 10px;
+  padding: 0.6em 1.15em;
   font-size: 1em;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
 }
 
 .calendar-hour-modal-save:hover {
-  background: #005f6b;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(0, 113, 139, 0.28);
 }
 
 .calendar-hour-modal-cancel {
-  background: #eee;
-  color: #333;
-  border: none;
-  border-radius: 8px;
-  padding: 0.5em 1.2em;
+  background: #ffffff;
+  color: #35525a;
+  border: 1px solid #c9d8dd;
+  border-radius: 10px;
+  padding: 0.6em 1.15em;
   font-size: 1em;
+  font-weight: 600;
   cursor: pointer;
-  margin-left: 0.5em;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .calendar-hour-modal-cancel:hover {
-  background: #ccc;
+  background: #f3f8fa;
+  border-color: #9cb8c1;
 }
 
+/* ------------------- */
+/* 9) Reglas responsive UI */
+/* ------------------- */
 @media (max-width: 600px) {
   .calendar-title {
     font-size: 1.1rem;
+  }
+
+  .calendar-hour-modal {
+    padding: 1.2rem 1rem 1rem 1rem;
+  }
+
+  .calendar-hour-modal-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-hour-modal-actions {
+    flex-direction: column;
+  }
+
+  .calendar-month-modal {
+    padding: 1.2rem 1rem 1rem 1rem;
+  }
+
+  .calendar-month-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .calendar-view-month-btn {
+    padding: 0.34rem 0.72rem;
+    font-size: 0.86rem;
   }
 }

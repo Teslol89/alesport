@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner, IonDatetime } from '@ionic/react';
-import './Calendar.css';
+import './CalendarForm.css';
+import CustomToast from './CustomStyles';
 import horaIcon from '../icons/horaColor.webp';
 import aforoIcon from '../icons/editarAlumnos.webp';
 import infoIcon from '../icons/detallesColor.svg';
@@ -63,6 +64,11 @@ const Calendar: React.FC = () => {
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [sessionOccupancy, setSessionOccupancy] = useState<Record<number, number>>({});
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' | 'info' }>({
+    show: false,
+    message: '',
+    type: 'danger',
+  });
 
   const dayButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -150,9 +156,9 @@ const Calendar: React.FC = () => {
     try {
       const data = await getBookingsBySession(session.id);
       setBookings(data);
-    } catch (err) {
+    } catch {
       setBookings([]);
-      alert('No se pudieron cargar los alumnos de la sesión');
+      setToast({ show: true, message: 'No se pudieron cargar los alumnos de la sesión', type: 'danger' });
     } finally {
       setBookingsLoading(false);
     }
@@ -165,8 +171,9 @@ const Calendar: React.FC = () => {
     try {
       await cancelBooking(bookingId);
       setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: 'cancelled' } : b)));
-    } catch (err) {
-      alert('No se pudo cancelar la reserva');
+      setToast({ show: true, message: 'Reserva cancelada correctamente', type: 'success' });
+    } catch {
+      setToast({ show: true, message: 'No se pudo cancelar la reserva', type: 'danger' });
     }
   }
 
@@ -177,8 +184,9 @@ const Calendar: React.FC = () => {
     try {
       await reactivateBooking(bookingId);
       setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: 'active' } : b)));
-    } catch (err) {
-      alert('No se pudo reactivar la reserva (puede que no haya cupo o la sesión no esté activa)');
+      setToast({ show: true, message: 'Reserva reactivada correctamente', type: 'success' });
+    } catch {
+      setToast({ show: true, message: 'No se pudo reactivar la reserva (puede que no haya cupo o la sesión no esté activa)', type: 'danger' });
     }
   }
 
@@ -193,8 +201,9 @@ const Calendar: React.FC = () => {
 
   function openTimePicker(target: 'start' | 'end') {
     const currentValue = target === 'start' ? newStartTime : newEndTime;
+    const normalizedValue = currentValue ? `${currentValue.slice(0, 2)}:00` : '';
     setTimePickerTarget(target);
-    setTimePickerValue(currentValue ? toPickerIso(currentValue) : `${TIME_PICKER_BASE_DATE}T08:00:00`);
+    setTimePickerValue(normalizedValue ? toPickerIso(normalizedValue) : `${TIME_PICKER_BASE_DATE}T08:00:00`);
     setShowTimePickerModal(true);
   }
 
@@ -214,20 +223,23 @@ const Calendar: React.FC = () => {
 
   // Función para guardar la nueva hora (aquí solo actualiza el estado local, deberías llamar a la API real)
   async function handleSaveHour() {
-    if (editingSession) {
-      try {
-        await patchSessionHour(editingSession.id, newStartTime, newEndTime);
-        setSessions(prev => prev.map(s => s.id === editingSession.id ? {
-          ...s,
-          start_time: newStartTime + ':00',
-          end_time: newEndTime + ':00',
-        } : s));
-      } catch (err) {
-        alert('Error al guardar la hora en el servidor');
-      }
+    if (!editingSession) {
+      return;
     }
-    setShowHourModal(false);
-    setEditingSession(null);
+
+    try {
+      await patchSessionHour(editingSession.id, newStartTime, newEndTime);
+      setSessions(prev => prev.map(s => s.id === editingSession.id ? {
+        ...s,
+        start_time: newStartTime + ':00',
+        end_time: newEndTime + ':00',
+      } : s));
+      setToast({ show: true, message: 'Hora actualizada correctamente', type: 'success' });
+      setShowHourModal(false);
+      setEditingSession(null);
+    } catch {
+      setToast({ show: true, message: 'Error al guardar la hora en el servidor', type: 'danger' });
+    }
   }
 
   // Obtener perfil del usuario
@@ -304,8 +316,14 @@ const Calendar: React.FC = () => {
         <div className="calendar-selected-date">
           <div className="calendar-selected-day">{fechaES.day}</div>
           <div className="calendar-selected-fulldate">{fechaES.fullDate}</div>
-        </div>
-        <button className="calendar-view-month-btn" onClick={() => setShowMonthModal(true)}>
+        </div >
+        <button
+          className="calendar-view-month-btn"
+          onClick={(e) => {
+            setShowMonthModal(true);
+            e.currentTarget.blur();
+          }}
+        >
           Ver mes
         </button>
       </div>
@@ -394,7 +412,13 @@ const Calendar: React.FC = () => {
               </button>
             ))}
           </div>
-          <button className="calendar-close-modal-btn" onClick={() => setShowMonthModal(false)}>
+          <button
+            className="calendar-close-modal-btn"
+            onClick={(e) => {
+              setShowMonthModal(false);
+              e.currentTarget.blur();
+            }}
+          >
             Cerrar
           </button>
         </div>
@@ -502,6 +526,14 @@ const Calendar: React.FC = () => {
           </div>
         </div>
       </IonModal>
+
+      <CustomToast
+        show={toast.show}
+        message={toast.message}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+        type={toast.type}
+        duration={3000}
+      />
     </div>
   );
 };

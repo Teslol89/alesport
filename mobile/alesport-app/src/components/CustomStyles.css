@@ -3,10 +3,8 @@
 /* -----------------------------------------*/
 .custom-toast {
   position: fixed;
-  top: 48px;
   left: 50%;
-  transform: translateX(-50%);
-  z-index: 99999 !important;
+  z-index: 9999 !important;
   min-width: 300px;
   max-width: 350px;
   padding: 16px 32px 16px 20px;
@@ -20,6 +18,16 @@
   background-clip: padding-box;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   text-align: center;
+}
+
+.custom-toast--top {
+  top: 50px;
+  transform: translateX(-50%);
+}
+
+.custom-toast--center {
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 /* ------------------------------------------- */
@@ -113,21 +121,189 @@
 /* Botón de ir atrás arriba a la izquierda */
 /* --------------------------------------- */
 .back-btn {
-    position: absolute;
-    
-    background: none;
-    border: none;
-    cursor: pointer;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  position: absolute;
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .back-icon {
-    width: 32px;
-    height: 32px;
-    display: block;
+  width: 32px;
+  height: 32px;
+  display: block;
+}
+
+/* -------------------------------------------------------- */
+/* Sistema global de estilos: inputs y botones principales  */
+/* -------------------------------------------------------- */
+:root {
+  --app-input-border-width: 2px;
+  --app-input-border-color: transparent;
+  --app-input-border-color-focus: #0089a6;
+  --app-input-bg: #f5f7fa;
+  --app-input-bg-focus: rgba(0, 137, 166, 0.08);
+  --app-input-radius: 12px;
+  --app-input-padding: 12px;
+  --app-input-font-size: 1rem;
+
+  --app-btn-bg: #0089a6;
+  --app-btn-bg-active: #77b154;
+  --app-btn-text: #ffffff;
+  --app-btn-radius: 12px;
+  --app-btn-padding: 14px;
+  --app-btn-font-size: 1.1rem;
+
+  --app-btn-secondary-bg: #f5f7fa;
+  --app-btn-secondary-bg-hover: #e6f7f7;
+  --app-btn-secondary-bg-active: #deedf0;
+  --app-btn-secondary-text: #000000;
+
+  --app-btn-link-color: #007efe;
+  --app-btn-link-color-active: #0d265c;
+}
+
+/* Clase utilitaria + mapeo de clases existentes de la app */
+.app-input,
+.login-input,
+.register-input,
+.fprequest-input,
+.fpverify-input,
+.fpreset-input,
+.verify-code-input,
+.search-form-search-input {
+  border: var(--app-input-border-width) solid var(--app-input-border-color);
+  background: var(--app-input-bg);
+  border-radius: var(--app-input-radius);
+  padding: var(--app-input-padding);
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: var(--app-input-font-size);
+  color: #000000;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.app-input:focus,
+.login-input:focus,
+.register-input:focus,
+.fprequest-input:focus,
+.fpverify-input:focus,
+.fpreset-input:focus,
+.verify-code-input:focus,
+.search-form-search-input:focus,
+.tab2-search-input:focus {
+  border: var(--app-input-border-width) solid var(--app-input-border-color-focus);
+  background: var(--app-input-bg-focus);
+  outline: none;
+}
+
+/* Clase utilitaria + mapeo de botones principales de formularios */
+.app-btn-primary,
+.login-btn,
+.register-btn,
+.fprequest-btn,
+.fpverify-btn,
+.fpreset-btn,
+.verify-code-btn {
+  background: var(--app-btn-bg);
+  color: var(--app-btn-text);
+  border: none;
+  border-radius: var(--app-btn-radius);
+  padding: var(--app-btn-padding);
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: var(--app-btn-font-size);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+}
+
+.app-btn-primary:active,
+.login-btn:active,
+.register-btn:active,
+.fprequest-btn:active,
+.fpverify-btn:active,
+.fpreset-btn:active,
+.verify-code-btn:active {
+  background: var(--app-btn-bg-active);
+  transform: scale(0.97);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) inset;
+}
+
+.app-btn-primary:disabled,
+.login-btn:disabled,
+.register-btn:disabled,
+.fprequest-btn:disabled,
+.fpverify-btn:disabled,
+.fpreset-btn:disabled,
+.verify-code-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Clase utilitaria + mapeo de botones secundarios */
+.app-btn-secondary,
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--app-btn-secondary-bg);
+  color: var(--app-btn-secondary-text);
+  border: none;
+  border-radius: 10px;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+}
+
+.app-btn-secondary:hover,
+.social-btn:hover {
+  background: var(--app-btn-secondary-bg-hover);
+}
+
+.app-btn-secondary:active,
+.social-btn:active {
+  background: var(--app-btn-secondary-bg-active);
+  transform: scale(0.98);
+}
+
+.app-btn-secondary:disabled,
+.social-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Clase utilitaria + mapeo para botones/enlaces de texto */
+.app-btn-link,
+.signup-link,
+.fpverify-resend-btn,
+.forgot-password,
+.register-return a {
+  color: var(--app-btn-link-color);
+  background: none;
+  border: none;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+}
+
+.app-btn-link:active,
+.signup-link:active,
+.fpverify-resend-btn:active,
+.forgot-password:active,
+.register-return a:active {
+  color: var(--app-btn-link-color-active);
+  transform: scale(0.98);
+}
+
+.app-btn-link:disabled,
+.fpverify-resend-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* --------------------------------------------------- */
@@ -169,4 +345,3 @@
     transform: translateX(-50%) translateY(0) translateX(0);
   }
 }
-

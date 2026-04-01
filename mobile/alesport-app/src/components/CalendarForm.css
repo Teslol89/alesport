@@ -1,6 +1,6 @@
-/* ------------------------------------------------------- */
-/* Calendar.css - Estilos para el componente de calendario */
-/* ------------------------------------------------------- */
+/* ---------------------------------------- */
+/* Estilos para el componente de calendario */
+/* ---------------------------------------- */
 
 /* Índice rápido de secciones
  * 1) Tipografía base
@@ -129,9 +129,13 @@ body,
   color: #0a4a57;
 }
 
-.calendar-view-month-btn:focus {
+.calendar-view-month-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(0, 137, 166, 0.2);
+}
+
+.calendar-view-month-btn:focus:not(:focus-visible) {
+  box-shadow: none;
 }
 
 .calendar-view-month-btn:active {

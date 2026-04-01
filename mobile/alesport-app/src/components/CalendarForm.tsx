@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner, IonDatetime } from '@ionic/react';
-import './Calendar.css';
+import './CalendarForm.css';
 import horaIcon from '../icons/horaColor.webp';
 import aforoIcon from '../icons/editarAlumnos.webp';
 import infoIcon from '../icons/detallesColor.svg';

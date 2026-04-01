@@ -1,0 +1,94 @@
+.buscar-form-container {
+	width: 100%;
+	min-height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.search-top-bar {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	background: #ffffff;
+	padding-top: max(env(safe-area-inset-top), 0.9rem);
+	padding-bottom: 0.5rem;
+	padding-left: 1rem;
+	padding-right: 1rem;
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+}
+
+.search-top-title {
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #0f3037;
+}
+
+.buscar-form-content {
+	padding: 1rem;
+}
+
+.buscar-form-body {
+	width: 100%;
+}
+
+.buscar-form-search-input {
+	width: 100%;
+	border: 1px solid #bfd5db;
+	border-radius: 12px;
+	padding: 0.7rem 0.8rem;
+	font-size: 0.95rem;
+	margin-bottom: 0.9rem;
+}
+
+.buscar-form-search-input:focus {
+	outline: none;
+	border-color: #0089a6;
+	box-shadow: 0 0 0 3px rgba(0, 137, 166, 0.18);
+}
+
+.buscar-form-loading {
+	display: flex;
+	justify-content: center;
+	margin-top: 2rem;
+}
+
+.buscar-form-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.buscar-form-item {
+	background: #fff;
+	border: 1px solid #d8e5e9;
+	border-radius: 12px;
+	padding: 0.65rem 0.75rem;
+}
+
+.buscar-form-item-name {
+	font-weight: 700;
+	color: #0f3037;
+}
+
+.buscar-form-item-email {
+	font-size: 0.88rem;
+	color: #5d747b;
+}
+
+.buscar-form-item-meta {
+	font-size: 0.82rem;
+	color: #4a656c;
+	margin-top: 0.2rem;
+}
+
+.buscar-form-error {
+	color: #b43434;
+}
+
+.buscar-form-empty {
+	color: #587077;
+}

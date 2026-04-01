@@ -2,7 +2,7 @@
 import { IonContent, IonPage } from '@ionic/react';
 
 import './AdminCalendarPage.css';
-import Calendar from '../components/Calendar';
+import Calendar from '../components/CalendarForm';
 
 
 const AdminCalendarPage: React.FC = () => {

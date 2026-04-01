@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'client'
         CHECK (role IN ('admin','trainer','client')),
+    phone VARCHAR(20),
+    fcm_token TEXT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     membership_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_verified BOOLEAN NOT NULL DEFAULT FALSE,

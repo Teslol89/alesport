@@ -6,7 +6,7 @@ import { getUserProfile } from '../api/user';
 import './BuscarForm.css';
 
 function mapBookingStatus(status: string) {
-    return status === 'active' ? 'Activa' : 'Inactiva';
+    return status === 'active' ? 'Activa' : 'Cancelada';
 }
 
 function formatDateDdMmYy(dateStr: string) {
@@ -220,11 +220,11 @@ const BuscarForm: React.FC = () => {
 
                         {!loading && !error ? (
                             <div className="search-form-summary">
-                                <span className="search-form-summary-total">{bookingSummary.total} reservas</span>
+                                <span className="search-form-summary-total">{bookingSummary.total} Reservas</span>
                                 <span className="search-form-summary-separator">·</span>
-                                <span className="search-form-summary-active">{bookingSummary.active} activas</span>
+                                <span className="search-form-summary-active">{bookingSummary.active} Activas</span>
                                 <span className="search-form-summary-separator">·</span>
-                                <span className="search-form-summary-inactive">{bookingSummary.inactive} inactivas</span>
+                                <span className="search-form-summary-inactive">{bookingSummary.inactive} Canceladas</span>
                             </div>
                         ) : null}
 

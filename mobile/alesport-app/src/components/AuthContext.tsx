@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useHistory } from "react-router-dom";
+import { registerFcmToken } from "../services/fcm";
 
 interface AuthContextType {
   token: string | null;
@@ -25,6 +26,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
+      // Registrar token FCM cuando el usuario inicia sesión
+      registerFcmToken();
     } else {
       localStorage.removeItem('token');
     }

@@ -10,9 +10,11 @@ from sqlalchemy import func
 
 from app.models.session import SessionModel
 from app.models.user import User
+from app.models.booking import Booking
 import logging
 
 from app.utils.utils import get_logger
+from app.services.notification_service import send_push_notification
 
 LOCAL_TIMEZONE = ZoneInfo("Europe/Madrid")
 logger = get_logger(__name__)
@@ -106,6 +108,35 @@ def get_sessions_by_date_range(
     return sessions
 
 
+def _notify_session_time_change(db: Session, session: SessionModel, old_start_time) -> None:
+    """Notifica por push a todos los alumnos con reserva activa en la sesión que cambió de hora."""
+    bookings = (
+        db.query(Booking)
+        .filter(Booking.session_id == session.id, Booking.status == "active")
+        .all()
+    )
+    if not bookings:
+        return
+
+    user_ids = [b.user_id for b in bookings]
+    users = db.query(User).filter(User.id.in_(user_ids), User.fcm_token.isnot(None)).all()
+    tokens = [u.fcm_token for u in users if u.fcm_token]
+
+    if not tokens:
+        return
+
+    old_hour = old_start_time.strftime("%H:%M") if old_start_time else "?"
+    new_hour = session.start_time.strftime("%H:%M")
+    session_date = session.start_time.strftime("%d/%m/%Y")
+
+    send_push_notification(
+        tokens=tokens,
+        title="Cambio de horario en tu clase",
+        body=f"Tu clase del {session_date} ha cambiado de {old_hour} a {new_hour}.",
+        data={"session_id": str(session.id)},
+    )
+
+
 def update_session(db: Session, session_id: int, update_data, current_user) -> dict:
     print(f"[DEBUG] PATCH session_id: {session_id}")
     print(
@@ -135,6 +166,11 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
 
     # Obtener solo los campos que se quieren modificar
     patch = update_data.model_dump(exclude_unset=True, exclude_none=True)
+
+    # Detectar si va a cambiar la hora antes de aplicar el patch
+    start_time_changed = "start_time" in patch
+    old_start_time = session.start_time
+
     patch = _prepare_patch_for_session(session, patch)
 
     # Aplicar los cambios al objeto ORM
@@ -156,6 +192,11 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
         )
 
     db.refresh(session)
+
+    # Enviar notificación push si cambió la hora
+    if start_time_changed:
+        _notify_session_time_change(db, session, old_start_time)
+
     # Obtener el nombre del entrenador
     trainer = db.query(User).filter(User.id == session.trainer_id).first()
     trainer_name = trainer.name if trainer else ""

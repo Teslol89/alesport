@@ -120,7 +120,7 @@ dist
 .firebase/
 
 # Firebase service account credentials (never commit)
-backend/alesportapp-firebase-adminsdk-fbsvc-4e919df3de.json
+backend/alesportapp-firebase-adminsdk-fbsvc-eb5aac50cf.json
 *firebase-adminsdk*.json
 
 # TernJS port file

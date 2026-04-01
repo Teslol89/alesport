@@ -17,7 +17,17 @@ export async function registerFcmToken(): Promise<void> {
 
     try {
         // Importación dinámica para evitar errores en web
-        const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
+        const { FirebaseMessaging, Importance, Visibility } = await import('@capacitor-firebase/messaging');
+
+        // Canal Android en alta importancia para mostrar heads-up (desplegable)
+        await FirebaseMessaging.createChannel({
+            id: 'alesport_alerts',
+            name: 'Alertas de clases',
+            description: 'Cambios de horario y avisos importantes de clases',
+            importance: Importance.High,
+            visibility: Visibility.Public,
+            vibration: true,
+        });
 
         // Pedir permiso de notificaciones al usuario
         const { receive } = await FirebaseMessaging.requestPermissions();

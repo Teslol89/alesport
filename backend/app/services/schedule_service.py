@@ -177,7 +177,7 @@ def generate_sessions_from_schedule(
             if "no_overlap_sessions" in str(exc.orig):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="La generación produjo solapamientos para al menos un entrenador",
+                    detail="La generación produjo solapamientos con sesiones no canceladas para al menos un entrenador",
                 )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

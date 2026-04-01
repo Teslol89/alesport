@@ -148,7 +148,7 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
         if "no_overlap_sessions" in str(exc.orig):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="La sesion actualizada se solapa con otra sesion activa del mismo entrenador",
+                detail="La sesion actualizada se solapa con otra sesion no cancelada del mismo entrenador",
             )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -212,7 +212,7 @@ def update_sessions_in_week(
         if "no_overlap_sessions" in str(exc.orig):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="La actualización semanal provoca solape con otras sesiones activas del mismo entrenador",
+                detail="La actualización semanal provoca solape con otras sesiones no canceladas del mismo entrenador",
             )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -78,6 +78,92 @@
 	background: var(--app-input-bg-focus, rgba(0, 137, 166, 0.08));
 }
 
+.search-form-filters-row {
+	display: flex;
+	gap: 0.6rem;
+	margin-bottom: 0.9rem;
+}
+
+.search-form-period-select,
+.search-form-period-date {
+	border: var(--app-input-border-width, 2px) solid var(--app-input-border-color, rgba(0, 0, 0, 0.08));
+	background: var(--app-input-bg, #f5f7fa);
+	border-radius: var(--app-input-radius, 12px);
+	padding: 0.55rem 0.7rem;
+	font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+	font-size: 0.92rem;
+	color: #0f3037;
+	outline: none;
+}
+
+.search-form-period-select {
+	min-width: 120px;
+}
+
+.search-form-period-date {
+	flex: 1;
+}
+
+.search-form-period-date-btn {
+	flex: 1;
+	text-align: left;
+	border: var(--app-input-border-width, 2px) solid var(--app-input-border-color, rgba(0, 0, 0, 0.08));
+	background: var(--app-input-bg, #f5f7fa);
+	border-radius: var(--app-input-radius, 12px);
+	padding: 0.55rem 0.7rem;
+	font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+	font-size: 0.92rem;
+	color: #0f3037;
+	cursor: pointer;
+}
+
+.search-form-period-date-btn:focus {
+	outline: none;
+	border-color: var(--app-input-border-color-focus, #0089a6);
+	background: var(--app-input-bg-focus, rgba(0, 137, 166, 0.08));
+}
+
+.search-form-date-modal-wrapper {
+	--width: min(92vw, 420px);
+	--height: auto;
+	--border-radius: 20px;
+}
+
+.search-form-date-modal {
+	padding: 1rem;
+	background: #ffffff;
+	border-radius: 18px;
+}
+
+.search-form-date-modal h4 {
+	margin: 0 0 0.65rem 0;
+	text-align: center;
+	color: #0f3037;
+}
+
+.search-form-date-calendar {
+	width: 100%;
+	color-scheme: light;
+	--background: #f4f6f8;
+	--background-rgb: 244, 246, 248;
+	--title-color: #0f3037;
+	--color: #0f3037;
+	border-radius: 12px;
+}
+
+.search-form-date-modal-actions {
+	margin-top: 0.9rem;
+	display: flex;
+	gap: 0.6rem;
+	justify-content: center;
+}
+
+.search-form-period-select:focus,
+.search-form-period-date:focus {
+	border-color: var(--app-input-border-color-focus, #0089a6);
+	background: var(--app-input-bg-focus, rgba(0, 137, 166, 0.08));
+}
+
 /* ----------------------------------------- */
 /* 5) Estados de carga y mensajes */
 /* ----------------------------------------- */
@@ -89,6 +175,39 @@
 
 .search-form-error {
 	color: #b43434;
+}
+
+.search-form-summary {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin-bottom: 0.9rem;
+	padding: 0.7rem 0.8rem;
+	border: 1px solid #d8e5e9;
+	border-radius: 12px;
+	background: #ffffff;
+	font-size: 0.88rem;
+	color: #4a656c;
+}
+
+.search-form-summary-total {
+	font-weight: 700;
+	color: #0f3037;
+}
+
+.search-form-summary-active {
+	font-weight: 700;
+	color: #157a43;
+}
+
+.search-form-summary-inactive {
+	font-weight: 700;
+	color: #9d2f2f;
+}
+
+.search-form-summary-separator {
+	color: #94a8ae;
 }
 
 .search-form-empty {
@@ -128,4 +247,42 @@
 	font-size: 0.82rem;
 	color: #4a656c;
 	margin-top: 0.2rem;
+}
+
+.search-form-item-meta-separator {
+	margin: 0 0.25rem;
+	color: #94a8ae;
+}
+
+.search-form-status-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.12rem 0.48rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	vertical-align: middle;
+}
+
+.search-form-status-badge.active {
+	background: rgba(21, 122, 67, 0.14);
+	color: #157a43;
+}
+
+.search-form-status-badge.inactive {
+	background: rgba(157, 47, 47, 0.14);
+	color: #9d2f2f;
+}
+
+@media (max-width: 600px) {
+	.search-form-filters-row {
+		flex-direction: column;
+	}
+
+	.search-form-period-select,
+	.search-form-period-date,
+	.search-form-period-date-btn {
+		width: 100%;
+	}
 }

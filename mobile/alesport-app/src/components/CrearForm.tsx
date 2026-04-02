@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
 import './CrearForm.css';
@@ -62,6 +62,11 @@ const CrearForm: React.FC = () => {
     const [isLoadingTrainers, setIsLoadingTrainers] = useState(false);
     const [trainersError, setTrainersError] = useState<string | null>(null);
     const [submitInfo, setSubmitInfo] = useState<string | null>(null);
+    const singleModalBodyRef = useRef<HTMLDivElement | null>(null);
+    const singleDatePanelRef = useRef<HTMLDivElement | null>(null);
+    const singleCapacityPanelRef = useRef<HTMLDivElement | null>(null);
+    const singleTrainerPanelRef = useRef<HTMLDivElement | null>(null);
+    const singleTimePanelRef = useRef<HTMLDivElement | null>(null);
     const [singleDraft, setSingleDraft] = useState<SingleSessionDraft>({
         className: '',
         sessionDate: toTodayIsoDate(),
@@ -78,6 +83,31 @@ const CrearForm: React.FC = () => {
     const isSingleTrainerValid = singleDraft.trainerId !== null;
     const isSingleRequiredValid = singleDraft.className.trim().length > 0 && singleDraft.sessionDate.length > 0 && isSingleTrainerValid;
     const isSingleValid = isSingleTimeRangeValid && isSingleCapacityValid && isSingleRequiredValid;
+
+    function closeAllSingleSubmodals() {
+        setShowSingleDatePicker(false);
+        setShowSingleTimePicker(false);
+        setShowCapacityPicker(false);
+        setShowTrainerPicker(false);
+    }
+
+    function toggleSingleDatePicker() {
+        const nextOpen = !showSingleDatePicker;
+        closeAllSingleSubmodals();
+        setShowSingleDatePicker(nextOpen);
+    }
+
+    function toggleCapacityPicker() {
+        const nextOpen = !showCapacityPicker;
+        closeAllSingleSubmodals();
+        setShowCapacityPicker(nextOpen);
+    }
+
+    function toggleTrainerPicker() {
+        const nextOpen = !showTrainerPicker;
+        closeAllSingleSubmodals();
+        setShowTrainerPicker(nextOpen);
+    }
 
     useEffect(() => {
         let cancelled = false;
@@ -144,12 +174,13 @@ const CrearForm: React.FC = () => {
             notes: '',
         });
         setSubmitInfo(null);
-        setShowTrainerPicker(false);
+        closeAllSingleSubmodals();
     }
 
     function openTimePicker(target: 'start' | 'end') {
         const currentValue = target === 'start' ? singleDraft.startTime : singleDraft.endTime;
         const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
+        closeAllSingleSubmodals();
         setTimePickerTarget(target);
         setTimePickerValue(toPickerIso(normalizedValue));
         setShowSingleTimePicker(true);
@@ -158,7 +189,7 @@ const CrearForm: React.FC = () => {
     function applyPickedTime() {
         const hmValue = fromPickerIsoToHm(timePickerValue);
         if (!hmValue || !timePickerTarget) {
-            setShowSingleTimePicker(false);
+            closeAllSingleSubmodals();
             return;
         }
         if (timePickerTarget === 'start') {
@@ -166,18 +197,66 @@ const CrearForm: React.FC = () => {
         } else {
             setSingleDraft((prev) => ({ ...prev, endTime: hmValue }));
         }
-        setShowSingleTimePicker(false);
+        closeAllSingleSubmodals();
     }
 
     function pickCapacity(value: number) {
         setSingleDraft((prev) => ({ ...prev, capacity: value }));
-        setShowCapacityPicker(false);
+        closeAllSingleSubmodals();
     }
 
     function pickTrainer(trainer: AssignableTrainer) {
         setSingleDraft((prev) => ({ ...prev, trainerId: trainer.id, trainerName: trainer.name }));
-        setShowTrainerPicker(false);
+        closeAllSingleSubmodals();
     }
+
+    function closeSubmodalsOnEmptyClick(e: React.MouseEvent<HTMLElement>) {
+        if (e.target === e.currentTarget) {
+            closeAllSingleSubmodals();
+        }
+    }
+
+    function scrollSubpanelIntoView(panelElement: HTMLDivElement | null) {
+        const container = singleModalBodyRef.current;
+        if (!container || !panelElement) {
+            return;
+        }
+
+        const containerCenter = container.clientHeight / 2;
+        const panelTop = panelElement.offsetTop;
+        const panelCenter = panelTop + panelElement.offsetHeight / 2;
+        const targetScrollTop = panelCenter - containerCenter;
+
+        container.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: 'smooth',
+        });
+    }
+
+    useEffect(() => {
+        let activePanel: HTMLDivElement | null = null;
+        if (showSingleDatePicker) {
+            activePanel = singleDatePanelRef.current;
+        } else if (showCapacityPicker) {
+            activePanel = singleCapacityPanelRef.current;
+        } else if (showTrainerPicker) {
+            activePanel = singleTrainerPanelRef.current;
+        } else if (showSingleTimePicker) {
+            activePanel = singleTimePanelRef.current;
+        }
+
+        if (!activePanel) {
+            return;
+        }
+
+        const timerId = window.setTimeout(() => {
+            scrollSubpanelIntoView(activePanel);
+        }, 40);
+
+        return () => {
+            window.clearTimeout(timerId);
+        };
+    }, [showSingleDatePicker, showCapacityPicker, showTrainerPicker, showSingleTimePicker]);
 
     return (
         <div className="crear-form-container">
@@ -189,7 +268,7 @@ const CrearForm: React.FC = () => {
 
                 {/* Elección de clase puntual o recurrente */}
                 <section className="crear-form-section">
-                    <h2 className="crear-form-section-title">Qué quieres crear</h2>
+                    <h2 className="crear-form-section-title">¿Qué quieres hacer?</h2>
                     <div className="crear-mode-grid">
                         <button
                             type="button"
@@ -197,6 +276,7 @@ const CrearForm: React.FC = () => {
                             onClick={() => {
                                 setCreateMode('single');
                                 setSubmitInfo(null);
+                                closeAllSingleSubmodals();
                                 setShowSingleModal(true);
                             }}
                         >
@@ -272,22 +352,28 @@ const CrearForm: React.FC = () => {
                 <IonModal
                     className="crear-single-modal-wrapper"
                     isOpen={showSingleModal}
-                    onDidDismiss={() => setShowSingleModal(false)}
+                    onDidDismiss={() => {
+                        setShowSingleModal(false);
+                        closeAllSingleSubmodals();
+                    }}
                 >
-                    <div className="crear-single-modal">
+                    <div className="crear-single-modal" onClick={closeSubmodalsOnEmptyClick} ref={singleModalBodyRef}>
                         <div className="crear-single-modal-header">
                             <h3>Crear clase puntual</h3>
                             <button
                                 type="button"
                                 className="crear-single-modal-close"
-                                onClick={() => setShowSingleModal(false)}
+                                onClick={() => {
+                                    setShowSingleModal(false);
+                                    closeAllSingleSubmodals();
+                                }}
                                 aria-label="Cerrar"
                             >
                                 ×
                             </button>
                         </div>
 
-                        <form className="crear-single-form" onSubmit={handleSingleSubmit}>
+                        <form className="crear-single-form" onSubmit={handleSingleSubmit} onClick={closeSubmodalsOnEmptyClick}>
 
                             {/* Campo Entrenador */}
                             <label className="crear-field-label" htmlFor="single-trainer-role">Entrenador</label>
@@ -296,13 +382,13 @@ const CrearForm: React.FC = () => {
                                 type="button"
                                 className="crear-input crear-date-btn"
                                 disabled={isLoadingTrainers || trainerOptions.length === 0}
-                                onClick={() => setShowTrainerPicker((prev) => !prev)}
+                                onClick={toggleTrainerPicker}
                             >
                                 {isLoadingTrainers ? 'Cargando entrenadores...' : (singleDraft.trainerName || 'Selecciona entrenador')}
                             </button>
 
                             {showTrainerPicker ? (
-                                <div className="crear-trainer-picker-panel">
+                                <div className="crear-trainer-picker-panel" ref={singleTrainerPanelRef}>
                                     {trainerOptions.map((trainer) => (
                                         <button
                                             key={trainer.id}
@@ -326,7 +412,7 @@ const CrearForm: React.FC = () => {
                                 type="text"
                                 value={singleDraft.className}
                                 onChange={(e) => setSingleDraft((prev) => ({ ...prev, className: e.target.value }))}
-                                placeholder="Ej: Funcional Intermedio"
+                                placeholder="Ej: Fuerza, Spinning..."
                             />
 
                             {/* Campo Fecha */}
@@ -337,13 +423,13 @@ const CrearForm: React.FC = () => {
                                         id="single-session-date-btn"
                                         type="button"
                                         className="crear-input crear-date-btn"
-                                        onClick={() => setShowSingleDatePicker((prev) => !prev)}
+                                        onClick={toggleSingleDatePicker}
                                     >
                                         {formatIsoDateForUi(singleDraft.sessionDate)}
                                     </button>
 
                                     {showSingleDatePicker ? (
-                                        <div className="crear-single-date-panel">
+                                        <div className="crear-single-date-panel" ref={singleDatePanelRef}>
                                             <IonDatetime
                                                 className="crear-single-date-calendar"
                                                 presentation="date"
@@ -362,14 +448,14 @@ const CrearForm: React.FC = () => {
                                                 <button
                                                     type="button"
                                                     className="crear-btn-primary"
-                                                    onClick={() => setShowSingleDatePicker(false)}
+                                                    onClick={closeAllSingleSubmodals}
                                                 >
                                                     Aceptar
                                                 </button>
                                                 <button
                                                     type="button"
                                                     className="app-btn-danger"
-                                                    onClick={() => setShowSingleDatePicker(false)}
+                                                    onClick={closeAllSingleSubmodals}
                                                 >
                                                     Cancelar
                                                 </button>
@@ -385,13 +471,13 @@ const CrearForm: React.FC = () => {
                                         id="single-capacity"
                                         type="button"
                                         className="crear-input crear-date-btn"
-                                        onClick={() => setShowCapacityPicker((prev) => !prev)}
+                                        onClick={toggleCapacityPicker}
                                     >
                                         {singleDraft.capacity}
                                     </button>
 
                                     {showCapacityPicker ? (
-                                        <div className="crear-capacity-picker-panel">
+                                        <div className="crear-capacity-picker-panel" ref={singleCapacityPanelRef}>
                                             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
                                                 <button
                                                     key={value}
@@ -436,7 +522,7 @@ const CrearForm: React.FC = () => {
                             </div>
 
                             {showSingleTimePicker ? (
-                                <div className="crear-time-picker-panel">
+                                <div className="crear-time-picker-panel" ref={singleTimePanelRef}>
                                     <h4>{timePickerTarget === 'start' ? 'Hora de inicio' : 'Hora de fin'}</h4>
                                     <IonDatetime
                                         className="crear-time-picker"
@@ -455,7 +541,7 @@ const CrearForm: React.FC = () => {
                                         <button type="button" className="crear-btn-primary" onClick={applyPickedTime}>
                                             Aplicar
                                         </button>
-                                        <button type="button" className="app-btn-danger" onClick={() => setShowSingleTimePicker(false)}>
+                                        <button type="button" className="app-btn-danger" onClick={closeAllSingleSubmodals}>
                                             Cancelar
                                         </button>
                                     </div>

@@ -390,6 +390,10 @@ body,
   overflow: hidden;
   --background: #f4f6f8;
   --background-rgb: 244, 246, 248;
+  --wheel-highlight-background: #ffffff;
+  --wheel-fade-background-rgb: 244, 246, 248;
+  --title-color: #000000;
+  --color: #000000;
   --ion-text-color: #000000;
   --ion-color-primary: #0089a6;
   --ion-color-primary-rgb: 0, 137, 166;
@@ -401,12 +405,10 @@ body,
 }
 
 .calendar-month-date-calendar::part(calendar-day active) {
-  color: #ffffff;
-}
-
-.calendar-month-date-calendar::part(weekday-header) {
-  color: #000000;
-  font-weight: 600;
+  background: rgba(0, 137, 166, 0.18);
+  color: #0f3037;
+  border: none;
+  box-shadow: none;
 }
 
 .calendar-month-date-calendar::part(month-year-button) {
@@ -414,30 +416,14 @@ body,
   font-weight: 700;
 }
 
-.calendar-month-date-calendar::part(next-month-button),
-.calendar-month-date-calendar::part(prev-month-button) {
-  color: #0089a6 !important;
+.calendar-month-date-calendar::part(wheel-item) {
+  color: #000000;
+  opacity: 0.75;
 }
 
-.calendar-month-modal ion-datetime::part(next-month-button) svg,
-.calendar-month-modal ion-datetime::part(prev-month-button) svg {
-  stroke: #000000 !important;
-  color: #000000 !important;
-}
-
-ion-datetime ion-icon {
-  color: #000000 !important;
-}
-
-.calendar-month-date-calendar::part(calendar-day today) {
-  border: 2px solid #0089a6;
-  border-radius: 999px;
-  font-weight: 700;
-}
-
-.calendar-month-date-calendar::part(calendar-day today active) {
-  border-color: #ffffff;
-  box-shadow: 0 0 0 2px #0089a6;
+.calendar-month-date-calendar::part(wheel-item active) {
+  color: #000000;
+  opacity: 1;
 }
 
 .calendar-month-nav {

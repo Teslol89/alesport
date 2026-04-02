@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
 import './CrearForm.css';
@@ -62,6 +62,11 @@ const CrearForm: React.FC = () => {
     const [isLoadingTrainers, setIsLoadingTrainers] = useState(false);
     const [trainersError, setTrainersError] = useState<string | null>(null);
     const [submitInfo, setSubmitInfo] = useState<string | null>(null);
+    const singleModalBodyRef = useRef<HTMLDivElement | null>(null);
+    const singleDatePanelRef = useRef<HTMLDivElement | null>(null);
+    const singleCapacityPanelRef = useRef<HTMLDivElement | null>(null);
+    const singleTrainerPanelRef = useRef<HTMLDivElement | null>(null);
+    const singleTimePanelRef = useRef<HTMLDivElement | null>(null);
     const [singleDraft, setSingleDraft] = useState<SingleSessionDraft>({
         className: '',
         sessionDate: toTodayIsoDate(),
@@ -205,6 +210,54 @@ const CrearForm: React.FC = () => {
         closeAllSingleSubmodals();
     }
 
+    function closeSubmodalsOnEmptyClick(e: React.MouseEvent<HTMLElement>) {
+        if (e.target === e.currentTarget) {
+            closeAllSingleSubmodals();
+        }
+    }
+
+    function scrollSubpanelIntoView(panelElement: HTMLDivElement | null) {
+        const container = singleModalBodyRef.current;
+        if (!container || !panelElement) {
+            return;
+        }
+
+        const containerCenter = container.clientHeight / 2;
+        const panelTop = panelElement.offsetTop;
+        const panelCenter = panelTop + panelElement.offsetHeight / 2;
+        const targetScrollTop = panelCenter - containerCenter;
+
+        container.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: 'smooth',
+        });
+    }
+
+    useEffect(() => {
+        let activePanel: HTMLDivElement | null = null;
+        if (showSingleDatePicker) {
+            activePanel = singleDatePanelRef.current;
+        } else if (showCapacityPicker) {
+            activePanel = singleCapacityPanelRef.current;
+        } else if (showTrainerPicker) {
+            activePanel = singleTrainerPanelRef.current;
+        } else if (showSingleTimePicker) {
+            activePanel = singleTimePanelRef.current;
+        }
+
+        if (!activePanel) {
+            return;
+        }
+
+        const timerId = window.setTimeout(() => {
+            scrollSubpanelIntoView(activePanel);
+        }, 40);
+
+        return () => {
+            window.clearTimeout(timerId);
+        };
+    }, [showSingleDatePicker, showCapacityPicker, showTrainerPicker, showSingleTimePicker]);
+
     return (
         <div className="crear-form-container">
             <div className="crear-top-bar">
@@ -215,7 +268,7 @@ const CrearForm: React.FC = () => {
 
                 {/* Elección de clase puntual o recurrente */}
                 <section className="crear-form-section">
-                    <h2 className="crear-form-section-title">Qué quieres crear</h2>
+                    <h2 className="crear-form-section-title">¿Qué quieres hacer?</h2>
                     <div className="crear-mode-grid">
                         <button
                             type="button"
@@ -304,7 +357,7 @@ const CrearForm: React.FC = () => {
                         closeAllSingleSubmodals();
                     }}
                 >
-                    <div className="crear-single-modal">
+                    <div className="crear-single-modal" onClick={closeSubmodalsOnEmptyClick} ref={singleModalBodyRef}>
                         <div className="crear-single-modal-header">
                             <h3>Crear clase puntual</h3>
                             <button
@@ -320,7 +373,7 @@ const CrearForm: React.FC = () => {
                             </button>
                         </div>
 
-                        <form className="crear-single-form" onSubmit={handleSingleSubmit}>
+                        <form className="crear-single-form" onSubmit={handleSingleSubmit} onClick={closeSubmodalsOnEmptyClick}>
 
                             {/* Campo Entrenador */}
                             <label className="crear-field-label" htmlFor="single-trainer-role">Entrenador</label>
@@ -335,7 +388,7 @@ const CrearForm: React.FC = () => {
                             </button>
 
                             {showTrainerPicker ? (
-                                <div className="crear-trainer-picker-panel">
+                                <div className="crear-trainer-picker-panel" ref={singleTrainerPanelRef}>
                                     {trainerOptions.map((trainer) => (
                                         <button
                                             key={trainer.id}
@@ -359,7 +412,7 @@ const CrearForm: React.FC = () => {
                                 type="text"
                                 value={singleDraft.className}
                                 onChange={(e) => setSingleDraft((prev) => ({ ...prev, className: e.target.value }))}
-                                placeholder="Ej: Funcional Intermedio"
+                                placeholder="Ej: Fuerza, Spinning..."
                             />
 
                             {/* Campo Fecha */}
@@ -376,7 +429,7 @@ const CrearForm: React.FC = () => {
                                     </button>
 
                                     {showSingleDatePicker ? (
-                                        <div className="crear-single-date-panel">
+                                        <div className="crear-single-date-panel" ref={singleDatePanelRef}>
                                             <IonDatetime
                                                 className="crear-single-date-calendar"
                                                 presentation="date"
@@ -424,7 +477,7 @@ const CrearForm: React.FC = () => {
                                     </button>
 
                                     {showCapacityPicker ? (
-                                        <div className="crear-capacity-picker-panel">
+                                        <div className="crear-capacity-picker-panel" ref={singleCapacityPanelRef}>
                                             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
                                                 <button
                                                     key={value}
@@ -469,7 +522,7 @@ const CrearForm: React.FC = () => {
                             </div>
 
                             {showSingleTimePicker ? (
-                                <div className="crear-time-picker-panel">
+                                <div className="crear-time-picker-panel" ref={singleTimePanelRef}>
                                     <h4>{timePickerTarget === 'start' ? 'Hora de inicio' : 'Hora de fin'}</h4>
                                     <IonDatetime
                                         className="crear-time-picker"

@@ -33,17 +33,15 @@ def _to_local_naive_time(value: time) -> time:
 
 def _ensure_no_session_overlap(
     db: Session,
-    trainer_id: int,
     start_time: datetime,
     end_time: datetime,
     exclude_session_id: int | None = None,
 ) -> None:
-    """Valida que la franja no se solape con otra sesión no cancelada del mismo entrenador."""
+    """Valida que la franja no se solape con otra sesión no cancelada (regla global)."""
     candidate_start = start_time.astimezone(LOCAL_TIMEZONE)
     candidate_end = end_time.astimezone(LOCAL_TIMEZONE)
 
     overlap_query = db.query(SessionModel).filter(
-        SessionModel.trainer_id == trainer_id,
         SessionModel.status != "cancelled",
     )
 
@@ -57,7 +55,7 @@ def _ensure_no_session_overlap(
         if existing_start < candidate_end and existing_end > candidate_start:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Esta sesión se solapa con otra no cancelada del mismo entrenador",
+                detail="Esta sesión se solapa con otra sesión activa",
             )
 
 
@@ -104,7 +102,7 @@ def create_session(db: Session, create_data, current_user: User) -> SessionModel
         tzinfo=session_timezone,
     )
 
-    _ensure_no_session_overlap(db, trainer_id, start_dt, end_dt)
+    _ensure_no_session_overlap(db, start_dt, end_dt)
 
     # Crear nuevo modelo de sesión
     new_session = SessionModel(
@@ -307,7 +305,6 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
     if next_status != "cancelled":
         _ensure_no_session_overlap(
             db,
-            session.trainer_id,
             next_start_time,
             next_end_time,
             exclude_session_id=session.id,

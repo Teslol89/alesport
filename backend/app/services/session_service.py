@@ -111,14 +111,14 @@ def create_session(db: Session, create_data, current_user: User) -> SessionModel
 def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
     """Convierte patch de time->datetime y valida coherencia start/end para una sesión."""
     prepared_patch = dict(patch)
-    session_timezone = session.start_time.tzinfo or LOCAL_TIMEZONE
+    session_timezone = LOCAL_TIMEZONE
+    session_date = session.start_time.astimezone(LOCAL_TIMEZONE).date()
 
     if (
         "start_time" in prepared_patch
         and hasattr(prepared_patch["start_time"], "hour")
         and not hasattr(prepared_patch["start_time"], "date")
     ):
-        session_date = session.start_time.date()
         local_start_time = _to_local_naive_time(prepared_patch["start_time"])
         prepared_patch["start_time"] = datetime.combine(
             session_date,
@@ -131,7 +131,6 @@ def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
         and hasattr(prepared_patch["end_time"], "hour")
         and not hasattr(prepared_patch["end_time"], "date")
     ):
-        session_date = session.start_time.date()
         local_end_time = _to_local_naive_time(prepared_patch["end_time"])
         prepared_patch["end_time"] = datetime.combine(
             session_date,

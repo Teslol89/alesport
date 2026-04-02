@@ -24,7 +24,7 @@ import Register from './pages/Register';
 import ForgotPasswordRequest from './pages/ForgotPasswordRequest';
 import ForgotPasswordVerify from './pages/ForgotPasswordVerify';
 import ForgotPasswordReset from './pages/ForgotPasswordReset';
-import Tab2 from './pages/Tab2';
+import Crear from './pages/Crear';
 import TabSearch from './pages/Buscar';
 import Tab3 from './pages/Tab3';
 import SplashPage from './pages/SplashPage';
@@ -183,7 +183,7 @@ const App: React.FC = () => {
         <IonRouterOutlet>
           <PrivateRoute exact path="/tab-search" component={TabSearch} />
           <PrivateRoute exact path="/admin-calendar" component={AdminCalendarPage} />
-          <PrivateRoute exact path="/tab2" component={Tab2} />
+          <PrivateRoute exact path="/crear" component={Crear} />
           <PrivateRoute path="/tab3" component={Tab3} />
           <Route exact path="/" component={RootRedirect} />
         </IonRouterOutlet>
@@ -196,9 +196,9 @@ const App: React.FC = () => {
             <img className="tabbar-search-icon" src={buscarIcon} alt="Buscar" aria-hidden="true" />
             <IonLabel>Buscar</IonLabel>
           </IonTabButton>
-          <IonTabButton tab="tab2" href="/tab2">
+          <IonTabButton tab="crear" href="/crear">
             <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={masIcon} />
-            <IonLabel>Añadir</IonLabel>
+            <IonLabel>Crear</IonLabel>
           </IonTabButton>
           <IonTabButton tab="tab3" href="/tab3">
             <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={configIcon} />

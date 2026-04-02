@@ -2,6 +2,18 @@ import { fetchWithAuth } from "./fetchWithAuth";
 
 const baseApiUrl = import.meta.env.VITE_API_URL || "https://verdeguerlabs.es/api";
 
+async function getResponseErrorDetail(response: Response, fallbackMessage: string) {
+  try {
+    const data = await response.json();
+    if (typeof data?.detail === 'string' && data.detail.trim()) {
+      return data.detail;
+    }
+  } catch {
+    // Ignorar errores al parsear para usar el mensaje fallback.
+  }
+  return fallbackMessage;
+}
+
 export async function getSessionsByDateRange(startDate: string, endDate: string) {
   const url = `${baseApiUrl}/sessions/?start_date=${startDate}&end_date=${endDate}`;
   const response = await fetchWithAuth(url);
@@ -21,7 +33,7 @@ export async function patchSessionHour(sessionId: number, start_time: string, en
     body,
   });
   if (!response.ok) {
-    throw new Error('Error al actualizar la hora de la sesión');
+    throw new Error(await getResponseErrorDetail(response, 'Error al actualizar la hora de la sesión'));
   }
   return response.json();
 }

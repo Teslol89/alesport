@@ -333,16 +333,48 @@ body,
   --height: auto;
   --border-radius: 22px;
   --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
+  --ion-color-primary: #0089a6;
+  --ion-color-primary-rgb: 0, 137, 166;
+}
+
+.calendar-month-modal-wrapper::part(content) {
+  border-radius: 22px;
+  overflow: hidden;
 }
 
 .calendar-month-modal {
   padding: 1.4rem 1.2rem 1.2rem 1.2rem;
   background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
-  border-radius: 22px;
+  border-radius: 0;
   border: 1px solid rgba(0, 137, 166, 0.18);
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.calendar-month-modal ion-button,
+.calendar-month-modal button,
+.calendar-month-modal .button-inner,
+.calendar-month-modal .calendar-day-btn,
+.calendar-month-modal .calendar-month-day-btn,
+.calendar-month-modal .calendar-month-nav-btn {
+  color: #0089a6 !important;
+}
+
+.calendar-month-modal ion-icon {
+  color: #000000 !important;
+}
+
+.calendar-month-modal .calendar-month-day-btn.selected,
+.calendar-month-modal .calendar-day-btn.selected {
+  background: #0089a6 !important;
+  border-color: #0089a6 !important;
+  color: #ffffff !important;
+}
+
+.calendar-month-modal .calendar-close-modal-btn {
+  color: #ffffff !important;
+  margin-top: 1.4rem;
 }
 
 .calendar-month-modal h3 {
@@ -350,6 +382,62 @@ body,
   font-size: 1.25rem;
   color: #0b2d34;
   font-weight: 700;
+}
+
+.calendar-month-date-calendar {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  --background: #f4f6f8;
+  --background-rgb: 244, 246, 248;
+  --ion-text-color: #000000;
+  --ion-color-primary: #0089a6;
+  --ion-color-primary-rgb: 0, 137, 166;
+  --ion-color-primary-contrast: #ffffff;
+}
+
+.calendar-month-date-calendar::part(calendar-day) {
+  color: #000000;
+}
+
+.calendar-month-date-calendar::part(calendar-day active) {
+  color: #ffffff;
+}
+
+.calendar-month-date-calendar::part(weekday-header) {
+  color: #000000;
+  font-weight: 600;
+}
+
+.calendar-month-date-calendar::part(month-year-button) {
+  color: #000000;
+  font-weight: 700;
+}
+
+.calendar-month-date-calendar::part(next-month-button),
+.calendar-month-date-calendar::part(prev-month-button) {
+  color: #0089a6 !important;
+}
+
+.calendar-month-modal ion-datetime::part(next-month-button) svg,
+.calendar-month-modal ion-datetime::part(prev-month-button) svg {
+  stroke: #000000 !important;
+  color: #000000 !important;
+}
+
+ion-datetime ion-icon {
+  color: #000000 !important;
+}
+
+.calendar-month-date-calendar::part(calendar-day today) {
+  border: 2px solid #0089a6;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.calendar-month-date-calendar::part(calendar-day today active) {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px #0089a6;
 }
 
 .calendar-month-nav {
@@ -408,6 +496,7 @@ body,
   gap: 0.45rem;
   margin: 0.2rem 0 1.1rem 0;
   width: 100%;
+
 }
 
 .calendar-month-day-btn {
@@ -434,7 +523,7 @@ body,
 }
 
 .calendar-month-day-btn.selected {
-  background: #0089a6;
+  background: #b85a0e;
   border-color: #0089a6;
   color: #fff;
 }
@@ -522,6 +611,8 @@ body,
   --width: min(92vw, 420px);
   --height: auto;
   --border-radius: 20px;
+  --ion-color-primary: #0089a6;
+  --ion-color-primary-rgb: 0, 137, 166;
 }
 
 /* Contenido visual del modal de spinner */

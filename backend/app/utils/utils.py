@@ -1,5 +1,22 @@
 import logging
+from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
+
+
+LOCAL_TIMEZONE = ZoneInfo("Europe/Madrid")
+
+
+def to_local_datetime(value: datetime) -> datetime:
+    """Normaliza un datetime a la zona horaria local de la aplicación."""
+    if value.tzinfo is None:
+        return value.replace(tzinfo=LOCAL_TIMEZONE)
+    return value.astimezone(LOCAL_TIMEZONE)
+
+
+def is_past_session_datetime(value: datetime) -> bool:
+    """Indica si una sesión pertenece a un día anterior al actual en horario local."""
+    return to_local_datetime(value).date() < datetime.now(LOCAL_TIMEZONE).date()
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
     """Devuelve un logger configurado con el nombre dado o root."""

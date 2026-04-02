@@ -7,8 +7,14 @@ from typing import Optional
 from app.database.db import get_db
 from app.auth.security import get_current_user
 from app.models.user import User
-from app.schemas.session import SessionResponse, SessionUpdate, SessionWeekUpdate
+from app.schemas.session import (
+    SessionCreate,
+    SessionResponse,
+    SessionUpdate,
+    SessionWeekUpdate,
+)
 from app.services.session_service import (
+    create_session,
     get_sessions,
     get_sessions_by_date_range,
     update_session,
@@ -18,6 +24,22 @@ from app.services.session_service import (
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 # Rutas para gestionar sesiones de entrenamiento. Solo accesibles por entrenadores y admins.
+
+
+@router.post("/", response_model=SessionResponse, status_code=201)
+def create_single_session(
+    create_data: SessionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Crea una nueva sesión puntual (clase concreta con fecha y hora específicas).
+
+    Trainers pueden crear solo sus propias sesiones.
+    Admins pueden crear sesiones para cualquier trainer (especificando trainer_id en body).
+    """
+    return create_session(db, create_data, current_user)
+
+
 @router.get("/", response_model=list[SessionResponse])
 def read_sessions(
     start_date: Optional[date] = Query(
@@ -78,3 +100,24 @@ def patch_session(
             detail="Solo entrenadores o administradores pueden modificar sesiones",
         )
     return update_session(db, session_id, update_data, current_user)
+
+
+@router.delete("/{session_id}", response_model=SessionResponse)
+def delete_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Cancela una sesión (soft delete: cambia status a 'cancelled').
+    La sesión se mantiene en BD para auditoría pero desaparece de vistas activas.
+    Los trainers solo pueden cancelar sus propias sesiones.
+    Los admins pueden cancelar cualquiera.
+    """
+    if current_user.role not in ("trainer", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo entrenadores o administradores pueden cancelar sesiones",
+        )
+    # Llamar a update_session con status='cancelled'
+    cancel_data = SessionUpdate(status="cancelled")
+    return update_session(db, session_id, cancel_data, current_user)

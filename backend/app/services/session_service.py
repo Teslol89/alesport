@@ -21,6 +21,79 @@ logger = get_logger(__name__)
 PAST_SESSION_UPDATE_ERROR = "No se pueden modificar sesiones de días pasados"
 
 
+def create_session(db: Session, create_data, current_user: User) -> SessionModel:
+    """Crea una nueva sesión puntual concreta.
+    
+    Si current_user.role == 'admin' y create_data.trainer_id está especificado,
+    se usa ese trainer_id. Caso contrario, se usa el del usuario autenticado
+    (solo trainers y admins pueden crear sesiones).
+    """
+    if current_user.role not in ("trainer", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo entrenadores o administradores pueden crear sesiones",
+        )
+
+    # Determinar trainer_id
+    if current_user.role == "admin" and create_data.trainer_id is not None:
+        trainer_id = create_data.trainer_id
+        # Validar que el trainer existe
+        trainer = db.query(User).filter(User.id == trainer_id).first()
+        if not trainer:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Usuario/entrenador con id {trainer_id} no encontrado",
+            )
+    else:
+        trainer_id = current_user.id
+
+    # Convertir session_date + times a datetimes con timezone
+    session_timezone = LOCAL_TIMEZONE
+    start_dt = datetime.combine(
+        create_data.session_date,
+        create_data.start_time,
+        tzinfo=session_timezone,
+    )
+    end_dt = datetime.combine(
+        create_data.session_date,
+        create_data.end_time,
+        tzinfo=session_timezone,
+    )
+
+    # Crear nuevo modelo de sesión
+    new_session = SessionModel(
+        trainer_id=trainer_id,
+        start_time=start_dt,
+        end_time=end_dt,
+        capacity=create_data.capacity,
+        class_name=create_data.class_name,
+        notes=create_data.notes or None,
+        status="active",
+    )
+
+    try:
+        db.add(new_session)
+        db.commit()
+        db.refresh(new_session)
+    except IntegrityError as exc:
+        db.rollback()
+        if "no_overlap_sessions" in str(exc.orig):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Esta sesión se solapa con otra no cancelada del mismo entrenador",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Datos de sesión inválidos",
+        )
+
+    # Obtener nombre del trainer para response
+    trainer = db.query(User).filter(User.id == trainer_id).first()
+    setattr(new_session, "trainer_name", trainer.name if trainer else "")
+
+    return new_session
+
+
 def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
     """Convierte patch de time->datetime y valida coherencia start/end para una sesión."""
     prepared_patch = dict(patch)

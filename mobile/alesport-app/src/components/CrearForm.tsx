@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
+import { createSingleSession } from '../api/sessions';
 import './CrearForm.css';
 
 type CreateMode = 'single' | 'recurring' | null;
@@ -158,7 +159,28 @@ const CrearForm: React.FC = () => {
             setSubmitInfo('Revisa los campos obligatorios y el rango de horas antes de continuar.');
             return;
         }
-        setSubmitInfo('Formulario de clase puntual correcto. En el siguiente paso lo conectamos con el endpoint de creación.');
+
+        setSubmitInfo('Enviando sesión...');
+
+        createSingleSession({
+            session_date: singleDraft.sessionDate,
+            start_time: singleDraft.startTime,
+            end_time: singleDraft.endTime,
+            capacity: singleDraft.capacity,
+            class_name: singleDraft.className.trim(),
+            notes: singleDraft.notes.trim() || undefined,
+            trainer_id: singleDraft.trainerId || undefined,
+        })
+            .then(() => {
+                setSubmitInfo('✓ Sesión creada exitosamente');
+                setTimeout(() => {
+                    setShowSingleModal(false);
+                    resetSingleDraft();
+                }, 1000);
+            })
+            .catch((error) => {
+                setSubmitInfo(`Error: ${error.message || 'No se pudo crear la sesión'}`);
+            });
     }
 
     function resetSingleDraft() {

@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
-from sqlalchemy.types import Integer, String, TIMESTAMP
+from sqlalchemy.types import Integer, String, Text, TIMESTAMP
 
 from app.database.db import Base
 
@@ -28,6 +28,10 @@ class SessionModel(Base):
     end_time: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     # Número máximo de asistentes (1-10)
     capacity: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Nombre visible de la clase (ej. Funcional, Spinning)
+    class_name: Mapped[str] = mapped_column(String(120), nullable=False, default="Clase")
+    # Notas opcionales para detalles operativos de la sesión
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Estado actual: 'active', 'cancelled' o 'completed'
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     # Fecha de creación, generada automáticamente por la base de datos

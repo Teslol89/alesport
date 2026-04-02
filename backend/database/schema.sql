@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0 AND capacity <= 10),
+    class_name VARCHAR(120) NOT NULL DEFAULT 'Clase',
+    notes TEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'active'
         CHECK (status IN ('active','cancelled','completed')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

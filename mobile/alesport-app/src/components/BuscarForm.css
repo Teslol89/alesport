@@ -144,10 +144,10 @@
 .search-form-date-calendar {
 	width: 100%;
 	color-scheme: light;
-	--background: #f4f6f8;
-	--background-rgb: 244, 246, 248;
+	--background: #f5f7fa;
+	--background-rgb: 245, 247, 250;
 	--wheel-highlight-background: #ffffff;
-	--wheel-fade-background-rgb: 244, 246, 248;
+	--wheel-fade-background-rgb: 245, 247, 250;
 	--title-color: #000000;
 	--color: #000000;
 	--ion-text-color: #000000;

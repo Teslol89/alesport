@@ -59,6 +59,25 @@ export async function patchSessionHour(sessionId: number, start_time: string, en
   return response.json();
 }
 
+export async function updateSession(sessionId: number, payload: {
+  start_time?: string;
+  end_time?: string;
+  capacity?: number;
+  class_name?: string;
+  notes?: string;
+}) {
+  const url = `${baseApiUrl}/sessions/${sessionId}`;
+  const response = await fetchWithAuth(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(await getResponseErrorDetail(response, 'Error al actualizar la sesión'));
+  }
+  return response.json();
+}
+
 // DELETE para cancelar una sesión (soft delete: cambia status a 'cancelled')
 export async function cancelSession(sessionId: number) {
   const url = `${baseApiUrl}/sessions/${sessionId}`;

@@ -24,6 +24,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      setTokenState(null);
+      history.replace('/login');
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized as EventListener);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized as EventListener);
+    };
+  }, [history]);
+
+  useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
       // Registrar token FCM cuando el usuario inicia sesión
@@ -39,6 +51,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     setTokenState(null);
+    localStorage.removeItem('token');
     history.replace("/login");
   };
 

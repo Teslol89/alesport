@@ -18,7 +18,6 @@ import buscarIcon from './icons/buscar.webp';
 import masIcon from './icons/mas.svg';
 import configIcon from './icons/config.svg';
 import AdminCalendarPage from './pages/AdminCalendarPage';
-
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPasswordRequest from './pages/ForgotPasswordRequest';
@@ -27,12 +26,12 @@ import ForgotPasswordReset from './pages/ForgotPasswordReset';
 import Crear from './pages/Crear';
 import TabSearch from './pages/Buscar';
 import Tab3 from './pages/Tab3';
+import VerifyCode from './pages/VerifyCode';
 import SplashPage from './pages/SplashPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import { getPendingUser, deletePendingUser } from './api/auth';
 import CustomToast from './components/CustomStyles';
-import VerifyCode from './pages/VerifyCode';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -75,6 +74,54 @@ function RootRedirect() {
   return <Redirect to={isAuthenticated ? "/admin-calendar" : "/login"} />;
 }
 
+function MainRoutes() {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return (
+      <IonRouterOutlet>
+        <Route exact path="/login" component={Login} />
+        <Route exact path="/register" component={Register} />
+        <Route exact path="/verify-code" component={VerifyCode} />
+        <Route exact path="/forgot-password-request" component={ForgotPasswordRequest} />
+        <Route exact path="/forgot-password-verify" component={ForgotPasswordVerify} />
+        <Route exact path="/forgot-password-reset" component={ForgotPasswordReset} />
+        <Route exact path="/" component={RootRedirect} />
+      </IonRouterOutlet>
+    );
+  }
+
+  return (
+    <IonTabs>
+      <IonRouterOutlet>
+        <PrivateRoute exact path="/tab-search" component={TabSearch} />
+        <PrivateRoute exact path="/admin-calendar" component={AdminCalendarPage} />
+        <PrivateRoute exact path="/crear" component={Crear} />
+        <PrivateRoute path="/tab3" component={Tab3} />
+        <Route exact path="/" component={RootRedirect} />
+      </IonRouterOutlet>
+      <IonTabBar className="tabbar-glass" slot="bottom" >
+        <IonTabButton tab="admin-calendar" href="/admin-calendar">
+          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={agendaIcon} />
+          <IonLabel>Agenda</IonLabel>
+        </IonTabButton>
+        <IonTabButton tab="tab-search" href="/tab-search">
+          <img className="tabbar-search-icon" src={buscarIcon} alt="Buscar" aria-hidden="true" />
+          <IonLabel>Buscar</IonLabel>
+        </IonTabButton>
+        <IonTabButton tab="crear" href="/crear">
+          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={masIcon} />
+          <IonLabel>Crear</IonLabel>
+        </IonTabButton>
+        <IonTabButton tab="tab3" href="/tab3">
+          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={configIcon} />
+          <IonLabel>Configuración</IonLabel>
+        </IonTabButton>
+      </IonTabBar>
+    </IonTabs>
+  );
+}
+
 const App: React.FC = () => {
 
   const [splashDone, setSplashDone] = useState(false);
@@ -113,6 +160,8 @@ const App: React.FC = () => {
   }, [history]);
 
   useEffect(() => {
+    let listenerHandle: { remove: () => Promise<void> } | undefined;
+
     const handler = ({ url }: { url: string }) => {
       if (url) {
         // Deep link: alesport://verify-code?email=...&code=...
@@ -136,9 +185,15 @@ const App: React.FC = () => {
         }
       }
     };
-    CapacitorApp.addListener('appUrlOpen', handler);
+
+    CapacitorApp.addListener('appUrlOpen', handler).then((handle) => {
+      listenerHandle = handle;
+    });
+
     return () => {
-      CapacitorApp.removeAllListeners();
+      if (listenerHandle) {
+        void listenerHandle.remove();
+      }
     };
   }, [history]);
 
@@ -161,53 +216,6 @@ const App: React.FC = () => {
       />
     </IonApp>
   );
-
-  // Componente que separa rutas públicas y privadas
-  function MainRoutes() {
-    const { isAuthenticated } = useAuth();
-    if (!isAuthenticated) {
-      return (
-        <IonRouterOutlet>
-          <Route exact path="/login" component={Login} />
-          <Route exact path="/register" component={Register} />
-          <Route exact path="/verify-code" component={VerifyCode} />
-          <Route exact path="/forgot-password-request" component={ForgotPasswordRequest} />
-          <Route exact path="/forgot-password-verify" component={ForgotPasswordVerify} />
-          <Route exact path="/forgot-password-reset" component={ForgotPasswordReset} />
-          <Route exact path="/" component={RootRedirect} />
-        </IonRouterOutlet>
-      );
-    }
-    return (
-      <IonTabs>
-        <IonRouterOutlet>
-          <PrivateRoute exact path="/tab-search" component={TabSearch} />
-          <PrivateRoute exact path="/admin-calendar" component={AdminCalendarPage} />
-          <PrivateRoute exact path="/crear" component={Crear} />
-          <PrivateRoute path="/tab3" component={Tab3} />
-          <Route exact path="/" component={RootRedirect} />
-        </IonRouterOutlet>
-        <IonTabBar className="tabbar-glass" slot="bottom" >
-          <IonTabButton tab="admin-calendar" href="/admin-calendar">
-            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={agendaIcon} />
-            <IonLabel>Agenda</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab-search" href="/tab-search">
-            <img className="tabbar-search-icon" src={buscarIcon} alt="Buscar" aria-hidden="true" />
-            <IonLabel>Buscar</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="crear" href="/crear">
-            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={masIcon} />
-            <IonLabel>Crear</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab3" href="/tab3">
-            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={configIcon} />
-            <IonLabel>Configuración</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
-      </IonTabs>
-    );
-  }
 };
 
 export default App;

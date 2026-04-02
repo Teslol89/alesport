@@ -63,6 +63,7 @@ const CrearForm: React.FC = () => {
     const [isLoadingTrainers, setIsLoadingTrainers] = useState(false);
     const [trainersError, setTrainersError] = useState<string | null>(null);
     const [submitInfo, setSubmitInfo] = useState<string | null>(null);
+    const openSingleModalRafRef = useRef<number | null>(null);
     const singleModalBodyRef = useRef<HTMLDivElement | null>(null);
     const singleDatePanelRef = useRef<HTMLDivElement | null>(null);
     const singleCapacityPanelRef = useRef<HTMLDivElement | null>(null);
@@ -238,6 +239,10 @@ const CrearForm: React.FC = () => {
         }
     }
 
+    function openSingleModalSmoothly() {
+        setShowSingleModal(true);
+    }
+
     function scrollSubpanelIntoView(panelElement: HTMLDivElement | null) {
         const container = singleModalBodyRef.current;
         if (!container || !panelElement) {
@@ -280,6 +285,14 @@ const CrearForm: React.FC = () => {
         };
     }, [showSingleDatePicker, showCapacityPicker, showTrainerPicker, showSingleTimePicker]);
 
+    useEffect(() => {
+        return () => {
+            if (openSingleModalRafRef.current !== null) {
+                window.cancelAnimationFrame(openSingleModalRafRef.current);
+            }
+        };
+    }, []);
+
     return (
         <div className="crear-form-container">
             <div className="crear-top-bar">
@@ -296,10 +309,16 @@ const CrearForm: React.FC = () => {
                             type="button"
                             className={`crear-mode-card ${createMode === 'single' ? 'selected' : ''}`}
                             onClick={() => {
-                                setCreateMode('single');
                                 setSubmitInfo(null);
                                 closeAllSingleSubmodals();
-                                setShowSingleModal(true);
+                                openSingleModalSmoothly();
+                                if (openSingleModalRafRef.current !== null) {
+                                    window.cancelAnimationFrame(openSingleModalRafRef.current);
+                                }
+                                openSingleModalRafRef.current = window.requestAnimationFrame(() => {
+                                    setCreateMode('single');
+                                    openSingleModalRafRef.current = null;
+                                });
                             }}
                         >
                             <span className="crear-mode-card-kicker">Opción 1</span>
@@ -374,6 +393,7 @@ const CrearForm: React.FC = () => {
                 <IonModal
                     className="crear-single-modal-wrapper"
                     isOpen={showSingleModal}
+                    keepContentsMounted={true}
                     onDidDismiss={() => {
                         setShowSingleModal(false);
                         closeAllSingleSubmodals();

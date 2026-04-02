@@ -169,6 +169,19 @@
   --app-btn-danger-text: #ffffff;
 }
 
+/* Gris de campos un poco más oscuro en TODOS los modales de la app */
+ion-modal {
+  --app-input-bg: #f5f7fa;
+  --app-input-bg-focus: rgba(0, 137, 166, 0.08);
+}
+
+/* Unifica el gris de los selectores de fecha/hora dentro de modales */
+ion-modal ion-datetime {
+  --background: #f5f7fa;
+  --background-rgb: 245, 247, 250;
+  --wheel-fade-background-rgb: 245, 247, 250;
+}
+
 /* Clase utilitaria + mapeo de clases existentes de la app */
 .app-input,
 .login-input,

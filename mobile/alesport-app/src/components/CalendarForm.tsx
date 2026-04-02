@@ -14,7 +14,7 @@ import {
   getTodayIsoDate,
   toPickerTimeIso,
 } from '../utils/funcionesGeneral';
-import { getSessionsByDateRange, patchSessionHour, cancelSession } from '../api/sessions';
+import { getSessionsByDateRange, updateSession, cancelSession } from '../api/sessions';
 import { getUserProfile } from '../api/user';
 import { BookingItem, cancelBooking, getBookingsBySession, reactivateBooking } from '../api/bookings';
 
@@ -29,6 +29,8 @@ const Calendar: React.FC = () => {
     start_time: string | Date;
     end_time: string | Date;
     capacity: number;
+    class_name?: string;
+    notes?: string | null;
     status: string;
   };
 
@@ -47,13 +49,19 @@ const Calendar: React.FC = () => {
   const [editingSession, setEditingSession] = useState<SessionItem | null>(null);
   const [newStartTime, setNewStartTime] = useState('');
   const [newEndTime, setNewEndTime] = useState('');
+  const [editClassName, setEditClassName] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editCapacity, setEditCapacity] = useState(10);
+  const [showCapacityPicker, setShowCapacityPicker] = useState(false);
   const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+  const [isTimePickerPresented, setIsTimePickerPresented] = useState(false);
   const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end' | null>(null);
   const [timePickerValue, setTimePickerValue] = useState(`${TIME_PICKER_BASE_DATE}T08:00:00`);
 
   // Estado modal detalles/alumnos
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsSession, setDetailsSession] = useState<SessionItem | null>(null);
+  const [pendingEditSession, setPendingEditSession] = useState<SessionItem | null>(null);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [sessionOccupancy, setSessionOccupancy] = useState<Record<number, number>>({});
@@ -64,6 +72,32 @@ const Calendar: React.FC = () => {
   });
 
   const dayButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const bookingsCacheRef = useRef<Record<number, BookingItem[]>>({});
+  const bookingsInFlightRef = useRef<Record<number, Promise<BookingItem[]>>>({});
+
+  const getSessionBookingsCached = useCallback(async (sessionId: number) => {
+    const cached = bookingsCacheRef.current[sessionId];
+    if (cached) {
+      return cached;
+    }
+
+    const inFlight = bookingsInFlightRef.current[sessionId];
+    if (inFlight) {
+      return inFlight;
+    }
+
+    const request = getBookingsBySession(sessionId)
+      .then((data) => {
+        bookingsCacheRef.current[sessionId] = data;
+        return data;
+      })
+      .finally(() => {
+        delete bookingsInFlightRef.current[sessionId];
+      });
+
+    bookingsInFlightRef.current[sessionId] = request;
+    return request;
+  }, []);
 
   // Sincronizar selectedDate cuando se abre el modal de mes
   useEffect(() => {
@@ -76,13 +110,26 @@ const Calendar: React.FC = () => {
   const startDate = weekDays[0].date;
   const endDate = weekDays[6].date;
 
-  const fetchSessions = useCallback(() => {
-    setLoading(true);
-    setError(null);
+  const fetchSessions = useCallback((options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
+
     getSessionsByDateRange(startDate, endDate)
       .then(data => setSessions(data as SessionItem[]))
-      .catch(() => setError("No se pudieron cargar las sesiones"))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!silent) {
+          setError("No se pudieron cargar las sesiones");
+        }
+      })
+      .finally(() => {
+        if (!silent) {
+          setLoading(false);
+        }
+      });
   }, [startDate, endDate]);
 
   // Cargar sesiones al montar y al cambiar semana
@@ -92,7 +139,7 @@ const Calendar: React.FC = () => {
 
   // También refrescar al entrar en la vista Agenda (cambio de tab/ruta)
   useIonViewWillEnter(() => {
-    fetchSessions();
+    fetchSessions({ silent: true });
   }, [startDate, endDate]);
 
   // Filtra y ordena sesiones por fecha seleccionada y hora de inicio
@@ -110,8 +157,7 @@ const Calendar: React.FC = () => {
 
   const fechaES = formatFullDateES(selectedDate);
 
-  // Función para abrir el modal de edición de hora
-  function handleEditHour(session: SessionItem) {
+  function openEditSessionModal(session: SessionItem) {
     if (isPastSession(session)) {
       setToast({ show: true, message: 'No se pueden modificar sesiones de días pasados', type: 'danger' });
       return;
@@ -122,15 +168,33 @@ const Calendar: React.FC = () => {
     setEditingSession(session);
     setNewStartTime(start !== '-' ? start : '');
     setNewEndTime(end !== '-' ? end : '');
+    setEditClassName(session.class_name || '');
+    setEditNotes(session.notes || '');
+    setEditCapacity(session.capacity);
+    setShowCapacityPicker(false);
+
+    if (showDetailsModal) {
+      setPendingEditSession(session);
+      setShowDetailsModal(false);
+      return;
+    }
+
     setShowHourModal(true);
   }
 
   async function openDetailsModal(session: SessionItem) {
+    const cachedBookings = bookingsCacheRef.current[session.id];
+    setBookings(cachedBookings || []);
+    setBookingsLoading(!cachedBookings);
     setDetailsSession(session);
     setShowDetailsModal(true);
-    setBookingsLoading(true);
+
+    if (cachedBookings) {
+      return;
+    }
+
     try {
-      const data = await getBookingsBySession(session.id);
+      const data = await getSessionBookingsCached(session.id);
       setBookings(data);
     } catch {
       setBookings([]);
@@ -151,7 +215,13 @@ const Calendar: React.FC = () => {
     }
     try {
       await cancelBooking(bookingId);
-      setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: 'cancelled' } : b)));
+      setBookings(prev => {
+        const next = prev.map(b => (b.id === bookingId ? { ...b, status: 'cancelled' } : b));
+        if (detailsSession) {
+          bookingsCacheRef.current[detailsSession.id] = next;
+        }
+        return next;
+      });
       setToast({ show: true, message: 'Reserva cancelada correctamente', type: 'success' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo cancelar la reserva';
@@ -170,7 +240,13 @@ const Calendar: React.FC = () => {
     }
     try {
       await reactivateBooking(bookingId);
-      setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: 'active' } : b)));
+      setBookings(prev => {
+        const next = prev.map(b => (b.id === bookingId ? { ...b, status: 'active' } : b));
+        if (detailsSession) {
+          bookingsCacheRef.current[detailsSession.id] = next;
+        }
+        return next;
+      });
       setToast({ show: true, message: 'Reserva reactivada correctamente', type: 'success' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo reactivar la reserva';
@@ -178,23 +254,89 @@ const Calendar: React.FC = () => {
     }
   }
 
-  async function handleCancelSession() {
-    if (!detailsSession) return;
+  async function handleDeleteSession(sessionToDelete?: SessionItem | null) {
+    const session = sessionToDelete ?? detailsSession;
+    if (!session) return;
 
-    if (!window.confirm('¿Seguro que deseas cancelar esta sesión? No se puede deshacer.')) {
+    if (!window.confirm('¿Seguro que deseas eliminar esta sesión? No se puede deshacer.')) {
       return;
     }
 
     try {
-      await cancelSession(detailsSession.id);
-      // Filtrar sesiones: remover la cancelada
-      setSessions(prev => 
-        prev.filter(s => s.id !== detailsSession.id)
-      );
+      await cancelSession(session.id);
+      setSessions(prev => prev.filter(s => s.id !== session.id));
+      setSessionOccupancy(prev => {
+        const next = { ...prev };
+        delete next[session.id];
+        return next;
+      });
+      delete bookingsCacheRef.current[session.id];
+      delete bookingsInFlightRef.current[session.id];
+      setDetailsSession(prev => (prev?.id === session.id ? null : prev));
+      setEditingSession(prev => (prev?.id === session.id ? null : prev));
+      setShowHourModal(false);
       setShowDetailsModal(false);
-      setToast({ show: true, message: 'Sesión cancelada correctamente', type: 'success' });
+      setToast({ show: true, message: 'Sesión eliminada correctamente', type: 'success' });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'No se pudo cancelar la sesión';
+      const message = error instanceof Error ? error.message : 'No se pudo eliminar la sesión';
+      setToast({ show: true, message, type: 'danger' });
+    }
+  }
+
+  async function handleSaveSession() {
+    if (!editingSession) {
+      return;
+    }
+
+    const trimmedClassName = editClassName.trim();
+    if (!trimmedClassName) {
+      setToast({ show: true, message: 'El nombre de la clase es obligatorio', type: 'danger' });
+      return;
+    }
+
+    if (!newStartTime || !newEndTime || newStartTime >= newEndTime) {
+      setToast({ show: true, message: 'La hora de inicio debe ser anterior a la de fin', type: 'danger' });
+      return;
+    }
+
+    if (!Number.isInteger(editCapacity) || editCapacity < 1 || editCapacity > 10) {
+      setToast({ show: true, message: 'La capacidad debe estar entre 1 y 10', type: 'danger' });
+      return;
+    }
+
+    try {
+      const updated = await updateSession(editingSession.id, {
+        start_time: newStartTime,
+        end_time: newEndTime,
+        capacity: editCapacity,
+        class_name: trimmedClassName,
+        notes: editNotes.trim(),
+      });
+
+      setSessions(prev => prev.map(session => (
+        session.id === editingSession.id
+          ? {
+            ...session,
+            ...updated,
+          }
+          : session
+      )));
+
+      setDetailsSession(prev => (
+        prev && prev.id === editingSession.id
+          ? {
+            ...prev,
+            ...updated,
+          }
+          : prev
+      ));
+
+      setShowHourModal(false);
+      setEditingSession(null);
+      setShowCapacityPicker(false);
+      setToast({ show: true, message: 'Sesión actualizada correctamente', type: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al actualizar la sesión';
       setToast({ show: true, message, type: 'danger' });
     }
   }
@@ -229,35 +371,6 @@ const Calendar: React.FC = () => {
     setShowTimePickerModal(false);
   }
 
-  // Función para guardar la nueva hora (aquí solo actualiza el estado local, deberías llamar a la API real)
-  async function handleSaveHour() {
-    if (!editingSession) {
-      return;
-    }
-
-    if (isPastSession(editingSession)) {
-      setToast({ show: true, message: 'No se pueden modificar sesiones de días pasados', type: 'danger' });
-      setShowHourModal(false);
-      setEditingSession(null);
-      return;
-    }
-
-    try {
-      await patchSessionHour(editingSession.id, newStartTime, newEndTime);
-      setSessions(prev => prev.map(s => s.id === editingSession.id ? {
-        ...s,
-        start_time: newStartTime + ':00',
-        end_time: newEndTime + ':00',
-      } : s));
-      setToast({ show: true, message: 'Hora actualizada correctamente', type: 'success' });
-      setShowHourModal(false);
-      setEditingSession(null);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error al guardar la hora en el servidor';
-      setToast({ show: true, message, type: 'danger' });
-    }
-  }
-
   // Obtener perfil del usuario
   const [userRole, setUserRole] = useState<string | null>(null);
   useEffect(() => {
@@ -288,7 +401,7 @@ const Calendar: React.FC = () => {
       const occupancyEntries = await Promise.all(
         sessionsForDate.map(async (session) => {
           try {
-            const sessionBookings = await getBookingsBySession(session.id);
+            const sessionBookings = await getSessionBookingsCached(session.id);
             const activeCount = sessionBookings.filter(b => b.status === 'active').length;
             return [session.id, activeCount] as const;
           } catch {
@@ -298,10 +411,17 @@ const Calendar: React.FC = () => {
       );
 
       if (!cancelled) {
-        setSessionOccupancy(prev => ({
-          ...prev,
-          ...Object.fromEntries(occupancyEntries),
-        }));
+        setSessionOccupancy(prev => {
+          let changed = false;
+          const next = { ...prev };
+          for (const [sessionId, count] of occupancyEntries) {
+            if (next[sessionId] !== count) {
+              next[sessionId] = count;
+              changed = true;
+            }
+          }
+          return changed ? next : prev;
+        });
       }
     };
 
@@ -312,7 +432,7 @@ const Calendar: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [sessionsForDate, userRole]);
+  }, [sessionsForDate, userRole, getSessionBookingsCached]);
 
   useEffect(() => {
     if (!detailsSession) {
@@ -326,6 +446,7 @@ const Calendar: React.FC = () => {
   const activeBookingsCount = bookings.filter(b => b.status === 'active').length;
   const isPastSession = (session: SessionItem) => session.session_date < getTodayIsoDate();
   const isDetailsSessionPast = detailsSession ? isPastSession(detailsSession) : false;
+  const loadingSkeletonRows = [1, 2, 3];
 
   return (
     <div className="calendar-container">
@@ -382,13 +503,7 @@ const Calendar: React.FC = () => {
                   <IonCardTitle>
                     <div className="session-title-row-flex">
                       <span className="session-title-custom session-title-row">
-                        {userRole === 'admin' && !isPast ? (
-                          <button type="button" className="session-title-icon-btn" onClick={() => handleEditHour(session)} title="Editar hora">
-                            <img src={horaIcon} alt="Hora" className="session-title-icon" />
-                          </button>
-                        ) : (
-                          <img src={horaIcon} alt="Hora" className="session-title-icon" />
-                        )}
+                        <img src={horaIcon} alt="Hora" className="session-title-icon" />
                         {formatHour(session.start_time, session.session_date)} - {formatHour(session.end_time, session.session_date)}
                       </span>
                       {session.trainer_name ? (
@@ -446,10 +561,28 @@ const Calendar: React.FC = () => {
       </IonModal>
 
       {/* Modal de edición de hora */}
-      <IonModal className="calendar-hour-modal-wrapper" isOpen={showHourModal} onDidDismiss={() => setShowHourModal(false)}>
-        <div className="calendar-hour-modal">
-          <h3>Editar hora de la sesión</h3>
-          <p className="calendar-hour-modal-subtitle">Selecciona la nueva franja horaria</p>
+      <IonModal className="calendar-hour-modal-wrapper" isOpen={showHourModal} focusTrap={false} onDidDismiss={() => {
+        setShowHourModal(false);
+        setEditingSession(null);
+        setShowCapacityPicker(false);
+        setIsTimePickerPresented(false);
+      }}>
+        <div className={`calendar-hour-modal ${isTimePickerPresented ? 'calendar-hour-modal--dimmed' : ''}`}>
+          <h3>Editar sesión</h3>
+          <p className="calendar-hour-modal-subtitle">Ajusta horario, capacidad y detalles de la clase</p>
+          <div className="calendar-edit-session-block">
+            <label className="calendar-hour-modal-label">
+              <span>Nombre de la clase</span>
+              <input
+                type="text"
+                className="app-input calendar-edit-text-input"
+                value={editClassName}
+                onChange={(e) => setEditClassName(e.target.value)}
+                maxLength={120}
+                placeholder="Ej. Funcional"
+              />
+            </label>
+          </div>
           <div className="calendar-hour-modal-fields">
             <label className="calendar-hour-modal-label">
               <span>Inicio</span>
@@ -464,15 +597,68 @@ const Calendar: React.FC = () => {
               </button>
             </label>
           </div>
-          <div className="calendar-hour-modal-actions">
-            <button onClick={handleSaveHour} className="calendar-hour-modal-save">Guardar</button>
-            <button onClick={() => setShowHourModal(false)} className="calendar-hour-modal-cancel">Cancelar</button>
+          <div className="calendar-edit-session-block">
+            <label className="calendar-hour-modal-label">
+              <span>Capacidad</span>
+              <button
+                type="button"
+                className="calendar-hour-picker-field"
+                onClick={() => setShowCapacityPicker(prev => !prev)}
+              >
+                {editCapacity}
+              </button>
+              {showCapacityPicker ? (
+                <div className="calendar-capacity-picker-panel">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`calendar-capacity-option ${editCapacity === value ? 'selected' : ''}`}
+                      onClick={() => {
+                        setEditCapacity(value);
+                        setShowCapacityPicker(false);
+                      }}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </label>
           </div>
+          <div className="calendar-edit-session-block">
+            <label className="calendar-hour-modal-label">
+              <span>Notas</span>
+              <textarea
+                className="app-input calendar-edit-textarea"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                maxLength={1000}
+                rows={4}
+                placeholder="Indicaciones internas u observaciones"
+              />
+            </label>
+          </div>
+          <div className="calendar-hour-modal-actions">
+            <button onClick={handleSaveSession} className="calendar-hour-modal-save">Guardar</button>
+            <button onClick={() => setShowHourModal(false)} className="calendar-hour-modal-cancel">Cerrar</button>
+          </div>
+          {editingSession ? (
+            <div className="calendar-modal-danger-zone">
+              <button onClick={() => handleDeleteSession(editingSession)} className="calendar-hour-modal-delete">Eliminar sesión</button>
+            </div>
+          ) : null}
         </div>
       </IonModal>
 
       {/* Modal del time picker reutilizable para inicio y fin */}
-      <IonModal className="calendar-time-picker-modal-wrapper" isOpen={showTimePickerModal} onDidDismiss={() => setShowTimePickerModal(false)}>
+      <IonModal
+        className="calendar-time-picker-modal-wrapper"
+        isOpen={showTimePickerModal}
+        onWillPresent={() => setIsTimePickerPresented(true)}
+        onWillDismiss={() => setIsTimePickerPresented(false)}
+        onDidDismiss={() => setShowTimePickerModal(false)}
+      >
         <div className="calendar-time-picker-modal">
           <h4>{timePickerTarget === 'start' ? 'Hora de inicio' : 'Hora de fin'}</h4>
           <IonDatetime
@@ -496,11 +682,25 @@ const Calendar: React.FC = () => {
       </IonModal>
 
       {/* Modal de detalles de sesión y alumnos */}
-      <IonModal className="calendar-bookings-modal-wrapper" isOpen={showDetailsModal} onDidDismiss={() => setShowDetailsModal(false)}>
+      <IonModal
+        className="calendar-bookings-modal-wrapper"
+        isOpen={showDetailsModal}
+        keepContentsMounted={true}
+        onDidDismiss={() => {
+          setShowDetailsModal(false);
+          if (pendingEditSession) {
+            setPendingEditSession(null);
+            setShowHourModal(true);
+          }
+        }}
+      >
         <div className="calendar-bookings-modal">
           <h3>Detalles de la clase</h3>
           {detailsSession ? (
             <>
+              {detailsSession.class_name ? (
+                <p className="calendar-bookings-modal-class-name">{detailsSession.class_name}</p>
+              ) : null}
               <p className="calendar-bookings-modal-subtitle">
                 {formatDateDdMmYy(detailsSession.session_date)} · {formatHour(detailsSession.start_time, detailsSession.session_date)} - {formatHour(detailsSession.end_time, detailsSession.session_date)}
               </p>
@@ -510,45 +710,58 @@ const Calendar: React.FC = () => {
               <p className="calendar-bookings-modal-capacity">
                 Ocupación: {activeBookingsCount}/{detailsSession.capacity}
               </p>
+              {detailsSession.notes ? (
+                <p className="calendar-bookings-modal-notes">{detailsSession.notes}</p>
+              ) : null}
 
-              {bookingsLoading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0' }}>
-                  <IonSpinner name="crescent" color="primary" />
-                </div>
-              ) : bookings.length === 0 ? (
-                <p className="calendar-bookings-empty">No hay alumnos apuntados.</p>
-              ) : (
-                <div className="calendar-bookings-list">
-                  {bookings.map(booking => (
-                    <div key={booking.id} className="calendar-booking-item">
-                      <div>
-                        <div className="calendar-booking-name">{booking.user_name || `Alumno #${booking.user_id}`}</div>
-                        <div className="calendar-booking-email">{booking.user_email || 'Sin email disponible'}</div>
-                        <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : 'cancelled'}`}>
-                          {booking.status === 'active' ? 'Activa' : 'Inactiva'}
+              <div className="calendar-bookings-body">
+                {bookingsLoading ? (
+                  <div className="calendar-bookings-loading" aria-live="polite" aria-busy="true">
+                    <IonSpinner name="crescent" color="primary" />
+                    <div className="calendar-bookings-skeleton-list" aria-hidden="true">
+                      {loadingSkeletonRows.map((row) => (
+                        <div key={row} className="calendar-bookings-skeleton-item">
+                          <div className="calendar-bookings-skeleton-line calendar-bookings-skeleton-line--name" />
+                          <div className="calendar-bookings-skeleton-line calendar-bookings-skeleton-line--email" />
                         </div>
-                      </div>
-                      {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast ? (
-                        booking.status === 'active' ? (
-                          <button className="calendar-booking-action-cancel" onClick={() => handleCancelBooking(booking.id)}>
-                            Cancelar
-                          </button>
-                        ) : (
-                          <button className="calendar-booking-action-reactivate" onClick={() => handleReactivateBooking(booking.id)}>
-                            Reactivar
-                          </button>
-                        )
-                      ) : null}
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ) : bookings.length === 0 ? (
+                  <p className="calendar-bookings-empty">No hay alumnos apuntados.</p>
+                ) : (
+                  <div className="calendar-bookings-list">
+                    {bookings.map(booking => (
+                      <div key={booking.id} className="calendar-booking-item">
+                        <div>
+                          <div className="calendar-booking-name">{booking.user_name || `Alumno #${booking.user_id}`}</div>
+                          <div className="calendar-booking-email">{booking.user_email || 'Sin email disponible'}</div>
+                          <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : 'cancelled'}`}>
+                            {booking.status === 'active' ? 'Activa' : 'Inactiva'}
+                          </div>
+                        </div>
+                        {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast ? (
+                          booking.status === 'active' ? (
+                            <button className="calendar-booking-action-cancel" onClick={() => handleCancelBooking(booking.id)}>
+                              Cancelar
+                            </button>
+                          ) : (
+                            <button className="calendar-booking-action-reactivate" onClick={() => handleReactivateBooking(booking.id)}>
+                              Reactivar
+                            </button>
+                          )
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </>
           ) : null}
           <div className="calendar-hour-modal-actions">
-            {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast ? (
-              <button className="calendar-hour-modal-cancel" onClick={handleCancelSession}>
-                Cancelar Sesión
+            {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast && detailsSession ? (
+              <button className="calendar-hour-modal-save" onClick={() => openEditSessionModal(detailsSession)}>
+                Editar Sesión
               </button>
             ) : null}
             <button className="calendar-hour-modal-cancel" onClick={() => setShowDetailsModal(false)}>Cerrar</button>

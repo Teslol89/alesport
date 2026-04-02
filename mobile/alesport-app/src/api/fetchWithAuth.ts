@@ -12,7 +12,9 @@ export async function fetchWithAuth(input: RequestInfo, init: RequestInit = {}) 
   }
   const response = await fetch(input, { ...init, headers });
   if (response.status === 401) {
-    // Token inválido o expirado
+    // Token inválido o expirado: limpiar sesión local y notificar a la app.
+    localStorage.removeItem('token');
+    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     throw new Error('UNAUTHORIZED');
   }
   return response;

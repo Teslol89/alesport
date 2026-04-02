@@ -147,6 +147,27 @@ def run_role_specific_checks(token: str, role: str, user_id: int | None, session
         if created_session:
             print(f"    ✓ Sesión creada: id={created_session.get('id')}, class_name={created_session.get('class_name')}")
             session_to_update = created_session["id"]
+
+            print(f"  [TEST] Validando que no se puede crear otra sesión solapada...")
+            overlapping_payload = {
+                "session_date": created_session.get("session_date", TOMORROW.isoformat()),
+                "start_time": "10:30",
+                "end_time": "11:00",
+                "capacity": 6,
+                "class_name": "Overlap Should Fail",
+                "notes": "Debe rechazar por solape",
+            }
+            if role == "admin" and created_session.get("trainer_id") is not None:
+                overlapping_payload["trainer_id"] = created_session.get("trainer_id")
+
+            request_and_check(
+                "POST",
+                "/sessions/",
+                {409},
+                headers=headers,
+                json=overlapping_payload,
+            )
+            print(f"    ✓ El solape en creación queda bloqueado")
         else:
             session_to_update = session["id"] if session else None
 

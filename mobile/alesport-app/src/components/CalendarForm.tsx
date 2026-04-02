@@ -14,7 +14,7 @@ import {
   getTodayIsoDate,
   toPickerTimeIso,
 } from '../utils/funcionesGeneral';
-import { getSessionsByDateRange, patchSessionHour, cancelSession } from '../api/sessions';
+import { getSessionsByDateRange, updateSession, cancelSession } from '../api/sessions';
 import { getUserProfile } from '../api/user';
 import { BookingItem, cancelBooking, getBookingsBySession, reactivateBooking } from '../api/bookings';
 
@@ -29,6 +29,8 @@ const Calendar: React.FC = () => {
     start_time: string | Date;
     end_time: string | Date;
     capacity: number;
+    class_name?: string;
+    notes?: string | null;
     status: string;
   };
 
@@ -47,13 +49,19 @@ const Calendar: React.FC = () => {
   const [editingSession, setEditingSession] = useState<SessionItem | null>(null);
   const [newStartTime, setNewStartTime] = useState('');
   const [newEndTime, setNewEndTime] = useState('');
+  const [editClassName, setEditClassName] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editCapacity, setEditCapacity] = useState(10);
+  const [showCapacityPicker, setShowCapacityPicker] = useState(false);
   const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+  const [isTimePickerPresented, setIsTimePickerPresented] = useState(false);
   const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end' | null>(null);
   const [timePickerValue, setTimePickerValue] = useState(`${TIME_PICKER_BASE_DATE}T08:00:00`);
 
   // Estado modal detalles/alumnos
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsSession, setDetailsSession] = useState<SessionItem | null>(null);
+  const [pendingEditSession, setPendingEditSession] = useState<SessionItem | null>(null);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [sessionOccupancy, setSessionOccupancy] = useState<Record<number, number>>({});
@@ -110,8 +118,7 @@ const Calendar: React.FC = () => {
 
   const fechaES = formatFullDateES(selectedDate);
 
-  // Función para abrir el modal de edición de hora
-  function handleEditHour(session: SessionItem) {
+  function openEditSessionModal(session: SessionItem) {
     if (isPastSession(session)) {
       setToast({ show: true, message: 'No se pueden modificar sesiones de días pasados', type: 'danger' });
       return;
@@ -122,13 +129,25 @@ const Calendar: React.FC = () => {
     setEditingSession(session);
     setNewStartTime(start !== '-' ? start : '');
     setNewEndTime(end !== '-' ? end : '');
+    setEditClassName(session.class_name || '');
+    setEditNotes(session.notes || '');
+    setEditCapacity(session.capacity);
+    setShowCapacityPicker(false);
+
+    if (showDetailsModal) {
+      setPendingEditSession(session);
+      setShowDetailsModal(false);
+      return;
+    }
+
     setShowHourModal(true);
   }
 
   async function openDetailsModal(session: SessionItem) {
+    setBookings([]);
+    setBookingsLoading(true);
     setDetailsSession(session);
     setShowDetailsModal(true);
-    setBookingsLoading(true);
     try {
       const data = await getBookingsBySession(session.id);
       setBookings(data);
@@ -178,23 +197,82 @@ const Calendar: React.FC = () => {
     }
   }
 
-  async function handleCancelSession() {
-    if (!detailsSession) return;
+  async function handleDeleteSession(sessionToDelete?: SessionItem | null) {
+    const session = sessionToDelete ?? detailsSession;
+    if (!session) return;
 
-    if (!window.confirm('¿Seguro que deseas cancelar esta sesión? No se puede deshacer.')) {
+    if (!window.confirm('¿Seguro que deseas eliminar esta sesión? No se puede deshacer.')) {
       return;
     }
 
     try {
-      await cancelSession(detailsSession.id);
-      // Filtrar sesiones: remover la cancelada
-      setSessions(prev => 
-        prev.filter(s => s.id !== detailsSession.id)
-      );
+      await cancelSession(session.id);
+      setSessions(prev => prev.filter(s => s.id !== session.id));
+      setDetailsSession(prev => (prev?.id === session.id ? null : prev));
+      setEditingSession(prev => (prev?.id === session.id ? null : prev));
+      setShowHourModal(false);
       setShowDetailsModal(false);
-      setToast({ show: true, message: 'Sesión cancelada correctamente', type: 'success' });
+      setToast({ show: true, message: 'Sesión eliminada correctamente', type: 'success' });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'No se pudo cancelar la sesión';
+      const message = error instanceof Error ? error.message : 'No se pudo eliminar la sesión';
+      setToast({ show: true, message, type: 'danger' });
+    }
+  }
+
+  async function handleSaveSession() {
+    if (!editingSession) {
+      return;
+    }
+
+    const trimmedClassName = editClassName.trim();
+    if (!trimmedClassName) {
+      setToast({ show: true, message: 'El nombre de la clase es obligatorio', type: 'danger' });
+      return;
+    }
+
+    if (!newStartTime || !newEndTime || newStartTime >= newEndTime) {
+      setToast({ show: true, message: 'La hora de inicio debe ser anterior a la de fin', type: 'danger' });
+      return;
+    }
+
+    if (!Number.isInteger(editCapacity) || editCapacity < 1 || editCapacity > 10) {
+      setToast({ show: true, message: 'La capacidad debe estar entre 1 y 10', type: 'danger' });
+      return;
+    }
+
+    try {
+      const updated = await updateSession(editingSession.id, {
+        start_time: newStartTime,
+        end_time: newEndTime,
+        capacity: editCapacity,
+        class_name: trimmedClassName,
+        notes: editNotes.trim(),
+      });
+
+      setSessions(prev => prev.map(session => (
+        session.id === editingSession.id
+          ? {
+            ...session,
+            ...updated,
+          }
+          : session
+      )));
+
+      setDetailsSession(prev => (
+        prev && prev.id === editingSession.id
+          ? {
+            ...prev,
+            ...updated,
+          }
+          : prev
+      ));
+
+      setShowHourModal(false);
+      setEditingSession(null);
+      setShowCapacityPicker(false);
+      setToast({ show: true, message: 'Sesión actualizada correctamente', type: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al actualizar la sesión';
       setToast({ show: true, message, type: 'danger' });
     }
   }
@@ -227,35 +305,6 @@ const Calendar: React.FC = () => {
       setNewEndTime(hourValue);
     }
     setShowTimePickerModal(false);
-  }
-
-  // Función para guardar la nueva hora (aquí solo actualiza el estado local, deberías llamar a la API real)
-  async function handleSaveHour() {
-    if (!editingSession) {
-      return;
-    }
-
-    if (isPastSession(editingSession)) {
-      setToast({ show: true, message: 'No se pueden modificar sesiones de días pasados', type: 'danger' });
-      setShowHourModal(false);
-      setEditingSession(null);
-      return;
-    }
-
-    try {
-      await patchSessionHour(editingSession.id, newStartTime, newEndTime);
-      setSessions(prev => prev.map(s => s.id === editingSession.id ? {
-        ...s,
-        start_time: newStartTime + ':00',
-        end_time: newEndTime + ':00',
-      } : s));
-      setToast({ show: true, message: 'Hora actualizada correctamente', type: 'success' });
-      setShowHourModal(false);
-      setEditingSession(null);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error al guardar la hora en el servidor';
-      setToast({ show: true, message, type: 'danger' });
-    }
   }
 
   // Obtener perfil del usuario
@@ -382,13 +431,7 @@ const Calendar: React.FC = () => {
                   <IonCardTitle>
                     <div className="session-title-row-flex">
                       <span className="session-title-custom session-title-row">
-                        {userRole === 'admin' && !isPast ? (
-                          <button type="button" className="session-title-icon-btn" onClick={() => handleEditHour(session)} title="Editar hora">
-                            <img src={horaIcon} alt="Hora" className="session-title-icon" />
-                          </button>
-                        ) : (
-                          <img src={horaIcon} alt="Hora" className="session-title-icon" />
-                        )}
+                        <img src={horaIcon} alt="Hora" className="session-title-icon" />
                         {formatHour(session.start_time, session.session_date)} - {formatHour(session.end_time, session.session_date)}
                       </span>
                       {session.trainer_name ? (
@@ -446,10 +489,28 @@ const Calendar: React.FC = () => {
       </IonModal>
 
       {/* Modal de edición de hora */}
-      <IonModal className="calendar-hour-modal-wrapper" isOpen={showHourModal} onDidDismiss={() => setShowHourModal(false)}>
-        <div className="calendar-hour-modal">
-          <h3>Editar hora de la sesión</h3>
-          <p className="calendar-hour-modal-subtitle">Selecciona la nueva franja horaria</p>
+      <IonModal className="calendar-hour-modal-wrapper" isOpen={showHourModal} focusTrap={false} onDidDismiss={() => {
+        setShowHourModal(false);
+        setEditingSession(null);
+        setShowCapacityPicker(false);
+        setIsTimePickerPresented(false);
+      }}>
+        <div className={`calendar-hour-modal ${isTimePickerPresented ? 'calendar-hour-modal--dimmed' : ''}`}>
+          <h3>Editar sesión</h3>
+          <p className="calendar-hour-modal-subtitle">Ajusta horario, capacidad y detalles de la clase</p>
+          <div className="calendar-edit-session-block">
+            <label className="calendar-hour-modal-label">
+              <span>Nombre de la clase</span>
+              <input
+                type="text"
+                className="app-input calendar-edit-text-input"
+                value={editClassName}
+                onChange={(e) => setEditClassName(e.target.value)}
+                maxLength={120}
+                placeholder="Ej. Funcional"
+              />
+            </label>
+          </div>
           <div className="calendar-hour-modal-fields">
             <label className="calendar-hour-modal-label">
               <span>Inicio</span>
@@ -464,15 +525,69 @@ const Calendar: React.FC = () => {
               </button>
             </label>
           </div>
-          <div className="calendar-hour-modal-actions">
-            <button onClick={handleSaveHour} className="calendar-hour-modal-save">Guardar</button>
-            <button onClick={() => setShowHourModal(false)} className="calendar-hour-modal-cancel">Cancelar</button>
+          <div className="calendar-edit-session-block">
+            <label className="calendar-hour-modal-label">
+              <span>Capacidad</span>
+              <button
+                type="button"
+                className="calendar-hour-picker-field"
+                onClick={() => setShowCapacityPicker(prev => !prev)}
+              >
+                {editCapacity}
+              </button>
+              {showCapacityPicker ? (
+                <div className="calendar-capacity-picker-panel">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`calendar-capacity-option ${editCapacity === value ? 'selected' : ''}`}
+                      onClick={() => {
+                        setEditCapacity(value);
+                        setShowCapacityPicker(false);
+                      }}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </label>
           </div>
+          <div className="calendar-edit-session-block">
+            <label className="calendar-hour-modal-label">
+              <span>Notas</span>
+              <textarea
+                className="app-input calendar-edit-textarea"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                maxLength={1000}
+                rows={4}
+                placeholder="Indicaciones internas u observaciones"
+              />
+            </label>
+          </div>
+          <div className="calendar-hour-modal-actions">
+            <button onClick={handleSaveSession} className="calendar-hour-modal-save">Guardar</button>
+            <button onClick={() => setShowHourModal(false)} className="calendar-hour-modal-cancel">Cerrar</button>
+          </div>
+          {editingSession ? (
+            <div className="calendar-modal-danger-zone">
+              <p className="calendar-modal-danger-text">Cuidado, acción irreversible.</p>
+              <button onClick={() => handleDeleteSession(editingSession)} className="calendar-hour-modal-delete">Eliminar sesión</button>
+            </div>
+          ) : null}
         </div>
       </IonModal>
 
       {/* Modal del time picker reutilizable para inicio y fin */}
-      <IonModal className="calendar-time-picker-modal-wrapper" isOpen={showTimePickerModal} onDidDismiss={() => setShowTimePickerModal(false)}>
+      <IonModal
+        className="calendar-time-picker-modal-wrapper"
+        isOpen={showTimePickerModal}
+        onWillPresent={() => setIsTimePickerPresented(true)}
+        onWillDismiss={() => setIsTimePickerPresented(false)}
+        onDidDismiss={() => setShowTimePickerModal(false)}
+      >
         <div className="calendar-time-picker-modal">
           <h4>{timePickerTarget === 'start' ? 'Hora de inicio' : 'Hora de fin'}</h4>
           <IonDatetime
@@ -496,11 +611,25 @@ const Calendar: React.FC = () => {
       </IonModal>
 
       {/* Modal de detalles de sesión y alumnos */}
-      <IonModal className="calendar-bookings-modal-wrapper" isOpen={showDetailsModal} onDidDismiss={() => setShowDetailsModal(false)}>
+      <IonModal
+        className="calendar-bookings-modal-wrapper"
+        isOpen={showDetailsModal}
+        keepContentsMounted={true}
+        onDidDismiss={() => {
+          setShowDetailsModal(false);
+          if (pendingEditSession) {
+            setPendingEditSession(null);
+            setShowHourModal(true);
+          }
+        }}
+      >
         <div className="calendar-bookings-modal">
           <h3>Detalles de la clase</h3>
           {detailsSession ? (
             <>
+              {detailsSession.class_name ? (
+                <p className="calendar-bookings-modal-class-name">{detailsSession.class_name}</p>
+              ) : null}
               <p className="calendar-bookings-modal-subtitle">
                 {formatDateDdMmYy(detailsSession.session_date)} · {formatHour(detailsSession.start_time, detailsSession.session_date)} - {formatHour(detailsSession.end_time, detailsSession.session_date)}
               </p>
@@ -510,6 +639,9 @@ const Calendar: React.FC = () => {
               <p className="calendar-bookings-modal-capacity">
                 Ocupación: {activeBookingsCount}/{detailsSession.capacity}
               </p>
+              {detailsSession.notes ? (
+                <p className="calendar-bookings-modal-notes">{detailsSession.notes}</p>
+              ) : null}
 
               {bookingsLoading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0' }}>
@@ -546,9 +678,9 @@ const Calendar: React.FC = () => {
             </>
           ) : null}
           <div className="calendar-hour-modal-actions">
-            {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast ? (
-              <button className="calendar-hour-modal-cancel" onClick={handleCancelSession}>
-                Cancelar Sesión
+            {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast && detailsSession ? (
+              <button className="calendar-hour-modal-save" onClick={() => openEditSessionModal(detailsSession)}>
+                Editar Sesión
               </button>
             ) : null}
             <button className="calendar-hour-modal-cancel" onClick={() => setShowDetailsModal(false)}>Cerrar</button>

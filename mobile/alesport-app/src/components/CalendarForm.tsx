@@ -72,6 +72,32 @@ const Calendar: React.FC = () => {
   });
 
   const dayButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const bookingsCacheRef = useRef<Record<number, BookingItem[]>>({});
+  const bookingsInFlightRef = useRef<Record<number, Promise<BookingItem[]>>>({});
+
+  const getSessionBookingsCached = useCallback(async (sessionId: number) => {
+    const cached = bookingsCacheRef.current[sessionId];
+    if (cached) {
+      return cached;
+    }
+
+    const inFlight = bookingsInFlightRef.current[sessionId];
+    if (inFlight) {
+      return inFlight;
+    }
+
+    const request = getBookingsBySession(sessionId)
+      .then((data) => {
+        bookingsCacheRef.current[sessionId] = data;
+        return data;
+      })
+      .finally(() => {
+        delete bookingsInFlightRef.current[sessionId];
+      });
+
+    bookingsInFlightRef.current[sessionId] = request;
+    return request;
+  }, []);
 
   // Sincronizar selectedDate cuando se abre el modal de mes
   useEffect(() => {
@@ -84,13 +110,26 @@ const Calendar: React.FC = () => {
   const startDate = weekDays[0].date;
   const endDate = weekDays[6].date;
 
-  const fetchSessions = useCallback(() => {
-    setLoading(true);
-    setError(null);
+  const fetchSessions = useCallback((options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
+
     getSessionsByDateRange(startDate, endDate)
       .then(data => setSessions(data as SessionItem[]))
-      .catch(() => setError("No se pudieron cargar las sesiones"))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!silent) {
+          setError("No se pudieron cargar las sesiones");
+        }
+      })
+      .finally(() => {
+        if (!silent) {
+          setLoading(false);
+        }
+      });
   }, [startDate, endDate]);
 
   // Cargar sesiones al montar y al cambiar semana
@@ -100,7 +139,7 @@ const Calendar: React.FC = () => {
 
   // También refrescar al entrar en la vista Agenda (cambio de tab/ruta)
   useIonViewWillEnter(() => {
-    fetchSessions();
+    fetchSessions({ silent: true });
   }, [startDate, endDate]);
 
   // Filtra y ordena sesiones por fecha seleccionada y hora de inicio
@@ -144,12 +183,18 @@ const Calendar: React.FC = () => {
   }
 
   async function openDetailsModal(session: SessionItem) {
-    setBookings([]);
-    setBookingsLoading(true);
+    const cachedBookings = bookingsCacheRef.current[session.id];
+    setBookings(cachedBookings || []);
+    setBookingsLoading(!cachedBookings);
     setDetailsSession(session);
     setShowDetailsModal(true);
+
+    if (cachedBookings) {
+      return;
+    }
+
     try {
-      const data = await getBookingsBySession(session.id);
+      const data = await getSessionBookingsCached(session.id);
       setBookings(data);
     } catch {
       setBookings([]);
@@ -170,7 +215,13 @@ const Calendar: React.FC = () => {
     }
     try {
       await cancelBooking(bookingId);
-      setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: 'cancelled' } : b)));
+      setBookings(prev => {
+        const next = prev.map(b => (b.id === bookingId ? { ...b, status: 'cancelled' } : b));
+        if (detailsSession) {
+          bookingsCacheRef.current[detailsSession.id] = next;
+        }
+        return next;
+      });
       setToast({ show: true, message: 'Reserva cancelada correctamente', type: 'success' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo cancelar la reserva';
@@ -189,7 +240,13 @@ const Calendar: React.FC = () => {
     }
     try {
       await reactivateBooking(bookingId);
-      setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: 'active' } : b)));
+      setBookings(prev => {
+        const next = prev.map(b => (b.id === bookingId ? { ...b, status: 'active' } : b));
+        if (detailsSession) {
+          bookingsCacheRef.current[detailsSession.id] = next;
+        }
+        return next;
+      });
       setToast({ show: true, message: 'Reserva reactivada correctamente', type: 'success' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo reactivar la reserva';
@@ -208,6 +265,13 @@ const Calendar: React.FC = () => {
     try {
       await cancelSession(session.id);
       setSessions(prev => prev.filter(s => s.id !== session.id));
+      setSessionOccupancy(prev => {
+        const next = { ...prev };
+        delete next[session.id];
+        return next;
+      });
+      delete bookingsCacheRef.current[session.id];
+      delete bookingsInFlightRef.current[session.id];
       setDetailsSession(prev => (prev?.id === session.id ? null : prev));
       setEditingSession(prev => (prev?.id === session.id ? null : prev));
       setShowHourModal(false);
@@ -337,7 +401,7 @@ const Calendar: React.FC = () => {
       const occupancyEntries = await Promise.all(
         sessionsForDate.map(async (session) => {
           try {
-            const sessionBookings = await getBookingsBySession(session.id);
+            const sessionBookings = await getSessionBookingsCached(session.id);
             const activeCount = sessionBookings.filter(b => b.status === 'active').length;
             return [session.id, activeCount] as const;
           } catch {
@@ -347,10 +411,17 @@ const Calendar: React.FC = () => {
       );
 
       if (!cancelled) {
-        setSessionOccupancy(prev => ({
-          ...prev,
-          ...Object.fromEntries(occupancyEntries),
-        }));
+        setSessionOccupancy(prev => {
+          let changed = false;
+          const next = { ...prev };
+          for (const [sessionId, count] of occupancyEntries) {
+            if (next[sessionId] !== count) {
+              next[sessionId] = count;
+              changed = true;
+            }
+          }
+          return changed ? next : prev;
+        });
       }
     };
 
@@ -361,7 +432,7 @@ const Calendar: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [sessionsForDate, userRole]);
+  }, [sessionsForDate, userRole, getSessionBookingsCached]);
 
   useEffect(() => {
     if (!detailsSession) {
@@ -375,6 +446,7 @@ const Calendar: React.FC = () => {
   const activeBookingsCount = bookings.filter(b => b.status === 'active').length;
   const isPastSession = (session: SessionItem) => session.session_date < getTodayIsoDate();
   const isDetailsSessionPast = detailsSession ? isPastSession(detailsSession) : false;
+  const loadingSkeletonRows = [1, 2, 3];
 
   return (
     <div className="calendar-container">
@@ -573,7 +645,6 @@ const Calendar: React.FC = () => {
           </div>
           {editingSession ? (
             <div className="calendar-modal-danger-zone">
-              <p className="calendar-modal-danger-text">Cuidado, acción irreversible.</p>
               <button onClick={() => handleDeleteSession(editingSession)} className="calendar-hour-modal-delete">Eliminar sesión</button>
             </div>
           ) : null}
@@ -643,38 +714,48 @@ const Calendar: React.FC = () => {
                 <p className="calendar-bookings-modal-notes">{detailsSession.notes}</p>
               ) : null}
 
-              {bookingsLoading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0' }}>
-                  <IonSpinner name="crescent" color="primary" />
-                </div>
-              ) : bookings.length === 0 ? (
-                <p className="calendar-bookings-empty">No hay alumnos apuntados.</p>
-              ) : (
-                <div className="calendar-bookings-list">
-                  {bookings.map(booking => (
-                    <div key={booking.id} className="calendar-booking-item">
-                      <div>
-                        <div className="calendar-booking-name">{booking.user_name || `Alumno #${booking.user_id}`}</div>
-                        <div className="calendar-booking-email">{booking.user_email || 'Sin email disponible'}</div>
-                        <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : 'cancelled'}`}>
-                          {booking.status === 'active' ? 'Activa' : 'Inactiva'}
+              <div className="calendar-bookings-body">
+                {bookingsLoading ? (
+                  <div className="calendar-bookings-loading" aria-live="polite" aria-busy="true">
+                    <IonSpinner name="crescent" color="primary" />
+                    <div className="calendar-bookings-skeleton-list" aria-hidden="true">
+                      {loadingSkeletonRows.map((row) => (
+                        <div key={row} className="calendar-bookings-skeleton-item">
+                          <div className="calendar-bookings-skeleton-line calendar-bookings-skeleton-line--name" />
+                          <div className="calendar-bookings-skeleton-line calendar-bookings-skeleton-line--email" />
                         </div>
-                      </div>
-                      {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast ? (
-                        booking.status === 'active' ? (
-                          <button className="calendar-booking-action-cancel" onClick={() => handleCancelBooking(booking.id)}>
-                            Cancelar
-                          </button>
-                        ) : (
-                          <button className="calendar-booking-action-reactivate" onClick={() => handleReactivateBooking(booking.id)}>
-                            Reactivar
-                          </button>
-                        )
-                      ) : null}
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ) : bookings.length === 0 ? (
+                  <p className="calendar-bookings-empty">No hay alumnos apuntados.</p>
+                ) : (
+                  <div className="calendar-bookings-list">
+                    {bookings.map(booking => (
+                      <div key={booking.id} className="calendar-booking-item">
+                        <div>
+                          <div className="calendar-booking-name">{booking.user_name || `Alumno #${booking.user_id}`}</div>
+                          <div className="calendar-booking-email">{booking.user_email || 'Sin email disponible'}</div>
+                          <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : 'cancelled'}`}>
+                            {booking.status === 'active' ? 'Activa' : 'Inactiva'}
+                          </div>
+                        </div>
+                        {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast ? (
+                          booking.status === 'active' ? (
+                            <button className="calendar-booking-action-cancel" onClick={() => handleCancelBooking(booking.id)}>
+                              Cancelar
+                            </button>
+                          ) : (
+                            <button className="calendar-booking-action-reactivate" onClick={() => handleReactivateBooking(booking.id)}>
+                              Reactivar
+                            </button>
+                          )
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </>
           ) : null}
           <div className="calendar-hour-modal-actions">

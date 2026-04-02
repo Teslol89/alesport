@@ -814,6 +814,7 @@ body,
   border-top: 1px solid rgba(144, 23, 38, 0.18);
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.75rem;
 }
 
@@ -824,25 +825,27 @@ body,
 }
 
 .calendar-hour-modal-delete {
-  width: 100%;
-  background: var(--app-btn-danger-bg);
-  color: var(--app-btn-danger-text);
+  width: fit-content;
+  background: transparent;
+  color: #b4232f;
   border: none;
-  border-radius: var(--app-btn-radius);
-  padding: var(--app-btn-padding);
+  border-radius: 0;
+  padding: 0;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }
 
 .calendar-hour-modal-delete:hover {
-  background: var(--app-btn-danger-bg-hover);
+  color: #8f1d28;
 }
 
 .calendar-hour-modal-delete:active {
-  background: var(--app-btn-danger-bg-active);
   transform: scale(0.98);
 }
 
@@ -878,6 +881,51 @@ body,
   overflow-y: auto;
 }
 
+.calendar-bookings-body {
+  height: clamp(220px, 42vh, 360px);
+  overflow: hidden;
+}
+
+.calendar-bookings-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.8rem;
+  height: 100%;
+  margin-top: 0.2rem;
+}
+
+.calendar-bookings-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.calendar-bookings-skeleton-item {
+  border: 1px solid #d7e4e8;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.65rem 0.7rem;
+}
+
+.calendar-bookings-skeleton-line {
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e8eff2 0%, #f3f7f9 50%, #e8eff2 100%);
+  background-size: 200% 100%;
+  animation: calendar-skeleton-pulse 1.15s ease-in-out infinite;
+}
+
+.calendar-bookings-skeleton-line--name {
+  height: 12px;
+  width: 62%;
+  margin-bottom: 0.45rem;
+}
+
+.calendar-bookings-skeleton-line--email {
+  height: 10px;
+  width: 48%;
+}
+
 .calendar-bookings-modal h3 {
   margin: 0;
   font-size: 1.25rem;
@@ -906,16 +954,31 @@ body,
 }
 
 .calendar-bookings-empty {
-  margin: 0.7rem 0;
+  margin: 0;
   color: #5e757c;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .calendar-bookings-list {
-  max-height: 48vh;
+  height: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  padding-right: 0.1rem;
+}
+
+@keyframes calendar-skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .calendar-booking-item {

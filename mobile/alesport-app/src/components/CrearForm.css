@@ -237,13 +237,16 @@
 }
 
 .crear-single-modal-wrapper {
-  --width: min(92vw, 720px);
+  --width: min(92vw, 560px);
   --height: auto;
   --border-radius: 22px;
   --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
 }
 
 .crear-single-modal-wrapper::part(content) {
+  width: min(92vw, 560px);
+  height: auto;
+  max-height: min(86vh, 780px);
   border-radius: 22px;
   overflow: hidden;
 }
@@ -252,7 +255,7 @@
   padding: 1rem;
   background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
   border: 1px solid rgba(15, 48, 55, 0.08);
-  max-height: min(84vh, 760px);
+  max-height: min(86vh, 780px);
   overflow-y: auto;
 }
 

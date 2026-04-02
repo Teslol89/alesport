@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
+import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
 import './CrearForm.css';
 
 type CreateMode = 'single' | 'recurring' | null;
@@ -12,6 +13,7 @@ type SingleSessionDraft = {
     startTime: string;
     endTime: string;
     capacity: number;
+    trainerId: number | null;
     trainerName: string;
     notes: string;
 };
@@ -32,11 +34,33 @@ function formatIsoDateForUi(isoDate: string) {
     return `${dd} / ${mm} / ${yyyy}`;
 }
 
+const TIME_PICKER_BASE_DATE = '1970-01-01';
+
+function toPickerIso(hourValue: string) {
+    return `${TIME_PICKER_BASE_DATE}T${hourValue}:00`;
+}
+
+function fromPickerIsoToHm(isoValue: string) {
+    const time = isoValue.includes('T') ? isoValue.split('T')[1] : '';
+    if (!time || time.length < 5) {
+        return '';
+    }
+    return time.slice(0, 5);
+}
+
 const CrearForm: React.FC = () => {
     const [createMode, setCreateMode] = useState<CreateMode>(null);
     const [recurrenceMode, setRecurrenceMode] = useState<RecurrenceMode>('weekly');
     const [showSingleModal, setShowSingleModal] = useState(false);
     const [showSingleDatePicker, setShowSingleDatePicker] = useState(false);
+    const [showSingleTimePicker, setShowSingleTimePicker] = useState(false);
+    const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end' | null>(null);
+    const [timePickerValue, setTimePickerValue] = useState(toPickerIso('09:00'));
+    const [showCapacityPicker, setShowCapacityPicker] = useState(false);
+    const [showTrainerPicker, setShowTrainerPicker] = useState(false);
+    const [trainerOptions, setTrainerOptions] = useState<AssignableTrainer[]>([]);
+    const [isLoadingTrainers, setIsLoadingTrainers] = useState(false);
+    const [trainersError, setTrainersError] = useState<string | null>(null);
     const [submitInfo, setSubmitInfo] = useState<string | null>(null);
     const [singleDraft, setSingleDraft] = useState<SingleSessionDraft>({
         className: '',
@@ -44,14 +68,59 @@ const CrearForm: React.FC = () => {
         startTime: '09:00',
         endTime: '10:00',
         capacity: 10,
-        trainerName: 'Alex',
+        trainerId: null,
+        trainerName: '',
         notes: '',
     });
 
     const isSingleTimeRangeValid = singleDraft.startTime < singleDraft.endTime;
     const isSingleCapacityValid = singleDraft.capacity >= 1 && singleDraft.capacity <= 10;
-    const isSingleRequiredValid = singleDraft.className.trim().length > 0 && singleDraft.sessionDate.length > 0;
+    const isSingleTrainerValid = singleDraft.trainerId !== null;
+    const isSingleRequiredValid = singleDraft.className.trim().length > 0 && singleDraft.sessionDate.length > 0 && isSingleTrainerValid;
     const isSingleValid = isSingleTimeRangeValid && isSingleCapacityValid && isSingleRequiredValid;
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadAssignableTrainers() {
+            setIsLoadingTrainers(true);
+            setTrainersError(null);
+
+            try {
+                const options = await getAssignableTrainers();
+                if (cancelled) {
+                    return;
+                }
+                setTrainerOptions(options);
+                if (options.length > 0) {
+                    setSingleDraft((prev) => {
+                        if (prev.trainerId !== null) {
+                            return prev;
+                        }
+                        return {
+                            ...prev,
+                            trainerId: options[0].id,
+                            trainerName: options[0].name,
+                        };
+                    });
+                }
+            } catch {
+                if (!cancelled) {
+                    setTrainersError('No se pudieron cargar los entrenadores.');
+                }
+            } finally {
+                if (!cancelled) {
+                    setIsLoadingTrainers(false);
+                }
+            }
+        }
+
+        loadAssignableTrainers();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     function handleSingleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -63,16 +132,51 @@ const CrearForm: React.FC = () => {
     }
 
     function resetSingleDraft() {
+        const defaultTrainer = trainerOptions[0];
         setSingleDraft({
             className: '',
             sessionDate: toTodayIsoDate(),
             startTime: '09:00',
             endTime: '10:00',
             capacity: 10,
-            trainerName: 'Alex',
+            trainerId: defaultTrainer?.id ?? null,
+            trainerName: defaultTrainer?.name ?? '',
             notes: '',
         });
         setSubmitInfo(null);
+        setShowTrainerPicker(false);
+    }
+
+    function openTimePicker(target: 'start' | 'end') {
+        const currentValue = target === 'start' ? singleDraft.startTime : singleDraft.endTime;
+        const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
+        setTimePickerTarget(target);
+        setTimePickerValue(toPickerIso(normalizedValue));
+        setShowSingleTimePicker(true);
+    }
+
+    function applyPickedTime() {
+        const hmValue = fromPickerIsoToHm(timePickerValue);
+        if (!hmValue || !timePickerTarget) {
+            setShowSingleTimePicker(false);
+            return;
+        }
+        if (timePickerTarget === 'start') {
+            setSingleDraft((prev) => ({ ...prev, startTime: hmValue }));
+        } else {
+            setSingleDraft((prev) => ({ ...prev, endTime: hmValue }));
+        }
+        setShowSingleTimePicker(false);
+    }
+
+    function pickCapacity(value: number) {
+        setSingleDraft((prev) => ({ ...prev, capacity: value }));
+        setShowCapacityPicker(false);
+    }
+
+    function pickTrainer(trainer: AssignableTrainer) {
+        setSingleDraft((prev) => ({ ...prev, trainerId: trainer.id, trainerName: trainer.name }));
+        setShowTrainerPicker(false);
     }
 
     return (
@@ -82,14 +186,6 @@ const CrearForm: React.FC = () => {
             </div>
 
             <div className="crear-form-content">
-
-                {/* Explicación general y elección de modo */}
-                <section className="crear-form-hero">
-                    <h1 className="crear-form-title">Nueva creación</h1>
-                    <p className="crear-form-subtitle">
-                        Aquí Alex podrá crear una clase puntual o configurar una recurrencia semanal o mensual.
-                    </p>
-                </section>
 
                 {/* Elección de clase puntual o recurrente */}
                 <section className="crear-form-section">
@@ -192,6 +288,37 @@ const CrearForm: React.FC = () => {
                         </div>
 
                         <form className="crear-single-form" onSubmit={handleSingleSubmit}>
+
+                            {/* Campo Entrenador */}
+                            <label className="crear-field-label" htmlFor="single-trainer-role">Entrenador</label>
+                            <button
+                                id="single-trainer-role"
+                                type="button"
+                                className="crear-input crear-date-btn"
+                                disabled={isLoadingTrainers || trainerOptions.length === 0}
+                                onClick={() => setShowTrainerPicker((prev) => !prev)}
+                            >
+                                {isLoadingTrainers ? 'Cargando entrenadores...' : (singleDraft.trainerName || 'Selecciona entrenador')}
+                            </button>
+
+                            {showTrainerPicker ? (
+                                <div className="crear-trainer-picker-panel">
+                                    {trainerOptions.map((trainer) => (
+                                        <button
+                                            key={trainer.id}
+                                            type="button"
+                                            className={`crear-trainer-option ${singleDraft.trainerId === trainer.id ? 'selected' : ''}`}
+                                            onClick={() => pickTrainer(trainer)}
+                                        >
+                                            <span className="crear-trainer-name">{trainer.name}</span>
+                                            <span className="crear-trainer-role">{trainer.role}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : null}
+                            {trainersError ? <p className="crear-validation-error">{trainersError}</p> : null}
+
+                            {/* Campo Nombre de la clase */}
                             <label className="crear-field-label" htmlFor="single-class-name">Nombre de la clase</label>
                             <input
                                 id="single-class-name"
@@ -202,6 +329,7 @@ const CrearForm: React.FC = () => {
                                 placeholder="Ej: Funcional Intermedio"
                             />
 
+                            {/* Campo Fecha */}
                             <div className="crear-field-grid">
                                 <div>
                                     <label className="crear-field-label" htmlFor="single-session-date-btn">Fecha</label>
@@ -233,73 +361,108 @@ const CrearForm: React.FC = () => {
                                             <div className="crear-single-date-modal-actions">
                                                 <button
                                                     type="button"
-                                                    className="crear-btn-secondary"
-                                                    onClick={() => setShowSingleDatePicker(false)}
-                                                >
-                                                    Cancelar
-                                                </button>
-                                                <button
-                                                    type="button"
                                                     className="crear-btn-primary"
                                                     onClick={() => setShowSingleDatePicker(false)}
                                                 >
                                                     Aceptar
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="app-btn-danger"
+                                                    onClick={() => setShowSingleDatePicker(false)}
+                                                >
+                                                    Cancelar
                                                 </button>
                                             </div>
                                         </div>
                                     ) : null}
                                 </div>
 
+                                {/* Campo Capacidad */}
                                 <div>
                                     <label className="crear-field-label" htmlFor="single-capacity">Capacidad (1-10)</label>
-                                    <input
+                                    <button
                                         id="single-capacity"
-                                        className="crear-input"
-                                        type="number"
-                                        min={1}
-                                        max={10}
-                                        value={singleDraft.capacity}
-                                        onChange={(e) => setSingleDraft((prev) => ({ ...prev, capacity: Number(e.target.value) || 0 }))}
-                                    />
+                                        type="button"
+                                        className="crear-input crear-date-btn"
+                                        onClick={() => setShowCapacityPicker((prev) => !prev)}
+                                    >
+                                        {singleDraft.capacity}
+                                    </button>
+
+                                    {showCapacityPicker ? (
+                                        <div className="crear-capacity-picker-panel">
+                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    className={`crear-capacity-option ${singleDraft.capacity === value ? 'selected' : ''}`}
+                                                    onClick={() => pickCapacity(value)}
+                                                >
+                                                    {value}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : null}
                                 </div>
                             </div>
 
+                            {/* Campo Hora Inicio */}
                             <div className="crear-field-grid">
                                 <div>
                                     <label className="crear-field-label" htmlFor="single-start-time">Hora inicio</label>
-                                    <input
+                                    <button
                                         id="single-start-time"
-                                        className="crear-input"
-                                        type="time"
-                                        step={1800}
-                                        value={singleDraft.startTime}
-                                        onChange={(e) => setSingleDraft((prev) => ({ ...prev, startTime: e.target.value }))}
-                                    />
+                                        type="button"
+                                        className="crear-input crear-date-btn"
+                                        onClick={() => openTimePicker('start')}
+                                    >
+                                        {singleDraft.startTime || '--:--'}
+                                    </button>
                                 </div>
 
+                                {/* Campo Hora Fin */}
                                 <div>
                                     <label className="crear-field-label" htmlFor="single-end-time">Hora fin</label>
-                                    <input
+                                    <button
                                         id="single-end-time"
-                                        className="crear-input"
-                                        type="time"
-                                        step={1800}
-                                        value={singleDraft.endTime}
-                                        onChange={(e) => setSingleDraft((prev) => ({ ...prev, endTime: e.target.value }))}
-                                    />
+                                        type="button"
+                                        className="crear-input crear-date-btn"
+                                        onClick={() => openTimePicker('end')}
+                                    >
+                                        {singleDraft.endTime || '--:--'}
+                                    </button>
                                 </div>
                             </div>
 
-                            <label className="crear-field-label" htmlFor="single-trainer-name">Entrenador</label>
-                            <input
-                                id="single-trainer-name"
-                                className="crear-input"
-                                type="text"
-                                value={singleDraft.trainerName}
-                                onChange={(e) => setSingleDraft((prev) => ({ ...prev, trainerName: e.target.value }))}
-                                placeholder="Nombre del entrenador"
-                            />
+                            {showSingleTimePicker ? (
+                                <div className="crear-time-picker-panel">
+                                    <h4>{timePickerTarget === 'start' ? 'Hora de inicio' : 'Hora de fin'}</h4>
+                                    <IonDatetime
+                                        className="crear-time-picker"
+                                        presentation="time"
+                                        preferWheel={true}
+                                        minuteValues="0,30"
+                                        value={timePickerValue}
+                                        onIonChange={(e: CustomEvent<{ value?: string | string[] | null }>) => {
+                                            const nextValue = e.detail.value;
+                                            if (typeof nextValue === 'string') {
+                                                setTimePickerValue(nextValue);
+                                            }
+                                        }}
+                                    />
+                                    <div className="crear-time-picker-actions">
+                                        <button type="button" className="crear-btn-primary" onClick={applyPickedTime}>
+                                            Aplicar
+                                        </button>
+                                        <button type="button" className="app-btn-danger" onClick={() => setShowSingleTimePicker(false)}>
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : null}
 
+                            {/* Campo Notas */}
                             <label className="crear-field-label" htmlFor="single-notes">Notas (opcional)</label>
                             <textarea
                                 id="single-notes"
@@ -315,6 +478,10 @@ const CrearForm: React.FC = () => {
 
                             {!isSingleCapacityValid ? (
                                 <p className="crear-validation-error">La capacidad debe estar entre 1 y 10.</p>
+                            ) : null}
+
+                            {!isSingleTrainerValid ? (
+                                <p className="crear-validation-error">Debes seleccionar un entrenador válido.</p>
                             ) : null}
 
                             <div className="crear-preview-card crear-single-preview">

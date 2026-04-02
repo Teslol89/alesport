@@ -337,11 +337,142 @@
   font-weight: 600;
 }
 
+.crear-single-date-calendar::part(wheel-item) {
+  color: #000000 !important;
+  opacity: 0.55;
+}
+
+.crear-single-date-calendar::part(wheel-item active) {
+  color: #000000 !important;
+  opacity: 1;
+}
+
 .crear-single-date-modal-actions {
   margin-top: 0.6rem;
   display: flex;
+  flex-direction: column;
   gap: 0.6rem;
   justify-content: center;
+}
+
+.crear-single-date-modal-actions .crear-btn-primary,
+.crear-single-date-modal-actions .app-btn-danger {
+  width: 100%;
+}
+
+.crear-time-picker-panel {
+  margin-top: 0.5rem;
+  background: #ffffff;
+  border: 1px solid #d8e5e9;
+  border-radius: 14px;
+  padding: 0.6rem;
+}
+
+.crear-time-picker-panel h4 {
+  margin: 0 0 0.6rem 0;
+  text-align: center;
+  color: #0e3139;
+}
+
+.crear-time-picker {
+  width: 100%;
+  color-scheme: light;
+  --background: #f4f6f8;
+  --background-rgb: 244, 246, 248;
+  --wheel-highlight-background: #ffffff;
+  --wheel-fade-background-rgb: 244, 246, 248;
+  --title-color: #000000;
+  --color: #000000;
+  --ion-color-primary: #1f2f35;
+  --ion-text-color: #000000;
+  --ion-text-color-rgb: 0, 0, 0;
+  border-radius: 14px;
+}
+
+.crear-time-picker::part(wheel-item) {
+  color: #000000;
+  opacity: 0.7;
+}
+
+.crear-time-picker::part(wheel-item active) {
+  color: #000000;
+  opacity: 1;
+}
+
+.crear-time-picker-actions {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.crear-capacity-picker-panel {
+  margin-top: 0.5rem;
+  background: #ffffff;
+  border: 1px solid #d8e5e9;
+  border-radius: 14px;
+  padding: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+}
+
+.crear-capacity-option {
+  border: 1px solid #c8dbe0;
+  background: #f6f9fa;
+  color: #0f3037;
+  border-radius: 10px;
+  padding: 0.5rem 0;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.crear-capacity-option.selected {
+  border-color: #0089a6;
+  background: rgba(0, 137, 166, 0.16);
+  color: #0a4a57;
+}
+
+.crear-trainer-picker-panel {
+  margin-top: 0.5rem;
+  background: #ffffff;
+  border: 1px solid #d8e5e9;
+  border-radius: 14px;
+  padding: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+}
+
+.crear-trainer-option {
+  border: 1px solid #c8dbe0;
+  background: #f6f9fa;
+  color: #0f3037;
+  border-radius: 10px;
+  padding: 0.55rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+}
+
+.crear-trainer-option.selected {
+  border-color: #0089a6;
+  background: rgba(0, 137, 166, 0.16);
+  color: #0a4a57;
+}
+
+.crear-trainer-name {
+  font-weight: 700;
+}
+
+.crear-trainer-role {
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.8;
+  text-transform: uppercase;
 }
 
 .crear-form-section-preview {

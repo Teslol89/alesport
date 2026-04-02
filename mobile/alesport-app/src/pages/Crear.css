@@ -1,0 +1,10 @@
+.ion-page.crear-page,
+.ion-page.crear-page ion-content,
+.ion-page.crear-page .ion-content {
+  --background: #eeeeee !important;
+  background: #eeeeee !important;
+}
+
+.crear-center-wrapper {
+  min-height: 100%;
+}

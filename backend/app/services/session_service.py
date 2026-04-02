@@ -39,22 +39,26 @@ def _ensure_no_session_overlap(
     exclude_session_id: int | None = None,
 ) -> None:
     """Valida que la franja no se solape con otra sesión no cancelada del mismo entrenador."""
+    candidate_start = start_time.astimezone(LOCAL_TIMEZONE)
+    candidate_end = end_time.astimezone(LOCAL_TIMEZONE)
+
     overlap_query = db.query(SessionModel).filter(
         SessionModel.trainer_id == trainer_id,
         SessionModel.status != "cancelled",
-        SessionModel.start_time < end_time,
-        SessionModel.end_time > start_time,
     )
 
     if exclude_session_id is not None:
         overlap_query = overlap_query.filter(SessionModel.id != exclude_session_id)
 
-    overlapping_session = overlap_query.first()
-    if overlapping_session is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Esta sesión se solapa con otra no cancelada del mismo entrenador",
-        )
+    for existing_session in overlap_query.all():
+        existing_start = existing_session.start_time.astimezone(LOCAL_TIMEZONE)
+        existing_end = existing_session.end_time.astimezone(LOCAL_TIMEZONE)
+
+        if existing_start < candidate_end and existing_end > candidate_start:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Esta sesión se solapa con otra no cancelada del mismo entrenador",
+            )
 
 
 def create_session(db: Session, create_data, current_user: User) -> SessionModel:

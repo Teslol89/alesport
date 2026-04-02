@@ -138,7 +138,7 @@
 .search-form-date-modal h4 {
 	margin: 0 0 0.65rem 0;
 	text-align: center;
-	color: #0f3037;
+	color: rgb(0, 0, 0);
 }
 
 .search-form-date-calendar {
@@ -308,6 +308,11 @@
 	--ion-color-primary-contrast: #000000;
 }
 
+.search-form-date-calendar::part(calendar-day) {
+	color: #000000;
+	font-weight: 400;
+}
+
 .search-form-date-calendar::part(calendar-day active) {
 	background: rgba(0, 137, 166, 0.18);
 	color: #0f3037;
@@ -317,19 +322,22 @@
 
 .search-form-date-calendar::part(month-year-button) {
 	color: #000000;
-	font-weight: 700;
+	font-weight: 400;
 }
 
-.search-form-date-calendar::part(next-month-button),
-.search-form-date-calendar::part(prev-month-button) {
-	color: #000000 !important;
+.search-form-date-modal ion-datetime::part(navigation-button),
+.search-form-date-modal ion-datetime::part(previous-button),
+.search-form-date-modal ion-datetime::part(next-button) {
+	color: #0089a6 !important;
 	opacity: 1 !important;
+	--color: #0089a6;
 }
 
-.search-form-date-modal ion-datetime::part(next-month-button),
-.search-form-date-modal ion-datetime::part(prev-month-button) {
+.search-form-date-calendar::part(calendar-days-of-week),
+.search-form-date-modal ion-datetime::part(calendar-days-of-week) {
 	color: #000000 !important;
 	opacity: 1 !important;
+	font-weight: 600;
 }
 
 .search-form-date-calendar::part(wheel-item) {

@@ -166,6 +166,21 @@ def run_role_specific_checks(token: str, role: str, user_id: int | None, session
             )
             print(f"    ✓ Sesión actualizada")
 
+            print(f"  [TEST] Actualizando solo metadatos manteniendo la misma franja horaria...")
+            request_and_check(
+                "PATCH",
+                f"/sessions/{session_to_update}",
+                {200},
+                headers=headers,
+                json={
+                    "start_time": created_session.get("start_time", "10:00") if created_session else "10:00",
+                    "end_time": created_session.get("end_time", "11:30") if created_session else "11:30",
+                    "class_name": "Updated Class Same Time",
+                    "notes": "Cambio solo notas sin mover la hora",
+                },
+            )
+            print(f"    ✓ La sesión acepta actualizar metadatos sin cambiar la franja")
+
             # ========== TEST: Validar capacity inválida ==========
             print(f"  [TEST] Validando capacity inválida...")
             request_and_check(

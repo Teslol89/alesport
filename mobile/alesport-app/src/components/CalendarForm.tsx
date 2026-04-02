@@ -497,10 +497,15 @@ const Calendar: React.FC = () => {
             const isPast = isPastSession(session);
             const colorClass = isAtCapacity ? 'danger' : 'success';
             const cardClass = `session-card ion-color-${colorClass}`;
+            const hasClassName = Boolean(session.class_name && session.class_name.trim().length > 0);
+            const hasNotes = Boolean(session.notes && session.notes.trim().length > 0);
             return (
               <IonCard key={session.id} className={cardClass}>
                 <IonCardHeader>
                   <IonCardTitle>
+                    {hasClassName ? (
+                      <p className="session-class-name">{session.class_name}</p>
+                    ) : null}
                     <div className="session-title-row-flex">
                       <span className="session-title-custom session-title-row">
                         <img src={horaIcon} alt="Hora" className="session-title-icon" />
@@ -513,7 +518,7 @@ const Calendar: React.FC = () => {
                   </IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
-                  <span className='session-small-title-custom session-aforo-row'>
+                  <div className='session-small-title-custom session-aforo-row'>
                     <img src={aforoIcon} alt="Aforo" className="session-aforo-icon" />
                     {`${occupancy}/${session.capacity}`}
                     <div className='calendar-details-btn-container'>
@@ -521,7 +526,10 @@ const Calendar: React.FC = () => {
                         <img src={infoIcon} alt="Detalles" className="calendar-details-btn-icon" />
                       </button>
                     </div>
-                  </span>
+                  </div>
+                  {hasNotes ? (
+                    <p className="session-class-notes">{session.notes}</p>
+                  ) : null}
                 </IonCardContent>
               </IonCard>
             );

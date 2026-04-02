@@ -1,6 +1,5 @@
 # services/session_service.py
 from datetime import date, datetime, time, timedelta
-from zoneinfo import ZoneInfo
 from typing import Optional
 
 from fastapi import HTTPException, status
@@ -13,11 +12,13 @@ from app.models.user import User
 from app.models.booking import Booking
 import logging
 
-from app.utils.utils import get_logger
+from app.utils.utils import LOCAL_TIMEZONE, get_logger, is_past_session_datetime
 from app.services.notification_service import send_push_notification
 
-LOCAL_TIMEZONE = ZoneInfo("Europe/Madrid")
 logger = get_logger(__name__)
+
+
+PAST_SESSION_UPDATE_ERROR = "No se pueden modificar sesiones de días pasados"
 
 
 def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
@@ -157,11 +158,17 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
             detail="Sesión no encontrada",
         )
 
+    if is_past_session_datetime(session.start_time):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=PAST_SESSION_UPDATE_ERROR,
+        )
+
     # Admin puede modificar cualquier sesión; trainer solo las suyas
     if current_user.role != "admin" and session.trainer_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para modificar esta sesion",
+            detail="No tienes permisos para modificar esta sesión",
         )
 
     # Obtener solo los campos que se quieren modificar
@@ -184,11 +191,11 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
         if "no_overlap_sessions" in str(exc.orig):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="La sesion actualizada se solapa con otra sesion no cancelada del mismo entrenador",
+                detail="No se pueden solapar horas",
             )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Datos de sesion inválidos",
+            detail="Datos de sesión inválidos",
         )
 
     db.refresh(session)
@@ -239,6 +246,12 @@ def update_sessions_in_week(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No hay sesiones para ese entrenador en la semana indicada",
+        )
+
+    if any(is_past_session_datetime(session.start_time) for session in sessions):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=PAST_SESSION_UPDATE_ERROR,
         )
 
     for session in sessions:

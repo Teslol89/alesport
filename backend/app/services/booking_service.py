@@ -5,6 +5,10 @@ from sqlalchemy.orm import Session
 from app.models.booking import Booking
 from app.models.session import SessionModel
 from app.models.user import User
+from app.utils.utils import is_past_session_datetime
+
+
+PAST_SESSION_MUTATION_ERROR = "No se pueden modificar reservas de días pasados"
 
 
 def _count_active_bookings(db: Session, session_id: int) -> int:
@@ -124,6 +128,12 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
             detail="Sesión no encontrada",
         )
 
+    if is_past_session_datetime(session.start_time):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=PAST_SESSION_MUTATION_ERROR,
+        )
+
     # Solo se puede reservar en sesiones no canceladas.
     # Si estaba marcada como 'completed' pero realmente tiene hueco,
     # el estado se corrige automáticamente más abajo.
@@ -189,6 +199,12 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
             detail="Sesión no encontrada",
         )
 
+    if is_past_session_datetime(session.start_time):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=PAST_SESSION_MUTATION_ERROR,
+        )
+
     # Autorización por rol
     if current_user.role == "admin":
         pass
@@ -245,6 +261,12 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Sesión no encontrada",
+        )
+
+    if is_past_session_datetime(session.start_time):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=PAST_SESSION_MUTATION_ERROR,
         )
 
     if current_user.role == "admin":

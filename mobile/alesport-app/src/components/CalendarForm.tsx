@@ -5,41 +5,18 @@ import CustomToast from './CustomStyles';
 import horaIcon from '../icons/horaColor.webp';
 import aforoIcon from '../icons/editarAlumnos.webp';
 import infoIcon from '../icons/detallesColor.svg';
-import { getCurrentWeekDays, getMonthDays } from '../utils/funcionesGeneral';
+import {
+  formatDateDdMmYy,
+  formatFullDateES,
+  formatHour,
+  fromPickerTimeIso,
+  getCurrentWeekDays,
+  getTodayIsoDate,
+  toPickerTimeIso,
+} from '../utils/funcionesGeneral';
 import { getSessionsByDateRange, patchSessionHour } from '../api/sessions';
 import { getUserProfile } from '../api/user';
 import { BookingItem, cancelBooking, getBookingsBySession, reactivateBooking } from '../api/bookings';
-
-function formatFullDateES(dateStr: string) {
-  const date = new Date(dateStr);
-  const optionsDay: Intl.DateTimeFormatOptions = { weekday: 'long' };
-  // Formato personalizado: "Marzo 31, 2026"
-  const day = date.toLocaleDateString('es-ES', optionsDay);
-  const month = date.toLocaleDateString('es-ES', { month: 'long' });
-  const dayNum = date.getDate();
-  const year = date.getFullYear();
-  // Capitalizar mes
-  const monthCap = month.charAt(0).toUpperCase() + month.slice(1);
-  const fullDate = `${monthCap} ${dayNum}, ${year}`;
-  return {
-    day: day.charAt(0).toUpperCase() + day.slice(1),
-    fullDate,
-  };
-}
-
-function formatDateDdMmYy(dateStr: string) {
-  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (match) {
-    const [, year, month, day] = match;
-    return `${day}/${month}/${year.slice(-2)}`;
-  }
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
-  const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const yy = String(date.getFullYear()).slice(-2);
-  return `${dd}/${mm}/${yy}`;
-}
 
 const Calendar: React.FC = () => {
   const TIME_PICKER_BASE_DATE = '1970-01-01';
@@ -88,31 +65,12 @@ const Calendar: React.FC = () => {
 
   const dayButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  // Para el modal mensual
-  const selectedDateObj = useMemo(() => {
-    const parsed = new Date(`${selectedDate}T00:00:00`);
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
-  }, [selectedDate]);
-  const [monthCursor, setMonthCursor] = useState(() => new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), 1));
-  const monthDays = useMemo(
-    () => getMonthDays(monthCursor.getFullYear(), monthCursor.getMonth()),
-    [monthCursor],
-  );
-  const monthCursorLabel = useMemo(() => {
-    const monthLabel = monthCursor.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-    return monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
-  }, [monthCursor]);
-
+  // Sincronizar selectedDate cuando se abre el modal de mes
   useEffect(() => {
-    if (!showMonthModal) {
-      return;
+    if (showMonthModal) {
+      setSelectedDate(weekAnchorDate);
     }
-    setMonthCursor(new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), 1));
-  }, [showMonthModal, selectedDateObj]);
-
-  function moveMonthCursor(monthOffset: number) {
-    setMonthCursor(prev => new Date(prev.getFullYear(), prev.getMonth() + monthOffset, 1));
-  }
+  }, [showMonthModal, weekAnchorDate]);
 
   // Obtener rango de la semana actual
   const startDate = weekDays[0].date;
@@ -134,51 +92,22 @@ const Calendar: React.FC = () => {
       sessions
         .filter(s => s.session_date === selectedDate)
         .sort((a, b) => {
-          // a.start_time y b.start_time pueden ser 'HH:mm:ss' o Date
-          const getTime = (session: SessionItem) => {
-            if (typeof session.start_time === 'string') {
-              // Si es solo hora, combínala con la fecha
-              if (/^\d{2}:\d{2}:\d{2}$/.test(session.start_time) && session.session_date) {
-                return new Date(`${session.session_date}T${session.start_time}`).getTime();
-              }
-              // Si es string tipo ISO
-              return new Date(session.start_time).getTime();
-            }
-            if (session.start_time instanceof Date) {
-              return session.start_time.getTime();
-            }
-            return 0;
-          };
-          return getTime(a) - getTime(b);
+          const startA = formatHour(a.start_time, a.session_date, '00:00');
+          const startB = formatHour(b.start_time, b.session_date, '00:00');
+          return startA.localeCompare(startB);
         }),
     [sessions, selectedDate],
   );
-
-  function formatHour(dateInput: string | Date, sessionDate?: string): string {
-    let d: Date;
-    if (typeof dateInput === 'string') {
-      if (/^\d{2}:\d{2}:\d{2}$/.test(dateInput) && sessionDate) {
-        d = new Date(`${sessionDate}T${dateInput}`);
-      } else {
-        let safeStr = dateInput;
-        if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(dateInput)) {
-          safeStr = dateInput.replace(' ', 'T');
-        }
-        d = new Date(safeStr);
-      }
-    } else {
-      d = dateInput;
-    }
-    if (isNaN(d.getTime())) return '-';
-    const hours = d.getHours().toString().padStart(2, '0');
-    const minutes = d.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
 
   const fechaES = formatFullDateES(selectedDate);
 
   // Función para abrir el modal de edición de hora
   function handleEditHour(session: SessionItem) {
+    if (isPastSession(session)) {
+      setToast({ show: true, message: 'No se pueden modificar sesiones de días pasados', type: 'danger' });
+      return;
+    }
+
     const start = formatHour(session.start_time, session.session_date);
     const end = formatHour(session.end_time, session.session_date);
     setEditingSession(session);
@@ -203,6 +132,11 @@ const Calendar: React.FC = () => {
   }
 
   async function handleCancelBooking(bookingId: number) {
+    if (detailsSession && isPastSession(detailsSession)) {
+      setToast({ show: true, message: 'No se pueden modificar reservas de días pasados', type: 'danger' });
+      return;
+    }
+
     if (!window.confirm('¿Seguro que quieres cancelar esta reserva?')) {
       return;
     }
@@ -210,12 +144,18 @@ const Calendar: React.FC = () => {
       await cancelBooking(bookingId);
       setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: 'cancelled' } : b)));
       setToast({ show: true, message: 'Reserva cancelada correctamente', type: 'success' });
-    } catch {
-      setToast({ show: true, message: 'No se pudo cancelar la reserva', type: 'danger' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo cancelar la reserva';
+      setToast({ show: true, message, type: 'danger' });
     }
   }
 
   async function handleReactivateBooking(bookingId: number) {
+    if (detailsSession && isPastSession(detailsSession)) {
+      setToast({ show: true, message: 'No se pueden modificar reservas de días pasados', type: 'danger' });
+      return;
+    }
+
     if (!window.confirm('¿Seguro que quieres reactivar esta reserva?')) {
       return;
     }
@@ -230,12 +170,11 @@ const Calendar: React.FC = () => {
   }
 
   function toPickerIso(hourValue: string) {
-    return `${TIME_PICKER_BASE_DATE}T${hourValue}:00`;
+    return toPickerTimeIso(hourValue, TIME_PICKER_BASE_DATE);
   }
 
   function fromPickerIsoToHm(isoValue: string) {
-    const match = isoValue.match(/T(\d{2}:\d{2})/);
-    return match ? match[1] : '';
+    return fromPickerTimeIso(isoValue);
   }
 
   function openTimePicker(target: 'start' | 'end') {
@@ -266,6 +205,13 @@ const Calendar: React.FC = () => {
       return;
     }
 
+    if (isPastSession(editingSession)) {
+      setToast({ show: true, message: 'No se pueden modificar sesiones de días pasados', type: 'danger' });
+      setShowHourModal(false);
+      setEditingSession(null);
+      return;
+    }
+
     try {
       await patchSessionHour(editingSession.id, newStartTime, newEndTime);
       setSessions(prev => prev.map(s => s.id === editingSession.id ? {
@@ -276,8 +222,9 @@ const Calendar: React.FC = () => {
       setToast({ show: true, message: 'Hora actualizada correctamente', type: 'success' });
       setShowHourModal(false);
       setEditingSession(null);
-    } catch {
-      setToast({ show: true, message: 'Error al guardar la hora en el servidor', type: 'danger' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al guardar la hora en el servidor';
+      setToast({ show: true, message, type: 'danger' });
     }
   }
 
@@ -347,6 +294,8 @@ const Calendar: React.FC = () => {
   }, [bookings, detailsSession]);
 
   const activeBookingsCount = bookings.filter(b => b.status === 'active').length;
+  const isPastSession = (session: SessionItem) => session.session_date < getTodayIsoDate();
+  const isDetailsSessionPast = detailsSession ? isPastSession(detailsSession) : false;
 
   return (
     <div className="calendar-container">
@@ -394,6 +343,7 @@ const Calendar: React.FC = () => {
           sessionsForDate.map(session => {
             const occupancy = sessionOccupancy[session.id] ?? 0;
             const isAtCapacity = occupancy >= session.capacity;
+            const isPast = isPastSession(session);
             const colorClass = isAtCapacity ? 'danger' : 'success';
             const cardClass = `session-card ion-color-${colorClass}`;
             return (
@@ -402,7 +352,7 @@ const Calendar: React.FC = () => {
                   <IonCardTitle>
                     <div className="session-title-row-flex">
                       <span className="session-title-custom session-title-row">
-                        {userRole === 'admin' ? (
+                        {userRole === 'admin' && !isPast ? (
                           <button type="button" className="session-title-icon-btn" onClick={() => handleEditHour(session)} title="Editar hora">
                             <img src={horaIcon} alt="Hora" className="session-title-icon" />
                           </button>
@@ -437,43 +387,22 @@ const Calendar: React.FC = () => {
       {/* Modal de mes completo */}
       <IonModal className="calendar-month-modal-wrapper" isOpen={showMonthModal} onDidDismiss={() => setShowMonthModal(false)}>
         <div className="calendar-month-modal">
-          <h3>Selecciona un día del mes</h3>
-          <div className="calendar-month-nav" aria-label="Selector de mes">
-            <button
-              type="button"
-              className="calendar-month-nav-btn"
-              onClick={() => moveMonthCursor(-1)}
-              aria-label="Mes anterior"
-            >
-              ‹
-            </button>
-            <span className="calendar-month-nav-label">{monthCursorLabel}</span>
-            <button
-              type="button"
-              className="calendar-month-nav-btn"
-              onClick={() => moveMonthCursor(1)}
-              aria-label="Mes siguiente"
-            >
-              ›
-            </button>
-          </div>
-          <p className="calendar-month-modal-subtitle">Pulsa un día para cambiar la fecha visible</p>
-          <div className="calendar-month-grid">
-            {monthDays.map((day: any) => (
-              <button
-                key={day.date}
-                className={`calendar-month-day-btn${selectedDate === day.date ? ' selected' : ''}`}
-                onClick={() => {
-                  setWeekAnchorDate(day.date);
-                  setSelectedDate(day.date);
-                  setShowMonthModal(false);
-                }}
-              >
-                <span className="calendar-day-label">{day.label}</span>
-                <span className="calendar-day-num">{day.num}</span>
-              </button>
-            ))}
-          </div>
+          <h4>Selecciona fecha</h4>
+          <IonDatetime
+            className="calendar-month-date-calendar"
+            presentation="date"
+            firstDayOfWeek={1}
+            locale="es-ES"
+            value={selectedDate}
+            onIonChange={(e) => {
+              const next = e.detail.value;
+              if (typeof next === 'string') {
+                const nextDate = next.slice(0, 10);
+                setSelectedDate(nextDate);
+                setWeekAnchorDate(nextDate);
+              }
+            }}
+          />
           <button
             className="calendar-close-modal-btn"
             onClick={(e) => {
@@ -545,6 +474,9 @@ const Calendar: React.FC = () => {
               <p className="calendar-bookings-modal-subtitle">
                 {formatDateDdMmYy(detailsSession.session_date)} · {formatHour(detailsSession.start_time, detailsSession.session_date)} - {formatHour(detailsSession.end_time, detailsSession.session_date)}
               </p>
+              {isDetailsSessionPast ? (
+                <p className="calendar-bookings-modal-capacity">Clase pasada: solo lectura.</p>
+              ) : null}
               <p className="calendar-bookings-modal-capacity">
                 Ocupación: {activeBookingsCount}/{detailsSession.capacity}
               </p>
@@ -566,7 +498,7 @@ const Calendar: React.FC = () => {
                           {booking.status === 'active' ? 'Activa' : 'Inactiva'}
                         </div>
                       </div>
-                      {(userRole === 'admin' || userRole === 'trainer') ? (
+                      {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast ? (
                         booking.status === 'active' ? (
                           <button className="calendar-booking-action-cancel" onClick={() => handleCancelBooking(booking.id)}>
                             Cancelar

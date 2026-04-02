@@ -14,8 +14,8 @@ export const LegalText: React.FC = () => (
       <li>
         <strong>Responsabilidad y Soporte</strong><br />
         Verdeguer Labs se compromete a mantener la aplicación en funcionamiento y a proporcionar soporte técnico a través de los canales oficiales:<br />
-        Email y otros medios de contacto disponibles en la web.<br />
-        <a href="https://www.verdeguerlabs.es" target="_blank" rel="noopener noreferrer">www.verdeguerlabs.es</a><br />
+        Email de soporte oficial.<br />
+        <a href="mailto:verdeguerlabs@verdeguerlabs.es">verdeguerlabs@verdeguerlabs.es</a><br />
         Cualquier incidencia, consulta o solicitud de soporte debe dirigirse exclusívamente a Verdeguer Labs.
       </li>
       <li>
@@ -36,7 +36,7 @@ export const LegalText: React.FC = () => (
     </ol>
     <p>
       Para cualquier duda, consulta o solicitud relacionada con la aplicación, contacte con el soporte oficial en:<br />
-      <a href="https://www.verdeguerlabs.es" target="_blank" rel="noopener noreferrer">www.verdeguerlabs.es</a>
+      <a href="mailto:verdeguerlabs@verdeguerlabs.es">verdeguerlabs@verdeguerlabs.es</a>
     </p>
   </>
 );

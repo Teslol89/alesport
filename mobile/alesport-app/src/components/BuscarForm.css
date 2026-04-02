@@ -299,3 +299,33 @@
 		width: 100%;
 	}
 }
+
+/* ------------------------------- */
+/* Estilos para IonDatetime */
+/* ------------------------------- */
+.search-form-date-calendar {
+	--ion-color-primary: #0089a6;
+	--ion-color-primary-rgb: 0, 137, 166;
+	--ion-color-primary-contrast: #ffffff;
+}
+
+.search-form-date-calendar::part(next-month-button),
+.search-form-date-calendar::part(prev-month-button) {
+	color: #0089a6 !important;
+}
+
+.search-form-date-calendar::part(weekday-header) {
+	color: #000000;
+	font-weight: 600;
+}
+
+.search-form-date-calendar::part(calendar-day today) {
+	border: 2px solid #0089a6;
+	border-radius: 999px;
+	font-weight: 700;
+}
+
+.search-form-date-calendar::part(calendar-day today active) {
+	border-color: #ffffff;
+	box-shadow: 0 0 0 2px #0089a6;
+}

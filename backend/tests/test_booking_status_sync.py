@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from app.models.booking import Booking
 
 
@@ -83,3 +85,60 @@ def test_reactivate_booking_corrects_stale_completed_session_when_there_is_space
     db_session.refresh(booking)
     assert booking.status == "active"
     assert seed_session.status == "active"
+
+
+def test_cannot_create_booking_for_past_session(client, seed_data, db_session):
+    seed_session = seed_data["session"]
+    seed_data["client"].is_verified = True
+    seed_session.start_time = datetime.now(timezone.utc) - timedelta(days=1)
+    seed_session.end_time = seed_session.start_time + timedelta(hours=1)
+    db_session.commit()
+
+    headers = _login_headers(client, seed_data["client"].email, "client1234")
+    response = client.post(
+        "/api/bookings/",
+        headers=headers,
+        json={"session_id": seed_session.id},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "No se pueden modificar reservas de días pasados"
+
+
+def test_cannot_cancel_booking_for_past_session(client, seed_data, db_session):
+    seed_session = seed_data["session"]
+    seed_data["admin"].is_verified = True
+    seed_session.start_time = datetime.now(timezone.utc) - timedelta(days=1)
+    seed_session.end_time = seed_session.start_time + timedelta(hours=1)
+    booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="active",
+    )
+    db_session.add(booking)
+    db_session.commit()
+    db_session.refresh(booking)
+
+    headers = _login_headers(client, seed_data["admin"].email, "admin1234")
+    response = client.patch(f"/api/bookings/{booking.id}/cancel", headers=headers)
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "No se pueden modificar reservas de días pasados"
+
+
+def test_cannot_update_past_session_hour(client, seed_data, db_session):
+    seed_session = seed_data["session"]
+    seed_data["admin"].is_verified = True
+    seed_session.start_time = datetime.now(timezone.utc) - timedelta(days=1, hours=2)
+    seed_session.end_time = seed_session.start_time + timedelta(hours=1)
+    db_session.commit()
+
+    headers = _login_headers(client, seed_data["admin"].email, "admin1234")
+    response = client.patch(
+        f"/api/sessions/{seed_session.id}",
+        headers=headers,
+        json={"start_time": "09:00", "end_time": "10:00"},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "No se pueden modificar sesiones de días pasados"

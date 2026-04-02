@@ -3,68 +3,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { IonDatetime, IonModal, IonSpinner } from '@ionic/react';
 import { BookingItem, getAllBookings } from '../api/bookings';
 import { getUserProfile } from '../api/user';
+import { formatDateDdMmYy, formatHour, isSameDay, isSameWeek, mapBookingStatus, toLocalISODate } from '../utils/funcionesGeneral';
 import './BuscarForm.css';
-
-function mapBookingStatus(status: string) {
-    return status === 'active' ? 'Activa' : 'Cancelada';
-}
-
-function formatDateDdMmYy(dateStr: string) {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    const dd = String(date.getDate()).padStart(2, '0');
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const yy = String(date.getFullYear()).slice(-2);
-    return `${dd}/${mm}/${yy}`;
-}
-
-function formatHour(dateStr: string) {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
-}
-
-function toLocalIsoDate(date: Date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-function inSameWeek(baseDate: Date, targetDate: Date) {
-    const base = new Date(baseDate);
-    const target = new Date(targetDate);
-    base.setHours(0, 0, 0, 0);
-    target.setHours(0, 0, 0, 0);
-
-    const day = base.getDay();
-    const mondayOffset = (day + 6) % 7;
-    const weekStart = new Date(base);
-    weekStart.setDate(base.getDate() - mondayOffset);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-
-    return target >= weekStart && target <= weekEnd;
-}
-
-function inSameDay(baseDate: Date, targetDate: Date) {
-    return baseDate.getFullYear() === targetDate.getFullYear()
-        && baseDate.getMonth() === targetDate.getMonth()
-        && baseDate.getDate() === targetDate.getDate();
-}
 
 type PeriodFilter = 'all' | 'today' | 'week' | 'month';
 
 const BuscarForm: React.FC = () => {
-    const todayIso = toLocalIsoDate(new Date());
+    const todayIso = toLocalISODate(new Date());
     const [bookings, setBookings] = useState<BookingItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState('');
     const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
-    const [periodDate, setPeriodDate] = useState<string>(() => toLocalIsoDate(new Date()));
+    const [periodDate, setPeriodDate] = useState<string>(() => toLocalISODate(new Date()));
     const [showPeriodCalendar, setShowPeriodCalendar] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
 
@@ -124,10 +75,10 @@ const BuscarForm: React.FC = () => {
             }
 
             if (periodFilter === 'today') {
-                return inSameDay(base, referenceDate);
+                return isSameDay(base, referenceDate);
             }
 
-            return inSameWeek(base, referenceDate);
+            return isSameWeek(base, referenceDate);
         });
     }, [filteredBookings, periodFilter, periodDate]);
 
@@ -209,7 +160,7 @@ const BuscarForm: React.FC = () => {
                                 />
                                 <div className="search-form-date-modal-actions">
                                     <button type="button" className="app-btn-primary" onClick={() => setShowPeriodCalendar(false)}>
-                                        Aplicar
+                                        Aceptar
                                     </button>
                                     <button type="button" className="app-btn-danger" onClick={() => setShowPeriodCalendar(false)}>
                                         Cerrar

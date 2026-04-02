@@ -144,7 +144,7 @@ const BuscarForm: React.FC = () => {
                             onDidDismiss={() => setShowPeriodCalendar(false)}
                         >
                             <div className="search-form-date-modal">
-                                <h4>Selecciona fecha de referencia</h4>
+                                <h4>Seleccionar fecha</h4>
                                 <IonDatetime
                                     className="search-form-date-calendar"
                                     presentation="date"
@@ -163,7 +163,7 @@ const BuscarForm: React.FC = () => {
                                         Aceptar
                                     </button>
                                     <button type="button" className="app-btn-danger" onClick={() => setShowPeriodCalendar(false)}>
-                                        Cerrar
+                                        Cancelar
                                     </button>
                                 </div>
                             </div>

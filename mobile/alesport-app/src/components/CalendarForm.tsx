@@ -387,7 +387,7 @@ const Calendar: React.FC = () => {
       {/* Modal de mes completo */}
       <IonModal className="calendar-month-modal-wrapper" isOpen={showMonthModal} onDidDismiss={() => setShowMonthModal(false)}>
         <div className="calendar-month-modal">
-          <h4>Selecciona fecha</h4>
+          <h4>Seleccionar fecha</h4>
           <IonDatetime
             className="calendar-month-date-calendar"
             presentation="date"

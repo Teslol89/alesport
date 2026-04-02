@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner, IonDatetime } from '@ionic/react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner, IonDatetime, useIonViewWillEnter } from '@ionic/react';
 import './CalendarForm.css';
 import CustomToast from './CustomStyles';
 import horaIcon from '../icons/horaColor.webp';
@@ -76,14 +76,23 @@ const Calendar: React.FC = () => {
   const startDate = weekDays[0].date;
   const endDate = weekDays[6].date;
 
-  // Cargar sesiones reales al montar o cambiar semana
-  useEffect(() => {
+  const fetchSessions = useCallback(() => {
     setLoading(true);
     setError(null);
     getSessionsByDateRange(startDate, endDate)
       .then(data => setSessions(data as SessionItem[]))
       .catch(() => setError("No se pudieron cargar las sesiones"))
       .finally(() => setLoading(false));
+  }, [startDate, endDate]);
+
+  // Cargar sesiones al montar y al cambiar semana
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
+
+  // También refrescar al entrar en la vista Agenda (cambio de tab/ruta)
+  useIonViewWillEnter(() => {
+    fetchSessions();
   }, [startDate, endDate]);
 
   // Filtra y ordena sesiones por fecha seleccionada y hora de inicio

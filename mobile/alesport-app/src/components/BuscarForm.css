@@ -340,12 +340,14 @@
 	font-weight: 600;
 }
 
-.search-form-date-calendar::part(wheel-item) {
+.search-form-date-calendar::part(wheel-item),
+.search-form-date-modal ion-datetime::part(wheel-item) {
 	color: #000000;
-	opacity: 0.75;
+	opacity: 0.55;
 }
 
-.search-form-date-calendar::part(wheel-item active) {
+.search-form-date-calendar::part(wheel-item active),
+.search-form-date-modal ion-datetime::part(wheel-item active) {
 	color: #000000;
 	opacity: 1;
 }

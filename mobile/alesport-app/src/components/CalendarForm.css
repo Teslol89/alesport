@@ -436,12 +436,14 @@ body,
   font-weight: 600;
 }
 
-.calendar-month-date-calendar::part(wheel-item) {
+.calendar-month-date-calendar::part(wheel-item),
+.calendar-month-modal ion-datetime::part(wheel-item) {
   color: #000000;
-  opacity: 0.75;
+  opacity: 0.55;
 }
 
-.calendar-month-date-calendar::part(wheel-item active) {
+.calendar-month-date-calendar::part(wheel-item active),
+.calendar-month-modal ion-datetime::part(wheel-item active) {
   color: #000000;
   opacity: 1;
 }

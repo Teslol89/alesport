@@ -131,6 +131,219 @@
   color: #0a4a57;
 }
 
+.crear-single-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.crear-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.crear-field-label {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #1b4851;
+  margin-top: 0.15rem;
+  margin-bottom: 0.2rem;
+}
+
+.crear-input,
+.crear-textarea {
+  width: 100%;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 0.62rem 0.74rem;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: 0.95rem;
+  color: #0f3037;
+  box-sizing: border-box;
+}
+
+.crear-date-btn {
+  text-align: left;
+  cursor: pointer;
+}
+
+.crear-textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.crear-input:focus,
+.crear-textarea:focus {
+  outline: none;
+  border-color: #0089a6;
+  background: rgba(0, 137, 166, 0.06);
+}
+
+.crear-single-preview {
+  margin-top: 0.3rem;
+}
+
+.crear-single-preview p {
+  margin: 0.15rem 0;
+}
+
+.crear-validation-error {
+  margin: 0.1rem 0;
+  color: #9d2f2f;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.crear-submit-info {
+  margin: 0.2rem 0 0 0;
+  color: #1b4851;
+  font-size: 0.88rem;
+}
+
+.crear-actions-row {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 0.3rem;
+}
+
+.crear-btn-primary,
+.crear-btn-secondary {
+  flex: 1;
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.crear-btn-secondary {
+  border: 1px solid #c9dbe0;
+  background: #ffffff;
+  color: #0f3037;
+}
+
+.crear-btn-primary {
+  border: none;
+  background: linear-gradient(135deg, #0089a6 0%, #00718b 100%);
+  color: #ffffff;
+}
+
+.crear-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.crear-single-modal-wrapper {
+  --width: min(92vw, 720px);
+  --height: auto;
+  --border-radius: 22px;
+  --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
+}
+
+.crear-single-modal-wrapper::part(content) {
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.crear-single-modal {
+  padding: 1rem;
+  background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
+  border: 1px solid rgba(15, 48, 55, 0.08);
+  max-height: min(84vh, 760px);
+  overflow-y: auto;
+}
+
+.crear-single-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.crear-single-modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #0b2d34;
+  font-weight: 700;
+}
+
+.crear-single-modal-close {
+  border: none;
+  background: transparent;
+  color: #3a4f54;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.2rem;
+}
+
+.crear-single-date-panel {
+  margin-top: 0.5rem;
+  background: #ffffff;
+  border: 1px solid #d8e5e9;
+  border-radius: 14px;
+  padding: 0.6rem;
+}
+
+.crear-single-date-calendar {
+  width: 100%;
+  color-scheme: light;
+  --background: #f4f6f8;
+  --background-rgb: 244, 246, 248;
+  --wheel-highlight-background: #ffffff;
+  --wheel-fade-background-rgb: 244, 246, 248;
+  --title-color: #000000;
+  --color: #000000;
+  --ion-text-color: #000000;
+  --ion-text-color-rgb: 0, 0, 0;
+  --ion-color-primary: #0089a6;
+  --ion-color-primary-rgb: 0, 137, 166;
+  --ion-color-primary-contrast: #ffffff;
+  border-radius: 12px;
+}
+
+.crear-single-date-calendar::part(calendar-day) {
+  color: #000000;
+  font-weight: 400;
+}
+
+.crear-single-date-calendar::part(calendar-day active) {
+  background: rgba(0, 137, 166, 0.18);
+  color: #0f3037;
+  border: none;
+  box-shadow: none;
+}
+
+.crear-single-date-calendar::part(month-year-button),
+.crear-single-date-calendar::part(navigation-button),
+.crear-single-date-calendar::part(previous-button),
+.crear-single-date-calendar::part(next-button),
+.crear-single-date-calendar::part(calendar-days-of-week) {
+  color: #000000 !important;
+  opacity: 1 !important;
+}
+
+.crear-single-date-calendar::part(navigation-button),
+.crear-single-date-calendar::part(previous-button),
+.crear-single-date-calendar::part(next-button) {
+  color: #0089a6 !important;
+  --color: #0089a6;
+}
+
+.crear-single-date-calendar::part(calendar-days-of-week) {
+  font-weight: 600;
+}
+
+.crear-single-date-modal-actions {
+  margin-top: 0.6rem;
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
 .crear-form-section-preview {
   padding-bottom: 1rem;
 }
@@ -148,5 +361,21 @@
 @media (max-width: 600px) {
   .crear-form-content {
     padding: 0.9rem;
+  }
+
+  .crear-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .crear-actions-row {
+    flex-direction: column;
+  }
+
+  .crear-single-modal {
+    padding: 0.9rem;
+  }
+
+  .crear-single-date-modal-actions {
+    flex-direction: column;
   }
 }

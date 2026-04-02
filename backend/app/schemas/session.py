@@ -4,6 +4,34 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 
+class SessionCreate(BaseModel):
+    """Schema para crear una sesión puntual concreta.
+    El trainer_id se obtiene del usuario autenticado (o se requiere para admins).
+    """
+
+    # Fecha de la sesión (YYYY-MM-DD)
+    session_date: date
+    # Hora de inicio (HH:MM)
+    start_time: time
+    # Hora de fin (HH:MM)
+    end_time: time
+    # Capacidad (1-10)
+    capacity: int = Field(gt=0, le=10)
+    # Nombre visible de la clase
+    class_name: str = Field(min_length=1, max_length=120)
+    # Notas opcionales
+    notes: str | None = Field(default=None, max_length=1000)
+    # Trainer ID (opcional: solo si lo asigna un admin)
+    trainer_id: int | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def validate_time_range(self):
+        """Valida que start_time < end_time."""
+        if self.start_time >= self.end_time:
+            raise ValueError("start_time debe ser anterior a end_time")
+        return self
+
+
 class SessionResponse(BaseModel):
     """Datos de una sesión concreta devueltos al cliente."""
 
@@ -13,6 +41,8 @@ class SessionResponse(BaseModel):
     start_datetime: datetime = Field(validation_alias="start_time", exclude=True)
     end_datetime: datetime = Field(validation_alias="end_time", exclude=True)
     capacity: int
+    class_name: str
+    notes: str | None = None
     status: str
     created_at: datetime
 
@@ -51,6 +81,10 @@ class SessionUpdate(BaseModel):
     end_time: time | None = None
     # Capacidad ajustada -- debe mantenerse entre 1 y 10
     capacity: int | None = Field(default=None, gt=0, le=10)
+    # Nombre visible de la clase
+    class_name: str | None = Field(default=None, min_length=1, max_length=120)
+    # Notas internas opcionales
+    notes: str | None = Field(default=None, max_length=1000)
     # Nuevo estado de la sesión
     status: Literal["active", "cancelled", "completed"] | None = None
 
@@ -67,6 +101,8 @@ class SessionWeekUpdate(BaseModel):
     start_time: time | None = None
     end_time: time | None = None
     capacity: int | None = Field(default=None, gt=0, le=10)
+    class_name: str | None = Field(default=None, min_length=1, max_length=120)
+    notes: str | None = Field(default=None, max_length=1000)
     status: Literal["active", "cancelled", "completed"] | None = None
 
     @model_validator(mode="after")
@@ -76,6 +112,8 @@ class SessionWeekUpdate(BaseModel):
             self.start_time is None
             and self.end_time is None
             and self.capacity is None
+            and self.class_name is None
+            and self.notes is None
             and self.status is None
         ):
             raise ValueError("Debes enviar al menos un campo para actualizar")

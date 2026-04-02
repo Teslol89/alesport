@@ -14,7 +14,7 @@ import {
   getTodayIsoDate,
   toPickerTimeIso,
 } from '../utils/funcionesGeneral';
-import { getSessionsByDateRange, patchSessionHour } from '../api/sessions';
+import { getSessionsByDateRange, patchSessionHour, cancelSession } from '../api/sessions';
 import { getUserProfile } from '../api/user';
 import { BookingItem, cancelBooking, getBookingsBySession, reactivateBooking } from '../api/bookings';
 
@@ -90,7 +90,7 @@ const Calendar: React.FC = () => {
   const sessionsForDate = useMemo(
     () =>
       sessions
-        .filter(s => s.session_date === selectedDate)
+        .filter(s => s.session_date === selectedDate && s.status !== 'cancelled')
         .sort((a, b) => {
           const startA = formatHour(a.start_time, a.session_date, '00:00');
           const startB = formatHour(b.start_time, b.session_date, '00:00');
@@ -165,6 +165,27 @@ const Calendar: React.FC = () => {
       setToast({ show: true, message: 'Reserva reactivada correctamente', type: 'success' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo reactivar la reserva';
+      setToast({ show: true, message, type: 'danger' });
+    }
+  }
+
+  async function handleCancelSession() {
+    if (!detailsSession) return;
+
+    if (!window.confirm('¿Seguro que deseas cancelar esta sesión? No se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      await cancelSession(detailsSession.id);
+      // Filtrar sesiones: remover la cancelada
+      setSessions(prev => 
+        prev.filter(s => s.id !== detailsSession.id)
+      );
+      setShowDetailsModal(false);
+      setToast({ show: true, message: 'Sesión cancelada correctamente', type: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo cancelar la sesión';
       setToast({ show: true, message, type: 'danger' });
     }
   }
@@ -516,6 +537,11 @@ const Calendar: React.FC = () => {
             </>
           ) : null}
           <div className="calendar-hour-modal-actions">
+            {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast ? (
+              <button className="calendar-hour-modal-cancel" onClick={handleCancelSession}>
+                Cancelar Sesión
+              </button>
+            ) : null}
             <button className="calendar-hour-modal-cancel" onClick={() => setShowDetailsModal(false)}>Cerrar</button>
           </div>
         </div>

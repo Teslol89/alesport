@@ -100,6 +100,22 @@ def delete_test_session(token: str, session_id: int) -> bool:
     return False
 
 
+def create_test_session_with_payload(token: str, payload: dict) -> dict | None:
+    """Crea una sesión de prueba con un payload arbitrario."""
+    response = requests.post(
+        f"{BASE_URL}/sessions/",
+        json=payload,
+        headers=auth_headers(token),
+        timeout=20,
+    )
+
+    if response.status_code in (200, 201):
+        return response.json()
+
+    print(f"[CREATE SESSION ERROR] {response.status_code} {response.text}")
+    return None
+
+
 def run_common_checks(token: str, role: str):
     headers = auth_headers(token)
 
@@ -168,6 +184,33 @@ def run_role_specific_checks(token: str, role: str, user_id: int | None, session
                 json=overlapping_payload,
             )
             print(f"    ✓ El solape en creación queda bloqueado")
+
+            print(f"  [TEST] Validando que no se puede editar una sesión para solaparla con otra...")
+            second_payload = {
+                "session_date": created_session.get("session_date", TOMORROW.isoformat()),
+                "start_time": "12:00",
+                "end_time": "13:00",
+                "capacity": 6,
+                "class_name": "Second Session For Overlap Edit",
+                "notes": "Base para probar PATCH solapado",
+            }
+            if role == "admin" and created_session.get("trainer_id") is not None:
+                second_payload["trainer_id"] = created_session.get("trainer_id")
+
+            second_session = create_test_session_with_payload(token, second_payload)
+            if second_session:
+                request_and_check(
+                    "PATCH",
+                    f"/sessions/{second_session['id']}",
+                    {409},
+                    headers=headers,
+                    json={
+                        "start_time": created_session.get("start_time", "10:00"),
+                        "end_time": created_session.get("end_time", "11:30"),
+                    },
+                )
+                print(f"    ✓ El solape en edición queda bloqueado")
+                delete_test_session(token, second_session["id"])
         else:
             session_to_update = session["id"] if session else None
 

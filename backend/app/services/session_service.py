@@ -21,6 +21,16 @@ logger = get_logger(__name__)
 PAST_SESSION_UPDATE_ERROR = "No se pueden modificar sesiones de días pasados"
 
 
+def _to_local_naive_time(value: time) -> time:
+    """Convierte una hora con tz (si viene) a hora local y la devuelve sin tzinfo."""
+    if value.tzinfo is None:
+        return value
+
+    probe_date = date.today()
+    localized = datetime.combine(probe_date, value).astimezone(LOCAL_TIMEZONE)
+    return localized.timetz().replace(tzinfo=None)
+
+
 def create_session(db: Session, create_data, current_user: User) -> SessionModel:
     """Crea una nueva sesión puntual concreta.
     
@@ -47,16 +57,20 @@ def create_session(db: Session, create_data, current_user: User) -> SessionModel
     else:
         trainer_id = current_user.id
 
+    # Normalizar horas a local (evita desfases cuando llega hora con offset/UTC)
+    start_local_time = _to_local_naive_time(create_data.start_time)
+    end_local_time = _to_local_naive_time(create_data.end_time)
+
     # Convertir session_date + times a datetimes con timezone
     session_timezone = LOCAL_TIMEZONE
     start_dt = datetime.combine(
         create_data.session_date,
-        create_data.start_time,
+        start_local_time,
         tzinfo=session_timezone,
     )
     end_dt = datetime.combine(
         create_data.session_date,
-        create_data.end_time,
+        end_local_time,
         tzinfo=session_timezone,
     )
 
@@ -105,9 +119,10 @@ def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
         and not hasattr(prepared_patch["start_time"], "date")
     ):
         session_date = session.start_time.date()
+        local_start_time = _to_local_naive_time(prepared_patch["start_time"])
         prepared_patch["start_time"] = datetime.combine(
             session_date,
-            prepared_patch["start_time"],
+            local_start_time,
             tzinfo=session_timezone,
         )
 
@@ -117,9 +132,10 @@ def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
         and not hasattr(prepared_patch["end_time"], "date")
     ):
         session_date = session.start_time.date()
+        local_end_time = _to_local_naive_time(prepared_patch["end_time"])
         prepared_patch["end_time"] = datetime.combine(
             session_date,
-            prepared_patch["end_time"],
+            local_end_time,
             tzinfo=session_timezone,
         )
 

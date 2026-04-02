@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
+from app.utils.utils import LOCAL_TIMEZONE
+
 
 class SessionCreate(BaseModel):
     """Schema para crear una sesión puntual concreta.
@@ -53,19 +55,21 @@ class SessionResponse(BaseModel):
     @property
     def session_date(self) -> date:
         """Fecha local de la sesión para consumo directo del cliente."""
-        return self.start_datetime.date()
+        return self.start_datetime.astimezone(LOCAL_TIMEZONE).date()
 
     @computed_field
     @property
     def start_time(self) -> time:
         """Hora local de inicio sin offset, pensada para mostrar en móvil."""
-        return self.start_datetime.timetz().replace(tzinfo=None)
+        return (
+            self.start_datetime.astimezone(LOCAL_TIMEZONE).timetz().replace(tzinfo=None)
+        )
 
     @computed_field
     @property
     def end_time(self) -> time:
         """Hora local de fin sin offset, pensada para mostrar en móvil."""
-        return self.end_datetime.timetz().replace(tzinfo=None)
+        return self.end_datetime.astimezone(LOCAL_TIMEZONE).timetz().replace(tzinfo=None)
 
 
 class SessionUpdate(BaseModel):

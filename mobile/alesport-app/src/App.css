@@ -1,46 +1,27 @@
-ion-tab-bar {
+ion-tab-button,
+ion-tab-button.tab-selected,
+ion-tab-button:active,
+ion-tab-button:focus,
+ion-tab-button[aria-selected="true"] {
+    background: none !important;
+    box-shadow: none !important;
     border: none !important;
-    box-shadow: none;
-    min-height: 52px !important;
-    height: 52px !important;
-    padding-top: 0 !important;
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.05rem) !important;
-}
-/* ================= IonTabBar Custom Styles ================= */
-/* Glassmorphism (translúcido, desenfoque) para uso opcional por clase */
-ion-tab-bar.tabbar-glass {
-        --background: transparent !important;
-        background: rgba(0, 0, 0, 0.2) !important;
-        backdrop-filter: blur(2px);
-        -webkit-backdrop-filter: blur(2px);
-        min-height: 52px !important;
-        height: 52px !important;
-        padding-top: 0 !important;
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.05rem) !important;
-        border-top: none !important;
-        box-shadow: none !important;
-        z-index: 1000;
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
 }
 
-/* Forzar eliminación de cualquier borde superior en el shadow DOM de Ionic y pseudo-elementos */
-ion-tab-bar,
-ion-tab-bar.tabbar-glass,
-ion-tab-bar.tabbar-glass::before,
-ion-tab-bar.tabbar-glass::after,
-ion-tab-bar::before,
-ion-tab-bar::after {
+/* Barra inferior translúcida y tabs sin fondo ni borde al seleccionar */
+ion-tab-bar.tabbar-glass {
+    background: rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    height: 52px !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.05rem) !important;
     border-top: none !important;
     box-shadow: none !important;
-}
-ion-tab-bar .tabbar,
-ion-tab-bar .tabbar::before,
-ion-tab-bar .tabbar::after {
-    border-top: none !important;
-    box-shadow: none !important;
+    z-index: 1000;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 ion-tab-button {

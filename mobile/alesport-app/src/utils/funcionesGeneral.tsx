@@ -11,6 +11,16 @@ export function getTodayIsoDate(): string {
   return toLocalISODate(new Date());
 }
 
+/* Devuelve una fecha ISO en formato legible para UI (DD / MM / YYYY o similar) */
+export function formatIsoDateForUi(isoDate: string, separator = ' / '): string {
+  if (!isoDate || isoDate.length < 10) {
+    return `--${separator}--${separator}----`;
+  }
+
+  const [yyyy, mm, dd] = isoDate.slice(0, 10).split('-');
+  return `${dd}${separator}${mm}${separator}${yyyy}`;
+}
+
 /* Devuelve la fecha de ayer en formato ISO local (YYYY-MM-DD) */
 export function formatDateDdMmYy(dateStr: string): string {
   const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);

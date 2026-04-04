@@ -7,7 +7,7 @@ const Config: React.FC = () => {
     <IonPage className="search-page">
       <IonHeader />
       <IonContent fullscreen scrollY={true} scrollEvents={true} forceOverscroll={true}>
-        <div className="search-center-wrapper">
+        <div className="config-center-wrapper">
           <LogoutButton />
         </div>
       </IonContent>

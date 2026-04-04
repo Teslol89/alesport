@@ -71,6 +71,7 @@ const Calendar: React.FC = () => {
     type: 'danger',
   });
 
+  const dayScrollRef = useRef<HTMLDivElement | null>(null);
   const dayButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const bookingsCacheRef = useRef<Record<number, BookingItem[]>>({});
   const bookingsInFlightRef = useRef<Record<number, Promise<BookingItem[]>>>({});
@@ -380,15 +381,36 @@ const Calendar: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const scrollContainer = dayScrollRef.current;
     const selectedButton = dayButtonRefs.current[selectedDate];
-    if (selectedButton) {
+
+    if (!scrollContainer || !selectedButton) {
+      return;
+    }
+
+    const selectedIndex = weekDays.findIndex((day: any) => day.date === selectedDate);
+
+    const alignSelectedDay = () => {
+      const maxScrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+
+      if (selectedIndex >= weekDays.length - 2) {
+        scrollContainer.scrollTo({
+          left: maxScrollLeft,
+          behavior: 'smooth',
+        });
+        return;
+      }
+
       selectedButton.scrollIntoView({
         behavior: 'smooth',
-        inline: 'center',
+        inline: 'nearest',
         block: 'nearest',
       });
-    }
-  }, [selectedDate]);
+    };
+
+    const frameId = window.requestAnimationFrame(alignSelectedDay);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [selectedDate, weekDays]);
 
   useEffect(() => {
     if (userRole !== 'admin' && userRole !== 'trainer') {
@@ -467,7 +489,7 @@ const Calendar: React.FC = () => {
         </button>
       </div>
       {/* Scroll de días debajo */}
-      <div className="calendar-days-scroll">
+      <div className="calendar-days-scroll" ref={dayScrollRef}>
         {weekDays.map((day: any) => (
           <button
             key={day.date}
@@ -483,11 +505,11 @@ const Calendar: React.FC = () => {
       {/* Bloque independiente para las sesiones */}
       <div className="calendar-sessions-section">
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+          <div className="calendar-loading-state">
             <IonSpinner name="crescent" color="primary" />
           </div>
         ) : error ? (
-          <p style={{ color: 'red' }}>{error}</p>
+          <p className="calendar-error-state">{error}</p>
         ) : sessionsForDate.length === 0 ? (
           <p>No hay sesiones para este día.</p>
         ) : (

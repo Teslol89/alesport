@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
 import { createSingleSession } from '../api/sessions';
+import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso } from '../utils/funcionesGeneral';
 import CustomToast from './CustomStyles';
 import './CrearForm.css';
 
@@ -20,36 +21,13 @@ type SingleSessionDraft = {
     notes: string;
 };
 
-function toTodayIsoDate() {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-}
-
-function formatIsoDateForUi(isoDate: string) {
-    if (!isoDate || isoDate.length < 10) {
-        return '-- / -- / ----';
-    }
-    const [yyyy, mm, dd] = isoDate.slice(0, 10).split('-');
-    return `${dd} / ${mm} / ${yyyy}`;
-}
-
+/* Fecha base para el time picker, que solo maneja horas y minutos.
+Se usará una fecha fija y se ignorará al aplicar la hora seleccionada. */
 const TIME_PICKER_BASE_DATE = '1970-01-01';
 
-function toPickerIso(hourValue: string) {
-    return `${TIME_PICKER_BASE_DATE}T${hourValue}:00`;
-}
-
-function fromPickerIsoToHm(isoValue: string) {
-    const time = isoValue.includes('T') ? isoValue.split('T')[1] : '';
-    if (!time || time.length < 5) {
-        return '';
-    }
-    return time.slice(0, 5);
-}
-
+/* Componente principal para el formulario de creación,
+ que incluye la elección entre clase puntual o recurrente,
+ y el formulario específico para clase puntual en un modal. */
 const CrearForm: React.FC = () => {
     const [createMode, setCreateMode] = useState<CreateMode>(null);
     const [recurrenceMode, setRecurrenceMode] = useState<RecurrenceMode>('weekly');
@@ -57,7 +35,7 @@ const CrearForm: React.FC = () => {
     const [showSingleDatePicker, setShowSingleDatePicker] = useState(false);
     const [showSingleTimePicker, setShowSingleTimePicker] = useState(false);
     const [timePickerTarget, setTimePickerTarget] = useState<'start' | 'end' | null>(null);
-    const [timePickerValue, setTimePickerValue] = useState(toPickerIso('09:00'));
+    const [timePickerValue, setTimePickerValue] = useState(toPickerTimeIso('09:00', TIME_PICKER_BASE_DATE));
     const [showCapacityPicker, setShowCapacityPicker] = useState(false);
     const [showTrainerPicker, setShowTrainerPicker] = useState(false);
     const [trainerOptions, setTrainerOptions] = useState<AssignableTrainer[]>([]);
@@ -76,7 +54,7 @@ const CrearForm: React.FC = () => {
     const singleTimePanelRef = useRef<HTMLDivElement | null>(null);
     const [singleDraft, setSingleDraft] = useState<SingleSessionDraft>({
         className: '',
-        sessionDate: toTodayIsoDate(),
+        sessionDate: getTodayIsoDate(),
         startTime: '09:00',
         endTime: '10:00',
         capacity: 10,
@@ -203,7 +181,7 @@ const CrearForm: React.FC = () => {
         const defaultTrainer = trainerOptions[0];
         setSingleDraft({
             className: '',
-            sessionDate: toTodayIsoDate(),
+            sessionDate: getTodayIsoDate(),
             startTime: '09:00',
             endTime: '10:00',
             capacity: 10,
@@ -219,12 +197,12 @@ const CrearForm: React.FC = () => {
         const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
         closeAllSingleSubmodals();
         setTimePickerTarget(target);
-        setTimePickerValue(toPickerIso(normalizedValue));
+        setTimePickerValue(toPickerTimeIso(normalizedValue, TIME_PICKER_BASE_DATE));
         setShowSingleTimePicker(true);
     }
 
     function applyPickedTime() {
-        const hmValue = fromPickerIsoToHm(timePickerValue);
+        const hmValue = fromPickerTimeIso(timePickerValue);
         if (!hmValue || !timePickerTarget) {
             closeAllSingleSubmodals();
             return;
@@ -628,7 +606,7 @@ const CrearForm: React.FC = () => {
                             <div className="crear-preview-card crear-single-preview">
                                 <p><strong>Vista previa</strong></p>
                                 <p>Clase: {singleDraft.className.trim() || 'Sin nombre'}</p>
-                                <p>Fecha: {singleDraft.sessionDate || '-'}</p>
+                                <p>Fecha: {singleDraft.sessionDate ? formatIsoDateForUi(singleDraft.sessionDate, '/') : '-'}</p>
                                 <p>Horario: {singleDraft.startTime} - {singleDraft.endTime}</p>
                                 <p>Capacidad: {singleDraft.capacity}</p>
                                 <p>Entrenador: {singleDraft.trainerName.trim() || 'Sin asignar'}</p>

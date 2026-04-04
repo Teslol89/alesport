@@ -166,6 +166,7 @@ body,
   border-radius: 16px;
   min-width: 56px;
   min-height: 72px;
+  flex: 0 0 56px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
@@ -194,6 +195,17 @@ body,
 .calendar-day-num {
   font-size: 1.3rem;
   font-weight: 600;
+}
+
+.calendar-loading-state {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.calendar-error-state {
+  margin: 1rem 0;
+  color: #c62828;
 }
 
 /* ------------------------------------- */
@@ -596,6 +608,12 @@ body,
   border-radius: 22px;
   text-align: center;
   color: #000000;
+  --app-input-border-width: 2px;
+  --app-input-border-color: rgba(0, 0, 0, 0.08);
+  --app-input-border-color-focus: #0089a6;
+  --app-input-radius: 12px;
+  --app-input-padding: 0.62rem 0.74rem;
+  --app-input-font-size: 0.95rem;
   --app-input-bg: #f5f7fa;
   --app-input-bg-focus: rgba(0, 137, 166, 0.08);
   border: none;

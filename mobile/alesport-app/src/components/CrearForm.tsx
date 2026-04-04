@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
 import { createSingleSession } from '../api/sessions';
+import CustomToast from './CustomStyles';
 import './CrearForm.css';
 
 type CreateMode = 'single' | 'recurring' | null;
@@ -62,7 +63,11 @@ const CrearForm: React.FC = () => {
     const [trainerOptions, setTrainerOptions] = useState<AssignableTrainer[]>([]);
     const [isLoadingTrainers, setIsLoadingTrainers] = useState(false);
     const [trainersError, setTrainersError] = useState<string | null>(null);
-    const [submitInfo, setSubmitInfo] = useState<string | null>(null);
+    const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' | 'info' }>({
+        show: false,
+        message: '',
+        type: 'info',
+    });
     const openSingleModalRafRef = useRef<number | null>(null);
     const singleModalBodyRef = useRef<HTMLDivElement | null>(null);
     const singleDatePanelRef = useRef<HTMLDivElement | null>(null);
@@ -157,11 +162,13 @@ const CrearForm: React.FC = () => {
     function handleSingleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         if (!isSingleValid) {
-            setSubmitInfo('Revisa los campos obligatorios y el rango de horas antes de continuar.');
+            setToast({
+                show: true,
+                message: 'Revisa los campos obligatorios y el rango de horas antes de continuar.',
+                type: 'danger',
+            });
             return;
         }
-
-        setSubmitInfo('Enviando sesión...');
 
         createSingleSession({
             session_date: singleDraft.sessionDate,
@@ -173,14 +180,22 @@ const CrearForm: React.FC = () => {
             trainer_id: singleDraft.trainerId || undefined,
         })
             .then(() => {
-                setSubmitInfo('✓ Sesión creada exitosamente');
+                setToast({
+                    show: true,
+                    message: '✓ Sesión creada exitosamente',
+                    type: 'success',
+                });
                 setTimeout(() => {
                     setShowSingleModal(false);
                     resetSingleDraft();
                 }, 1000);
             })
             .catch((error) => {
-                setSubmitInfo(`Error: ${error.message || 'No se pudo crear la sesión'}`);
+                setToast({
+                    show: true,
+                    message: `Error: ${error.message || 'No se pudo crear la sesión'}`,
+                    type: 'danger',
+                });
             });
     }
 
@@ -196,7 +211,6 @@ const CrearForm: React.FC = () => {
             trainerName: defaultTrainer?.name ?? '',
             notes: '',
         });
-        setSubmitInfo(null);
         closeAllSingleSubmodals();
     }
 
@@ -309,7 +323,6 @@ const CrearForm: React.FC = () => {
                             type="button"
                             className={`crear-mode-card ${createMode === 'single' ? 'selected' : ''}`}
                             onClick={() => {
-                                setSubmitInfo(null);
                                 closeAllSingleSubmodals();
                                 openSingleModalSmoothly();
                                 if (openSingleModalRafRef.current !== null) {
@@ -621,8 +634,6 @@ const CrearForm: React.FC = () => {
                                 <p>Entrenador: {singleDraft.trainerName.trim() || 'Sin asignar'}</p>
                             </div>
 
-                            {submitInfo ? <p className="crear-submit-info">{submitInfo}</p> : null}
-
                             <div className="crear-actions-row">
                                 <button type="button" className="crear-btn-secondary" onClick={resetSingleDraft}>
                                     Limpiar
@@ -634,6 +645,14 @@ const CrearForm: React.FC = () => {
                         </form>
                     </div>
                 </IonModal>
+
+                <CustomToast
+                    show={toast.show}
+                    message={toast.message}
+                    onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+                    type={toast.type}
+                    duration={3000}
+                />
             </div>
         </div>
     );

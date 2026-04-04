@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { Route, Redirect } from 'react-router-dom';
 import {
   IonApp,
@@ -14,9 +14,13 @@ import {
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import agendaIcon from './icons/agenda.svg';
-import buscarIcon from './icons/buscar.webp';
-import masIcon from './icons/mas.svg';
+import agendaActiveIcon from './icons/agenda2.svg';
+import buscarIcon from './icons/buscar.svg';
+import buscarActiveIcon from './icons/buscar2.svg';
+import crearIcon from './icons/crear.svg';
+import crearActiveIcon from './icons/crear2.svg';
 import configIcon from './icons/config.svg';
+import configActiveIcon from './icons/config2.svg';
 import AdminCalendarPage from './pages/AdminCalendarPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -25,7 +29,7 @@ import ForgotPasswordVerify from './pages/ForgotPasswordVerify';
 import ForgotPasswordReset from './pages/ForgotPasswordReset';
 import Crear from './pages/Crear';
 import TabSearch from './pages/Buscar';
-import Tab3 from './pages/Tab3';
+import Config from './pages/Config';
 import VerifyCode from './pages/VerifyCode';
 import SplashPage from './pages/SplashPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
@@ -76,6 +80,11 @@ function RootRedirect() {
 
 function MainRoutes() {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
+  const isAgendaActive = location.pathname.startsWith('/admin-calendar');
+  const isSearchActive = location.pathname.startsWith('/tab-search');
+  const isCrearActive = location.pathname.startsWith('/crear');
+  const isConfigActive = location.pathname.startsWith('/config');
 
   if (!isAuthenticated) {
     return (
@@ -97,25 +106,25 @@ function MainRoutes() {
         <PrivateRoute exact path="/tab-search" component={TabSearch} />
         <PrivateRoute exact path="/admin-calendar" component={AdminCalendarPage} />
         <PrivateRoute exact path="/crear" component={Crear} />
-        <PrivateRoute path="/tab3" component={Tab3} />
+        <PrivateRoute path="/config" component={Config} />
         <Route exact path="/" component={RootRedirect} />
       </IonRouterOutlet>
       <IonTabBar className="tabbar-glass" slot="bottom" >
         <IonTabButton tab="admin-calendar" href="/admin-calendar">
-          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={agendaIcon} />
+          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isAgendaActive ? agendaActiveIcon : agendaIcon} />
           <IonLabel>Agenda</IonLabel>
         </IonTabButton>
         <IonTabButton tab="tab-search" href="/tab-search">
-          <img className="tabbar-search-icon" src={buscarIcon} alt="Buscar" aria-hidden="true" />
+          <img className="tabbar-search-icon" src={isSearchActive ? buscarActiveIcon : buscarIcon} alt="Buscar" aria-hidden="true" />
           <IonLabel>Buscar</IonLabel>
         </IonTabButton>
         <IonTabButton tab="crear" href="/crear">
-          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={masIcon} />
+          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isCrearActive ? crearActiveIcon : crearIcon} />
           <IonLabel>Crear</IonLabel>
         </IonTabButton>
-        <IonTabButton tab="tab3" href="/tab3">
-          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={configIcon} />
-          <IonLabel>Configuración</IonLabel>
+        <IonTabButton tab="config" href="/config">
+          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isConfigActive ? configActiveIcon : configIcon} />
+          <IonLabel>Opciones</IonLabel>
         </IonTabButton>
       </IonTabBar>
     </IonTabs>

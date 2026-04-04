@@ -1,25 +1,65 @@
 ion-tab-bar {
     border: none !important;
     box-shadow: none;
+    min-height: 52px !important;
+    height: 52px !important;
+    padding-top: 0 !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.05rem) !important;
 }
 /* ================= IonTabBar Custom Styles ================= */
 /* Glassmorphism (translúcido, desenfoque) para uso opcional por clase */
 ion-tab-bar.tabbar-glass {
-    --background: transparent;
-    background: rgba(0, 0, 0, 0.1) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+        --background: transparent !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        min-height: 52px !important;
+        height: 52px !important;
+        padding-top: 0 !important;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.05rem) !important;
+        border-top: none !important;
+        box-shadow: none !important;
+        z-index: 1000;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+}
+
+/* Forzar eliminación de cualquier borde superior en el shadow DOM de Ionic y pseudo-elementos */
+ion-tab-bar,
+ion-tab-bar.tabbar-glass,
+ion-tab-bar.tabbar-glass::before,
+ion-tab-bar.tabbar-glass::after,
+ion-tab-bar::before,
+ion-tab-bar::after {
+    border-top: none !important;
+    box-shadow: none !important;
+}
+ion-tab-bar .tabbar,
+ion-tab-bar .tabbar::before,
+ion-tab-bar .tabbar::after {
+    border-top: none !important;
+    box-shadow: none !important;
 }
 
 ion-tab-button {
-    --color: #111;
-    --color-selected: #0089a6;
+    --color: #111111;
+    --color-selected: #0f5132;
     color: #111;
     font-size: 0.75rem;
+    border-radius: 14px;
+    margin: 0 0.12rem;
+    transition: transform 0.14s ease, background-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
 }
 
+ion-tab-button:active {
+    transform: scale(0.96);
+}
+
+
 ion-tab-button.tab-selected ion-label {
-    color: #0089a6 !important;
+    color: #0f5132 !important;
     font-weight: 700;
 }
 
@@ -33,6 +73,10 @@ ion-tab-button ion-icon {
     width: 28px;
     height: 28px;
     object-fit: contain;
+}
+
+ion-tab-button.tab-selected .tabbar-search-icon {
+    filter: saturate(1.08);
 }
 
 /* Solo iconos, sin texto */

@@ -217,18 +217,56 @@
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.12s ease;
 }
 
 .crear-btn-secondary {
-  border: 1px solid #c9dbe0;
+  border: 0.75px solid #000000;
   background: #ffffff;
-  color: #0f3037;
+  color: #000000;
+}
+
+.crear-btn-secondary:focus,
+.crear-btn-secondary:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+.crear-btn-secondary:focus-visible {
+  outline: 2px solid rgba(0, 137, 166, 0.28);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .crear-btn-secondary:hover {
+    background: rgba(0, 137, 166, 0.08);
+    border-color: #0a7891;
+    color: #0a7891;
+  }
+}
+
+.crear-btn-secondary:active {
+  background: rgba(0, 137, 166, 0.16);
+  border-color: #0a7891;
+  color: #0a7891;
+  transform: scale(0.98);
 }
 
 .crear-btn-primary {
   border: none;
-  background: linear-gradient(135deg, #0089a6 0%, #00718b 100%);
+  background: #0089a6;
   color: #ffffff;
+}
+
+.crear-btn-primary:hover {
+  background: #0a7891;
+}
+
+.crear-btn-primary:active {
+  background: #07697f;
+  transform: scale(0.98);
 }
 
 .crear-btn-primary:disabled {
@@ -484,7 +522,9 @@
 
 .crear-preview-card {
   padding: 1rem;
+  
   color: #000000;
+  border: 0.75px solid #000000;
   line-height: 1.5;
 }
 

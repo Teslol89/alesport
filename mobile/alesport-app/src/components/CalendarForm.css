@@ -112,9 +112,9 @@ body,
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  background: transparent;
-  color: #0f5d6d;
-  border: 1px solid #b9d7df;
+  background: #0089a6;
+  color: #ffffff;
+  border: 1px solid #0089a6;
   border-radius: 999px;
   padding: 0.38rem 0.9rem;
   font-size: 0.92rem;
@@ -124,9 +124,9 @@ body,
 }
 
 .calendar-view-month-btn:hover {
-  background: #e9f5f8;
-  border-color: #93c2cc;
-  color: #0a4a57;
+  background: #0a7891;
+  border-color: #0a7891;
+  color: #ffffff;
 }
 
 .calendar-view-month-btn:focus-visible {
@@ -139,8 +139,9 @@ body,
 }
 
 .calendar-view-month-btn:active {
-  background: #dff0f4;
+  background: #07697f;
 }
+
 
 /* ------------------------------- */
 /* 4) Scroll horizontal de días semana */

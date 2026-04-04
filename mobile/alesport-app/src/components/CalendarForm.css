@@ -166,6 +166,7 @@ body,
   border-radius: 16px;
   min-width: 56px;
   min-height: 72px;
+  flex: 0 0 56px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
@@ -196,13 +197,24 @@ body,
   font-weight: 600;
 }
 
+.calendar-loading-state {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.calendar-error-state {
+  margin: 1rem 0;
+  color: #c62828;
+}
+
 /* ------------------------------------- */
 /* 5) Tarjetas de sesión (contenedor y estado) */
 /* ------------------------------------- */
 .session-card {
   margin-bottom: 1rem;
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   background: #fff;
   transition: box-shadow 0.2s;
   padding: 0;
@@ -211,17 +223,17 @@ body,
 }
 
 .session-card.ion-color-success {
-  background: rgba(45, 211, 111, 0.10);
+  background: rgba(45, 211, 111, 0.2);
   border-left: 6px solid var(--ion-color-success, #2dd36f);
 }
 
 .session-card.ion-color-medium {
-  background: rgba(146, 148, 156, 0.10);
+  background: rgba(146, 148, 156, 0.20);
   border-left: 6px solid var(--ion-color-medium, #92949c);
 }
 
 .session-card.ion-color-danger {
-  background: rgba(235, 68, 90, 0.10);
+  background: rgba(235, 68, 90, 0.20);
   border-left: 6px solid var(--ion-color-danger, #eb445a);
 }
 
@@ -596,6 +608,12 @@ body,
   border-radius: 22px;
   text-align: center;
   color: #000000;
+  --app-input-border-width: 2px;
+  --app-input-border-color: rgba(0, 0, 0, 0.08);
+  --app-input-border-color-focus: #0089a6;
+  --app-input-radius: 12px;
+  --app-input-padding: 0.62rem 0.74rem;
+  --app-input-font-size: 0.95rem;
   --app-input-bg: #f5f7fa;
   --app-input-bg-focus: rgba(0, 137, 166, 0.08);
   border: none;

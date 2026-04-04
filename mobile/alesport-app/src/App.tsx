@@ -15,9 +15,9 @@ import {
 import { IonReactRouter } from '@ionic/react-router';
 import agendaIcon from './icons/agenda.svg';
 import agendaActiveIcon from './icons/agenda2.svg';
-import buscarIcon from './icons/buscar.webp';
-import buscarActiveIcon from './icons/buscarTodo.svg';
-import masIcon from './icons/mas.svg';
+import buscarIcon from './icons/buscar.svg';
+import buscarActiveIcon from './icons/buscar2.svg';
+import crearIcon from './icons/crear.svg';
 import crearActiveIcon from './icons/crear2.svg';
 import configIcon from './icons/config.svg';
 import configActiveIcon from './icons/config2.svg';
@@ -119,7 +119,7 @@ function MainRoutes() {
           <IonLabel>Buscar</IonLabel>
         </IonTabButton>
         <IonTabButton tab="crear" href="/crear">
-          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isCrearActive ? crearActiveIcon : masIcon} />
+          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isCrearActive ? crearActiveIcon : crearIcon} />
           <IonLabel>Crear</IonLabel>
         </IonTabButton>
         <IonTabButton tab="config" href="/config">

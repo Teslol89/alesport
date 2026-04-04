@@ -78,6 +78,7 @@ const CrearForm: React.FC = () => {
         notes: '',
     });
 
+
     const [recurringDraft, setRecurringDraft] = useState<RecurringSessionDraft>({
         className: '',
         startDate: getTodayIsoDate(),
@@ -90,6 +91,26 @@ const CrearForm: React.FC = () => {
         trainerName: '',
         notes: '',
     });
+
+    // --- Lógica del picker de entrenador recurrente ---
+    // (Agrupada aquí para claridad, cerca del modal recurrente)
+    const [showRecurringTrainerPicker, setShowRecurringTrainerPicker] = useState(false);
+    const recurringTrainerPanelRef = useRef<HTMLDivElement | null>(null);
+
+    function toggleRecurringTrainerPicker() {
+        setShowRecurringTrainerPicker((open) => !open);
+    }
+
+    function pickRecurringTrainer(trainer: AssignableTrainer) {
+        setRecurringDraft((prev) => ({ ...prev, trainerId: trainer.id, trainerName: trainer.name }));
+        setShowRecurringTrainerPicker(false);
+    }
+
+    function closeRecurringSubmodalsOnEmptyClick(e: React.MouseEvent<HTMLElement>) {
+        if (e.target === e.currentTarget) {
+            setShowRecurringTrainerPicker(false);
+        }
+    }
 
     const isSingleTimeRangeValid = singleDraft.startTime < singleDraft.endTime;
     const isSingleCapacityValid = singleDraft.capacity >= 1 && singleDraft.capacity <= 10;
@@ -135,18 +156,7 @@ const CrearForm: React.FC = () => {
                     return;
                 }
                 setTrainerOptions(options);
-                if (options.length > 0) {
-                    setSingleDraft((prev) => {
-                        if (prev.trainerId !== null) {
-                            return prev;
-                        }
-                        return {
-                            ...prev,
-                            trainerId: options[0].id,
-                            trainerName: options[0].name,
-                        };
-                    });
-                }
+                // Ya no asignamos entrenador por defecto
             } catch {
                 if (!cancelled) {
                     setTrainersError('No se pudieron cargar los entrenadores.');
@@ -206,15 +216,14 @@ const CrearForm: React.FC = () => {
     }
 
     function resetSingleDraft() {
-        const defaultTrainer = trainerOptions[0];
         setSingleDraft({
             className: '',
             sessionDate: getTodayIsoDate(),
             startTime: '09:00',
             endTime: '10:00',
             capacity: 10,
-            trainerId: defaultTrainer?.id ?? null,
-            trainerName: defaultTrainer?.name ?? '',
+            trainerId: null,
+            trainerName: '',
             notes: '',
         });
         closeAllSingleSubmodals();
@@ -360,159 +369,180 @@ const CrearForm: React.FC = () => {
                     </div>
                 </section>
 
-                                {createMode === 'recurring' && (
-                                    <section className="crear-form-section">
-                                        <h2 className="crear-form-section-title">¿Qué frecuencia quieres?</h2>
-                                        <div className="crear-frequency-row">
-                                            <button
-                                                type="button"
-                                                className={`crear-frequency-pill${recurrenceMode === 'weekly' ? ' selected' : ''}`}
-                                                onClick={() => {
-                                                    setRecurrenceMode('weekly');
-                                                    setShowRecurringModal(true);
-                                                }}
-                                            >
-                                                Semanal
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className={`crear-frequency-pill${recurrenceMode === 'monthly' ? ' selected' : ''}`}
-                                                onClick={() => {
-                                                    setRecurrenceMode('monthly');
-                                                    // Aquí puedes abrir el modal mensual cuando lo implementes
-                                                }}
-                                            >
-                                                Mensual
-                                            </button>
-                                        </div>
-                                    </section>
-                                )}
+                {createMode === 'recurring' && (
+                    <section className="crear-form-section">
+                        <h2 className="crear-form-section-title">¿Qué frecuencia quieres?</h2>
+                        <div className="crear-frequency-row">
+                            <button
+                                type="button"
+                                className={`crear-frequency-pill${recurrenceMode === 'weekly' ? ' selected' : ''}`}
+                                onClick={() => {
+                                    setRecurrenceMode('weekly');
+                                    setShowRecurringModal(true);
+                                }}
+                            >
+                                Semanal
+                            </button>
+                            <button
+                                type="button"
+                                className={`crear-frequency-pill${recurrenceMode === 'monthly' ? ' selected' : ''}`}
+                                onClick={() => {
+                                    setRecurrenceMode('monthly');
+                                    // Aquí puedes abrir el modal mensual cuando lo implementes
+                                }}
+                            >
+                                Mensual
+                            </button>
+                        </div>
+                    </section>
+                )}
 
-                                {/* Modal para clase recurrente semanal */}
-                                <IonModal
-                                    className="crear-single-modal-wrapper"
-                                    isOpen={showRecurringModal && recurrenceMode === 'weekly'}
-                                    keepContentsMounted={true}
-                                    onDidDismiss={() => {
-                                        setShowRecurringModal(false);
-                                    }}
-                                >
-                                    <div className="crear-single-modal" onClick={closeSubmodalsOnEmptyClick}>
-                                        <div className="crear-single-modal-header">
-                                            <h3>Crear clase recurrente semanal</h3>
-                                            <button
-                                                type="button"
-                                                className="crear-single-modal-close"
-                                                onClick={() => setShowRecurringModal(false)}
-                                                aria-label="Cerrar"
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                        <form className="crear-single-form">
-                                            {/* Campo Entrenador */}
-                                            <label className="crear-field-label" htmlFor="rec-trainer-role">Entrenador</label>
-                                            <button
-                                                id="rec-trainer-role"
-                                                type="button"
-                                                className="crear-input crear-date-btn"
-                                                disabled={isLoadingTrainers || trainerOptions.length === 0}
-                                                onClick={() => setShowTrainerPicker(true)}
-                                            >
-                                                {recurringDraft.trainerName || (isLoadingTrainers ? 'Cargando...' : 'Selecciona entrenador')}
-                                            </button>
+                {/* Modal para clase recurrente semanal */}
+                <IonModal
+                    className="crear-single-modal-wrapper"
+                    isOpen={showRecurringModal && recurrenceMode === 'weekly'}
+                    keepContentsMounted={true}
+                    onDidDismiss={() => {
+                        setShowRecurringModal(false);
+                        setShowRecurringTrainerPicker(false);
+                    }}
+                >
+                    <div className="crear-single-modal" onClick={closeRecurringSubmodalsOnEmptyClick}>
+                        <div className="crear-single-modal-header">
+                            <h3>Crear clase recurrente semanal</h3>
+                            <button
+                                type="button"
+                                className="crear-single-modal-close"
+                                onClick={() => {
+                                    setShowRecurringModal(false);
+                                    setShowRecurringTrainerPicker(false);
+                                }}
+                                aria-label="Cerrar"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <form className="crear-single-form">
+                            {/* Campo Entrenador */}
+                            <label className="crear-field-label" htmlFor="rec-trainer-role">Entrenador</label>
+                            <button
+                                id="rec-trainer-role"
+                                type="button"
+                                className="crear-input crear-date-btn"
+                                disabled={isLoadingTrainers || trainerOptions.length === 0}
+                                onClick={toggleRecurringTrainerPicker}
+                            >
+                                {isLoadingTrainers ? 'Cargando entrenadores...' : (recurringDraft.trainerName || 'Selecciona entrenador')}
+                            </button>
 
-                                            {/* Campo Nombre de la clase */}
-                                            <label className="crear-field-label" htmlFor="rec-class-name">Nombre de la clase</label>
-                                            <input
-                                                id="rec-class-name"
-                                                className="crear-input"
-                                                type="text"
-                                                value={recurringDraft.className}
-                                                onChange={e => setRecurringDraft(d => ({ ...d, className: e.target.value }))}
-                                                placeholder="Ej: Yoga, Pilates..."
-                                            />
+                            {showRecurringTrainerPicker ? (
+                                <div className="crear-trainer-picker-panel" ref={recurringTrainerPanelRef}>
+                                    {trainerOptions.map((trainer) => (
+                                        <button
+                                            key={trainer.id}
+                                            type="button"
+                                            className={`crear-trainer-option ${recurringDraft.trainerId === trainer.id ? 'selected' : ''}`}
+                                            onClick={() => pickRecurringTrainer(trainer)}
+                                        >
+                                            <span className="crear-trainer-name">{trainer.name}</span>
+                                            <span className="crear-trainer-role">{trainer.role}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : null}
+                            {trainersError ? <p className="crear-validation-error">{trainersError}</p> : null}
 
-                                            {/* Selección de días de la semana */}
-                                            <div className="crear-days-row">
-                                                {["D","L","M","X","J","V","S"].map((d, i) => (
-                                                    <label key={i} className={`crear-day-checkbox ${recurringDraft.daysOfWeek.includes(i) ? 'selected' : ''}`}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={recurringDraft.daysOfWeek.includes(i)}
-                                                            onChange={() => setRecurringDraft(draft => {
-                                                                const days = draft.daysOfWeek.includes(i)
-                                                                    ? draft.daysOfWeek.filter(day => day !== i)
-                                                                    : [...draft.daysOfWeek, i];
-                                                                return { ...draft, daysOfWeek: days };
-                                                            })}
-                                                        />
-                                                        {d}
-                                                    </label>
-                                                ))}
-                                            </div>
+                            {/* Campo Nombre de la clase */}
+                            <label className="crear-field-label" htmlFor="rec-class-name">Nombre de la clase</label>
+                            <input
+                                id="rec-class-name"
+                                className="crear-input"
+                                type="text"
+                                value={recurringDraft.className}
+                                onChange={e => setRecurringDraft(d => ({ ...d, className: e.target.value }))}
+                                placeholder="Ej: Yoga, Pilates..."
+                            />
 
-                                            {/* Fechas inicio/fin */}
-                                            <label className="crear-field-label" htmlFor="rec-start-date">Fecha inicio</label>
-                                            <input
-                                                id="rec-start-date"
-                                                className="crear-input"
-                                                type="date"
-                                                value={recurringDraft.startDate}
-                                                onChange={e => setRecurringDraft(d => ({ ...d, startDate: e.target.value }))}
-                                            />
-                                            <label className="crear-field-label" htmlFor="rec-end-date">Fecha fin</label>
-                                            <input
-                                                id="rec-end-date"
-                                                className="crear-input"
-                                                type="date"
-                                                value={recurringDraft.endDate}
-                                                onChange={e => setRecurringDraft(d => ({ ...d, endDate: e.target.value }))}
-                                            />
+                            {/* Selección de días de la semana */}
+                            <div className="crear-days-row">
+                                {["D", "L", "M", "X", "J", "V", "S"].map((d, i) => (
+                                    <label key={i} className={`crear-day-checkbox ${recurringDraft.daysOfWeek.includes(i) ? 'selected' : ''}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={recurringDraft.daysOfWeek.includes(i)}
+                                            onChange={() => setRecurringDraft(draft => {
+                                                const days = draft.daysOfWeek.includes(i)
+                                                    ? draft.daysOfWeek.filter(day => day !== i)
+                                                    : [...draft.daysOfWeek, i];
+                                                return { ...draft, daysOfWeek: days };
+                                            })}
+                                        />
+                                        {d}
+                                    </label>
+                                ))}
+                            </div>
 
-                                            {/* Hora inicio/fin */}
-                                            <label className="crear-field-label" htmlFor="rec-start-time">Hora inicio</label>
-                                            <input
-                                                id="rec-start-time"
-                                                className="crear-input"
-                                                type="time"
-                                                value={recurringDraft.startTime}
-                                                onChange={e => setRecurringDraft(d => ({ ...d, startTime: e.target.value }))}
-                                            />
-                                            <label className="crear-field-label" htmlFor="rec-end-time">Hora fin</label>
-                                            <input
-                                                id="rec-end-time"
-                                                className="crear-input"
-                                                type="time"
-                                                value={recurringDraft.endTime}
-                                                onChange={e => setRecurringDraft(d => ({ ...d, endTime: e.target.value }))}
-                                            />
+                            {/* Fechas inicio/fin */}
+                            <label className="crear-field-label" htmlFor="rec-start-date">Fecha inicio</label>
+                            <input
+                                id="rec-start-date"
+                                className="crear-input"
+                                type="date"
+                                value={recurringDraft.startDate}
+                                onChange={e => setRecurringDraft(d => ({ ...d, startDate: e.target.value }))}
+                            />
+                            <label className="crear-field-label" htmlFor="rec-end-date">Fecha fin</label>
+                            <input
+                                id="rec-end-date"
+                                className="crear-input"
+                                type="date"
+                                value={recurringDraft.endDate}
+                                onChange={e => setRecurringDraft(d => ({ ...d, endDate: e.target.value }))}
+                            />
 
-                                            {/* Capacidad */}
-                                            <label className="crear-field-label" htmlFor="rec-capacity">Capacidad</label>
-                                            <input
-                                                id="rec-capacity"
-                                                className="crear-input"
-                                                type="number"
-                                                min={1}
-                                                max={10}
-                                                value={recurringDraft.capacity}
-                                                onChange={e => setRecurringDraft(d => ({ ...d, capacity: Number(e.target.value) }))}
-                                            />
+                            {/* Hora inicio/fin */}
+                            <label className="crear-field-label" htmlFor="rec-start-time">Hora inicio</label>
+                            <input
+                                id="rec-start-time"
+                                className="crear-input"
+                                type="time"
+                                value={recurringDraft.startTime}
+                                onChange={e => setRecurringDraft(d => ({ ...d, startTime: e.target.value }))}
+                            />
+                            <label className="crear-field-label" htmlFor="rec-end-time">Hora fin</label>
+                            <input
+                                id="rec-end-time"
+                                className="crear-input"
+                                type="time"
+                                value={recurringDraft.endTime}
+                                onChange={e => setRecurringDraft(d => ({ ...d, endTime: e.target.value }))}
+                            />
 
-                                            {/* Notas */}
-                                            <label className="crear-field-label" htmlFor="rec-notes">Notas</label>
-                                            <textarea
-                                                id="rec-notes"
-                                                className="crear-input"
-                                                value={recurringDraft.notes}
-                                                onChange={e => setRecurringDraft(d => ({ ...d, notes: e.target.value }))}
-                                                placeholder="Opcional"
-                                            />
+                            {/* Capacidad */}
+                            <label className="crear-field-label" htmlFor="rec-capacity">Capacidad</label>
+                            <input
+                                id="rec-capacity"
+                                className="crear-input"
+                                type="number"
+                                min={1}
+                                max={10}
+                                value={recurringDraft.capacity}
+                                onChange={e => setRecurringDraft(d => ({ ...d, capacity: Number(e.target.value) }))}
+                            />
 
-                                        </form>
-                                    </div>
-                                </IonModal>
+                            {/* Notas */}
+                            <label className="crear-field-label" htmlFor="rec-notes">Notas</label>
+                            <textarea
+                                id="rec-notes"
+                                className="crear-input"
+                                value={recurringDraft.notes}
+                                onChange={e => setRecurringDraft(d => ({ ...d, notes: e.target.value }))}
+                                placeholder="Opcional"
+                            />
+
+                        </form>
+                    </div>
+                </IonModal>
 
                 <section className="crear-form-section crear-form-section-preview">
                     <h2 className="crear-form-section-title">Siguiente paso</h2>

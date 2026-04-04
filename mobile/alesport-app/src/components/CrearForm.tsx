@@ -635,7 +635,19 @@ const CrearForm: React.FC = () => {
                             </div>
 
                             <div className="crear-actions-row">
-                                <button type="button" className="crear-btn-secondary" onClick={resetSingleDraft}>
+                                <button
+                                    type="button"
+                                    className="crear-btn-secondary"
+                                    onClick={(e) => {
+                                        const button = e.currentTarget;
+                                        button.classList.add('crear-btn-secondary-tap');
+                                        window.setTimeout(() => {
+                                            button.classList.remove('crear-btn-secondary-tap');
+                                            button.blur();
+                                        }, 140);
+                                        resetSingleDraft();
+                                    }}
+                                >
                                     Limpiar
                                 </button>
                                 <button type="submit" className="crear-btn-primary" disabled={!isSingleValid}>

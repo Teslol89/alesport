@@ -1,3 +1,4 @@
+import logoIcon from '../icons/icon.png';
 import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
@@ -27,7 +28,7 @@ const TIME_PICKER_BASE_DATE = '1970-01-01';
 
 /* Componente principal para el formulario de creación,
  que incluye la elección entre clase puntual o recurrente,
- y el formulario específico para clase puntual en un modal. */
+  y el formulario específico para clase puntual en un modal. */
 const CrearForm: React.FC = () => {
     const [createMode, setCreateMode] = useState<CreateMode>(null);
     const [recurrenceMode, setRecurrenceMode] = useState<RecurrenceMode>('weekly');
@@ -48,7 +49,7 @@ const CrearForm: React.FC = () => {
     });
     const openSingleModalRafRef = useRef<number | null>(null);
     const singleModalBodyRef = useRef<HTMLDivElement | null>(null);
-    const singleDatePanelRef = useRef<HTMLDivElement | null>(null);
+    const singleDatePanelRef = useRef<HTMLDivElement | null>(null); 
     const singleCapacityPanelRef = useRef<HTMLDivElement | null>(null);
     const singleTrainerPanelRef = useRef<HTMLDivElement | null>(null);
     const singleTimePanelRef = useRef<HTMLDivElement | null>(null);
@@ -286,9 +287,11 @@ const CrearForm: React.FC = () => {
     }, []);
 
     return (
+
         <div className="crear-form-container">
             <div className="crear-top-bar">
-                <div className="crear-top-title">Crear</div>
+                <img src={logoIcon} alt="Logo gimnasio" className="crear-top-logo" />
+                <div className="crear-top-title crear-top-title-absolute">Crear clases</div>
             </div>
 
             <div className="crear-form-content">

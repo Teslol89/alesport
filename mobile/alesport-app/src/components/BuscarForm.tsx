@@ -1,5 +1,6 @@
 /* Buscador avanzado de reservas para admins, con filtros por texto y fecha, y resumen de resultados. */
 import { useEffect, useMemo, useState } from 'react';
+import logoIcon from '../icons/icon.png';
 import { IonDatetime, IonModal, IonSpinner } from '@ionic/react';
 import { BookingItem, getAllBookings } from '../api/bookings';
 import { getUserProfile } from '../api/user';
@@ -18,6 +19,7 @@ const BuscarForm: React.FC = () => {
     const [periodDate, setPeriodDate] = useState<string>(() => toLocalISODate(new Date()));
     const [showPeriodCalendar, setShowPeriodCalendar] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
+    // Barra de búsqueda siempre visible, sin lupa
 
     useEffect(() => {
         getUserProfile(() => { })
@@ -95,7 +97,8 @@ const BuscarForm: React.FC = () => {
     return (
         <div className="search-form-container">
             <div className="search-top-bar">
-                <div className="search-top-title">Buscar reservas</div>
+                <img src={logoIcon} alt="Logo gimnasio" className="search-top-logo" />
+                <div className="search-top-title search-top-title-absolute">Buscar reservas</div>
             </div>
             {/* Contenido principal de la búsqueda */}
             <div className="search-form-content">
@@ -103,12 +106,12 @@ const BuscarForm: React.FC = () => {
                     <p className="search-form-empty">Solo administradores pueden ver todas las reservas.</p>
                 ) : (
                     <div className="search-form-body">
-                        <input
-                            className="search-form-search-input"
-                            placeholder="Buscar por alumno, email o estado (activa/inactiva)"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                        />
+                                                <input
+                                                        className="search-form-search-input"
+                                                        placeholder="Buscar por alumno, email o estado (activa/inactiva)"
+                                                        value={query}
+                                                        onChange={(e) => setQuery(e.target.value)}
+                                                />
 
                         <div className="search-form-filters-row">
                             <select

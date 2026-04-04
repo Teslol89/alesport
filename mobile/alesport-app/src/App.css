@@ -12,13 +12,20 @@ ion-tab-bar.tabbar-glass {
 }
 
 ion-tab-button {
+    --color: #111;
+    --color-selected: #0089a6;
     color: #111;
     font-size: 0.75rem;
 }
 
+ion-tab-button.tab-selected ion-label {
+    color: #0089a6 !important;
+    font-weight: 700;
+}
+
 ion-tab-button ion-icon {
     /* Tamaño de iconos y color personalizado */
-    color: #000000;
+    color: currentColor;
     font-size: 1.5rem;
 }
 

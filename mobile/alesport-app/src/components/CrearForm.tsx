@@ -1,4 +1,4 @@
-// =================== TIPOS Y CONSTANTES ===================
+/* =================== TIPOS Y CONSTANTES =================== */
 import logoIcon from '../icons/icon.png';
 import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';

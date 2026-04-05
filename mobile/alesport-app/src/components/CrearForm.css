@@ -21,17 +21,6 @@
   min-width: 180px;
 }
 
-/* Estilos para el modal de copiar semana */
-.crear-copy-week-modal-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 40vh;
-  padding: 24px;
-  gap: 18px;
-}
-
 .crear-copy-week-title {
   margin-bottom: 10px;
 }

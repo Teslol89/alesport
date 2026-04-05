@@ -1,17 +1,28 @@
+.crear-day-checkbox-day {
+  margin-left: 0.25em;
+  font-size: 1em;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: #000000;
+}
 /* Checkboxes de días de la semana con fondo igual que la page */
 .crear-day-checkbox {
-  background: var(--background, #eeeeee);
+  position: relative;
+  cursor: pointer;
+  background: #ffffff !important;
   border-radius: 0.4em;
-  padding: 0.1em 0.2em;
+  padding: 0.4em 0.4em;
   display: inline-flex;
   align-items: center;
-  margin: 0 0.05em;
+  color: #000000;
 }
+
 .crear-day-checkbox input[type='checkbox'] {
   accent-color: #bbbbbb;
   background: var(--background, #eeeeee);
   border-radius: 0.3em;
 }
+
 .crear-form-container {
   width: 100%;
   min-height: 100%;
@@ -43,7 +54,8 @@
   left: 50%;
   /* Centrado visual compensando el padding-top del safe area */
   top: calc(50% + (max(env(safe-area-inset-top), 1.1rem) / 2));
-  transform: translate(-50%, -40%); /* Baja solo el texto unos px */
+  transform: translate(-50%, -40%);
+  /* Baja solo el texto unos px */
   width: max-content;
   max-width: 80vw;
   pointer-events: none;

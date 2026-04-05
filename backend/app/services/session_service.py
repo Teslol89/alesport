@@ -524,12 +524,12 @@ def create_recurring_sessions(
 
 # --- Función para copiar sesiones de una semana a otra --- #
 def copy_week_sessions(
-    db: Session, source_week_start: date, target_week_start: date, trainer_id: int
+    db: Session, source_week_start: date, target_week_start: date, trainer_id: int | None = None
 ) -> list[SessionModel]:
     """
-    Copia todas las sesiones (status 'active' o 'completed', nunca 'cancelled') de una semana a otra para un entrenador.
-    Las nuevas sesiones tendrán las mismas horas, clase, capacidad, etc., pero en la semana destino.
-    Si alguna sesión de destino solapa, se hace rollback de todas.
+    Copia todas las sesiones (status 'active' o 'completed', nunca 'cancelled') de una semana a otra.
+    Si trainer_id es None, copia todas las sesiones de todos los entrenadores.
+    Si trainer_id está presente, solo copia las de ese entrenador.
     """
     session_timezone = LOCAL_TIMEZONE
     # Calcular rango de fechas origen y destino
@@ -541,20 +541,17 @@ def copy_week_sessions(
         target_week_start, time.min, tzinfo=session_timezone
     )
     # Buscar sesiones activas o completadas en la semana origen
-    sessions_to_copy = (
-        db.query(SessionModel)
-        .filter(SessionModel.trainer_id == trainer_id)
-        .filter(SessionModel.status.in_(["active", "completed"]))
-        .filter(SessionModel.start_time >= source_start_dt)
-        .filter(SessionModel.start_time < source_end_dt)
-        .all()
-    )
+    query = db.query(SessionModel).filter(SessionModel.status.in_(["active", "completed"]))
+    if trainer_id is not None:
+        query = query.filter(SessionModel.trainer_id == trainer_id)
+    query = query.filter(SessionModel.start_time >= source_start_dt)
+    query = query.filter(SessionModel.start_time < source_end_dt)
+    sessions_to_copy = query.all()
     if not sessions_to_copy:
         raise HTTPException(
             status_code=404,
             detail="No hay sesiones activas o completadas en la semana origen",
         )
-
     new_sessions = []
     try:
         for session in sessions_to_copy:
@@ -578,7 +575,7 @@ def copy_week_sessions(
             new_end_dt = datetime.combine(new_date, end_local, tzinfo=session_timezone)
             _ensure_no_session_overlap(db, new_start_dt, new_end_dt)
             new_session = SessionModel(
-                trainer_id=trainer_id,
+                trainer_id=session.trainer_id,
                 start_time=new_start_dt,
                 end_time=new_end_dt,
                 capacity=session.capacity,
@@ -593,8 +590,8 @@ def copy_week_sessions(
         for s in new_sessions:
             db.refresh(s)
         # Añadir trainer_name dinámicamente
-        trainer = db.query(User).filter(User.id == trainer_id).first()
         for s in new_sessions:
+            trainer = db.query(User).filter(User.id == s.trainer_id).first()
             setattr(s, "trainer_name", trainer.name if trainer else "")
         return new_sessions
     except IntegrityError as exc:
@@ -605,9 +602,6 @@ def copy_week_sessions(
                 detail="Alguna sesión copiada se solapa con otra existente en la semana destino",
             )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error al copiar sesiones",
+            status_code=500,
+            detail="Error inesperado al copiar sesiones",
         )
-    except Exception:
-        db.rollback()
-        raise

@@ -151,12 +151,8 @@ def copy_week_endpoint(
 ):
     """Copia todas las sesiones activas o completadas de una semana a otra para el entrenador actual (o el indicado por admin)."""
     if current_user.role == "admin":
-        if req.trainer_id is None:
-            raise HTTPException(
-                status_code=422,
-                detail="Los administradores deben especificar trainer_id",
-            )
-        trainer_id = req.trainer_id
+        # Si el admin NO pasa trainer_id, copia todas las sesiones de todos los entrenadores
+        trainer_id = req.trainer_id if req.trainer_id is not None else None
     else:
         trainer_id = current_user.id
     return copy_week_sessions(

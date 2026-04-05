@@ -738,7 +738,8 @@ const CrearForm: React.FC = () => {
                                                 return { ...draft, daysOfWeek: days };
                                             })}
                                         />
-                                        {d}
+                                        <span className="custom-checkbox" />
+                                        <span className="crear-day-checkbox-day">{d}</span>
                                     </label>
                                 ))}
                             </div>

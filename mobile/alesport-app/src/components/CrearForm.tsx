@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
 import { createSingleSession, createRecurringSessions } from '../api/sessions';
+import { copyWeekSessions } from '../api/sessions';
 import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso, getMondayOfWeek, getSundayOfWeek } from '../utils/funcionesGeneral';
 import CustomToast from './CustomStyles';
 import './CrearForm.css';
@@ -477,17 +478,48 @@ const CrearForm: React.FC = () => {
 
     // Estado para el modal de copiar semana
     const [showCopyWeekModal, setShowCopyWeekModal] = useState(false);
+    const [copyWeekSource, setCopyWeekSource] = useState("");
+    const [copyWeekTarget, setCopyWeekTarget] = useState("");
+    const [showSourcePicker, setShowSourcePicker] = useState(false);
+    const [showTargetPicker, setShowTargetPicker] = useState(false);
+    function formatDateDMY(iso: string) {
+        if (!iso) return "-";
+        const [y, m, d] = iso.split("-");
+        return `${d}/${m}/${y}`;
+    }
+    function getWeekRange(isoMonday: string) {
+        if (!isoMonday) return "-";
+        const monday = new Date(isoMonday);
+        if (monday.getDay() !== 1) return "(elige un lunes)";
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        return `${formatDateDMY(isoMonday)} - ${formatDateDMY(sunday.toISOString().slice(0, 10))}`;
+    }
 
-    // Handler para copiar semana anterior (debe implementarse la lógica real)
-    function handleCopyPreviousWeek() {
-        // Aquí va la lógica para copiar la semana anterior
-        // Por ejemplo: llamar a un servicio backend y actualizar recurringDraft
-        // setRecurringDraft(...)
-        setToast({
-            show: true,
-            message: 'Semana anterior copiada (demo)',
-            type: 'success',
-        });
+    // Handler para copiar semana usando el backend real
+    async function handleCopyWeek() {
+        if (!copyWeekSource || !copyWeekTarget) return;
+        try {
+            await copyWeekSessions({
+                source_week_start_date: copyWeekSource,
+                target_week_start_date: copyWeekTarget,
+                trainer_id: recurringDraft.trainerId || undefined,
+            });
+            setToast({
+                show: true,
+                message: `✓ Semana copiada correctamente`,
+                type: 'success',
+            });
+            setShowCopyWeekModal(false);
+            setCopyWeekSource("");
+            setCopyWeekTarget("");
+        } catch (error: any) {
+            setToast({
+                show: true,
+                message: error?.message || 'Error al copiar la semana',
+                type: 'danger',
+            });
+        }
     }
 
     return (
@@ -847,56 +879,128 @@ const CrearForm: React.FC = () => {
                             </button>
                         </div>
                         <form className="crear-single-form">
-                                                        {/* Botón para abrir el modal de copiar semana */}
-                                                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                                                            <button
-                                                                type="button"
-                                                                className="crear-btn-primary"
-                                                                style={{ minWidth: 180 }}
-                                                                onClick={() => setShowCopyWeekModal(true)}
-                                                            >
-                                                                Copiar semana anterior
-                                                            </button>
-                                                        </div>
+                            {/* Botón para abrir el modal de copiar semana */}
+                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                                <button
+                                    type="button"
+                                    className="crear-btn-primary"
+                                    style={{ minWidth: 180 }}
+                                    onClick={() => setShowCopyWeekModal(true)}
+                                >
+                                    Copiar semana anterior
+                                </button>
+                            </div>
 
-                                                        {/* Modal de copiar semana anterior */}
-                                                        <IonModal
-                                                            isOpen={showCopyWeekModal}
-                                                            onDidDismiss={() => setShowCopyWeekModal(false)}
-                                                            className="crear-copy-week-modal-wrapper"
-                                                            backdropDismiss={true}
-                                                        >
-                                                            <div style={{
-                                                                display: 'flex',
-                                                                flexDirection: 'column',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                minHeight: '40vh',
-                                                                padding: 24
-                                                            }}>
-                                                                <h3 style={{ marginBottom: 16 }}>Copiar semana anterior</h3>
-                                                                <p style={{ marginBottom: 24 }}>¿Quieres copiar la configuración de la semana anterior a esta?</p>
-                                                                <div style={{ display: 'flex', gap: 16 }}>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="crear-btn-primary"
-                                                                        onClick={() => {
-                                                                            setShowCopyWeekModal(false);
-                                                                            handleCopyPreviousWeek();
-                                                                        }}
-                                                                    >
-                                                                        Copiar
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="app-btn-danger"
-                                                                        onClick={() => setShowCopyWeekModal(false)}
-                                                                    >
-                                                                        Cancelar
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </IonModal>
+                            {/* Modal de copiar semana: permite elegir semana origen y destino */}
+                            <IonModal
+                                isOpen={showCopyWeekModal}
+                                onDidDismiss={() => setShowCopyWeekModal(false)}
+                                className="crear-copy-week-modal-wrapper"
+                                backdropDismiss={true}
+                            >
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minHeight: '40vh',
+                                    padding: 24,
+                                    gap: 18
+                                }}>
+                                    <h3 style={{ marginBottom: 10 }}>Copiar semana</h3>
+                                    <div style={{ width: '100%', maxWidth: 320, marginBottom: 12 }}>
+                                        <label className="crear-field-label">Semana a copiar (origen)</label>
+                                        <button
+                                            type="button"
+                                            className="crear-input crear-date-btn"
+                                            onClick={() => setShowSourcePicker(true)}
+                                        >
+                                            {getWeekRange(copyWeekSource)}
+                                        </button>
+                                        {showSourcePicker && (
+                                            <div className="crear-single-date-panel" style={{ marginTop: 8 }}>
+                                                <IonDatetime
+                                                    className="crear-single-date-calendar"
+                                                    presentation="date"
+                                                    firstDayOfWeek={1}
+                                                    locale="es-ES"
+                                                    value={copyWeekSource}
+                                                    min="2020-01-01"
+                                                    max="2100-12-31"
+                                                    isDateEnabled={(isoDate: string) => {
+                                                        const d = new Date(isoDate);
+                                                        return d.getDay() === 1;
+                                                    }}
+                                                    onIonChange={(e: CustomEvent<{ value?: string | string[] | null }>) => {
+                                                        const value = e.detail.value;
+                                                        if (typeof value === 'string') {
+                                                            const d = new Date(value);
+                                                            if (d.getDay() === 1) setCopyWeekSource(value.slice(0, 10));
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="crear-single-date-modal-actions">
+                                                    <button type="button" className="crear-btn-primary" onClick={() => setShowSourcePicker(false)}>Aceptar</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ width: '100%', maxWidth: 320, marginBottom: 12 }}>
+                                        <label className="crear-field-label">Semana destino</label>
+                                        <button
+                                            type="button"
+                                            className="crear-input crear-date-btn"
+                                            onClick={() => setShowTargetPicker(true)}
+                                        >
+                                            {getWeekRange(copyWeekTarget)}
+                                        </button>
+                                        {showTargetPicker && (
+                                            <div className="crear-single-date-panel" style={{ marginTop: 8 }}>
+                                                <IonDatetime
+                                                    className="crear-single-date-calendar"
+                                                    presentation="date"
+                                                    firstDayOfWeek={1}
+                                                    locale="es-ES"
+                                                    value={copyWeekTarget}
+                                                    min="2020-01-01"
+                                                    max="2100-12-31"
+                                                    isDateEnabled={(isoDate: string) => {
+                                                        const d = new Date(isoDate);
+                                                        return d.getDay() === 1;
+                                                    }}
+                                                    onIonChange={(e: CustomEvent<{ value?: string | string[] | null }>) => {
+                                                        const value = e.detail.value;
+                                                        if (typeof value === 'string') {
+                                                            const d = new Date(value);
+                                                            if (d.getDay() === 1) setCopyWeekTarget(value.slice(0, 10));
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="crear-single-date-modal-actions">
+                                                    <button type="button" className="crear-btn-primary" onClick={() => setShowTargetPicker(false)}>Aceptar</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
+                                        <button
+                                            type="button"
+                                            className="crear-btn-primary"
+                                            disabled={!copyWeekSource || !copyWeekTarget}
+                                            onClick={handleCopyWeek}
+                                        >
+                                            Copiar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="app-btn-danger"
+                                            onClick={() => setShowCopyWeekModal(false)}
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </IonModal>
                             {/* Campo Entrenador */}
                             <label className="crear-field-label" htmlFor="rec-trainer-role">Entrenador</label>
                             <button

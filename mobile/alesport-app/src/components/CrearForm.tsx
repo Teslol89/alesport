@@ -890,104 +890,105 @@ const CrearForm: React.FC = () => {
 
                             {/* Modal de copiar semana: permite elegir semana origen y destino */}
                             <IonModal
+                                className="crear-single-modal-wrapper"
                                 isOpen={showCopyWeekModal}
                                 onDidDismiss={() => setShowCopyWeekModal(false)}
-                                className="crear-single-modal-wrapper"
                                 backdropDismiss={true}
                             >
-                                <div className="crear-single-modal crear-copy-week-modal-content">
+                                <div className="crear-single-modal">
                                     <h3 className="crear-copy-week-title">Copiar semana</h3>
-                                    <div className="crear-copy-week-row">
-                                        <label className="crear-field-label">Semana a copiar (origen)</label>
-                                        <button
-                                            type="button"
-                                            className="crear-input crear-date-btn"
-                                            onClick={() => setShowSourcePicker(true)}
-                                        >
-                                            {getWeekRange(copyWeekSource)}
-                                        </button>
-                                        {showSourcePicker && (
-                                            <div className="crear-single-date-panel crear-copy-week-date-panel">
-                                                <IonDatetime
-                                                    className="crear-single-date-calendar"
-                                                    presentation="date"
-                                                    firstDayOfWeek={1}
-                                                    locale="es-ES"
-                                                    value={copyWeekSource}
-                                                    min="2020-01-01"
-                                                    max="2100-12-31"
-                                                    isDateEnabled={(isoDate: string) => {
-                                                        const d = new Date(isoDate);
-                                                        return d.getDay() === 1;
-                                                    }}
-                                                    onIonChange={(e: CustomEvent<{ value?: string | string[] | null }>) => {
-                                                        const value = e.detail.value;
-                                                        if (typeof value === 'string') {
-                                                            const d = new Date(value);
-                                                            if (d.getDay() === 1) setCopyWeekSource(value.slice(0, 10));
-                                                        }
-                                                    }}
-                                                />
-                                                <div className="crear-single-date-modal-actions">
-                                                    <button type="button" className="crear-btn-primary" onClick={() => setShowSourcePicker(false)}>Aceptar</button>
+                                    <form className="crear-single-form" onSubmit={e => { e.preventDefault(); handleCopyWeek(); }}>
+                                        <div className="crear-copy-week-row">
+                                            <label className="crear-field-label">Semana a copiar (origen)</label>
+                                            <button
+                                                type="button"
+                                                className="crear-input crear-date-btn"
+                                                onClick={() => setShowSourcePicker(v => !v)}
+                                            >
+                                                {getWeekRange(copyWeekSource)}
+                                            </button>
+                                            {showSourcePicker && (
+                                                <div className="crear-single-date-panel crear-copy-week-date-panel">
+                                                    <IonDatetime
+                                                        className="crear-single-date-calendar"
+                                                        presentation="date"
+                                                        firstDayOfWeek={1}
+                                                        locale="es-ES"
+                                                        value={copyWeekSource}
+                                                        min="2020-01-01"
+                                                        max="2100-12-31"
+                                                        isDateEnabled={(isoDate: string) => {
+                                                            const d = new Date(isoDate);
+                                                            return d.getDay() === 1;
+                                                        }}
+                                                        onIonChange={(e: CustomEvent<{ value?: string | string[] | null }>) => {
+                                                            const value = e.detail.value;
+                                                            if (typeof value === 'string') {
+                                                                const d = new Date(value);
+                                                                if (d.getDay() === 1) setCopyWeekSource(value.slice(0, 10));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <div className="crear-single-date-modal-actions">
+                                                        <button type="button" className="crear-btn-primary" onClick={() => setShowSourcePicker(false)}>Aceptar</button>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="crear-copy-week-row">
-                                        <label className="crear-field-label">Semana destino</label>
-                                        <button
-                                            type="button"
-                                            className="crear-input crear-date-btn"
-                                            onClick={() => setShowTargetPicker(true)}
-                                        >
-                                            {getWeekRange(copyWeekTarget)}
-                                        </button>
-                                        {showTargetPicker && (
-                                            <div className="crear-single-date-panel crear-copy-week-date-panel">
-                                                <IonDatetime
-                                                    className="crear-single-date-calendar"
-                                                    presentation="date"
-                                                    firstDayOfWeek={1}
-                                                    locale="es-ES"
-                                                    value={copyWeekTarget}
-                                                    min="2020-01-01"
-                                                    max="2100-12-31"
-                                                    isDateEnabled={(isoDate: string) => {
-                                                        const d = new Date(isoDate);
-                                                        return d.getDay() === 1;
-                                                    }}
-                                                    onIonChange={(e: CustomEvent<{ value?: string | string[] | null }>) => {
-                                                        const value = e.detail.value;
-                                                        if (typeof value === 'string') {
-                                                            const d = new Date(value);
-                                                            if (d.getDay() === 1) setCopyWeekTarget(value.slice(0, 10));
-                                                        }
-                                                    }}
-                                                />
-                                                <div className="crear-single-date-modal-actions">
-                                                    <button type="button" className="crear-btn-primary" onClick={() => setShowTargetPicker(false)}>Aceptar</button>
+                                            )}
+                                        </div>
+                                        <div className="crear-copy-week-row">
+                                            <label className="crear-field-label">Semana destino</label>
+                                            <button
+                                                type="button"
+                                                className="crear-input crear-date-btn"
+                                                onClick={() => setShowTargetPicker(v => !v)}
+                                            >
+                                                {getWeekRange(copyWeekTarget)}
+                                            </button>
+                                            {showTargetPicker && (
+                                                <div className="crear-single-date-panel crear-copy-week-date-panel">
+                                                    <IonDatetime
+                                                        className="crear-single-date-calendar"
+                                                        presentation="date"
+                                                        firstDayOfWeek={1}
+                                                        locale="es-ES"
+                                                        value={copyWeekTarget}
+                                                        min="2020-01-01"
+                                                        max="2100-12-31"
+                                                        isDateEnabled={(isoDate: string) => {
+                                                            const d = new Date(isoDate);
+                                                            return d.getDay() === 1;
+                                                        }}
+                                                        onIonChange={(e: CustomEvent<{ value?: string | string[] | null }>) => {
+                                                            const value = e.detail.value;
+                                                            if (typeof value === 'string') {
+                                                                const d = new Date(value);
+                                                                if (d.getDay() === 1) setCopyWeekTarget(value.slice(0, 10));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <div className="crear-single-date-modal-actions">
+                                                        <button type="button" className="crear-btn-primary" onClick={() => setShowTargetPicker(false)}>Aceptar</button>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="crear-copy-week-actions">
-                                        <button
-                                            type="button"
-                                            className="crear-btn-primary"
-                                            disabled={!copyWeekSource || !copyWeekTarget}
-                                            onClick={handleCopyWeek}
-                                        >
-                                            Copiar
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="app-btn-danger"
-                                            onClick={() => setShowCopyWeekModal(false)}
-                                        >
-                                            Cancelar
-                                        </button>
-                                    </div>
+                                            )}
+                                        </div>
+                                        <div className="crear-actions-row">
+                                            <button
+                                                type="submit"
+                                                className="crear-btn-primary"
+                                                disabled={!copyWeekSource || !copyWeekTarget}
+                                            >
+                                                Copiar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="app-btn-danger"
+                                                onClick={() => setShowCopyWeekModal(false)}
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             </IonModal>
                             {/* Campo Entrenador */}

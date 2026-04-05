@@ -21,6 +21,7 @@ logger = get_logger(__name__)
 PAST_SESSION_UPDATE_ERROR = "No se pueden modificar sesiones de días pasados"
 
 
+# --- Función para convertir hora con tz a hora local sin tzinfo --- #
 def _to_local_naive_time(value: time) -> time:
     """Convierte una hora con tz (si viene) a hora local y la devuelve sin tzinfo."""
     if value.tzinfo is None:
@@ -31,6 +32,7 @@ def _to_local_naive_time(value: time) -> time:
     return localized.timetz().replace(tzinfo=None)
 
 
+# --- Función para validar que una franja horaria no se solape con otras sesiones activas (regla global) --- #
 def _ensure_no_session_overlap(
     db: Session,
     start_time: datetime,
@@ -59,6 +61,7 @@ def _ensure_no_session_overlap(
             )
 
 
+# --- Función para crear una sesión puntual concreta --- #
 def create_session(db: Session, create_data, current_user: User) -> SessionModel:
     """Crea una nueva sesión puntual concreta.
 
@@ -138,6 +141,7 @@ def create_session(db: Session, create_data, current_user: User) -> SessionModel
     return new_session
 
 
+# --- Función para preparar y validar un patch de sesión (conversión de horas y validación start<end) --- #
 def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
     """Convierte patch de time->datetime y valida coherencia start/end para una sesión."""
     prepared_patch = dict(patch)
@@ -186,6 +190,7 @@ def _prepare_patch_for_session(session: SessionModel, patch: dict) -> dict:
     return prepared_patch
 
 
+# --- Función para obtener sesiones (con join para nombre de entrenador) --- #
 def get_sessions(db: Session) -> list[SessionModel]:
     logger.debug("¡Logger activo! Entrando en get_sessions")
     # Join con User para obtener el nombre del entrenador
@@ -203,6 +208,7 @@ def get_sessions(db: Session) -> list[SessionModel]:
     return sessions
 
 
+# --- Función para filtrar sesiones por rango de fechas --- #
 def get_sessions_by_date_range(
     db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None
 ) -> list[SessionModel]:
@@ -227,6 +233,7 @@ def get_sessions_by_date_range(
     return sessions
 
 
+# --- Función para notificar a alumnos de cambio de hora en sesión --- #
 def _notify_session_time_change(
     db: Session, session: SessionModel, old_start_time
 ) -> None:
@@ -260,6 +267,7 @@ def _notify_session_time_change(
     )
 
 
+# --- Función para actualizar una sesión concreta --- #
 def update_session(db: Session, session_id: int, update_data, current_user) -> dict:
     print(f"[DEBUG] PATCH session_id: {session_id}")
     print(
@@ -349,6 +357,7 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
     return session
 
 
+# --- Función para actualizar en bloque sesiones de una semana --- #
 def update_sessions_in_week(
     db: Session,
     trainer_id: int,
@@ -413,6 +422,7 @@ def update_sessions_in_week(
     return sessions
 
 
+# --- Función para crear sesiones recurrentes de forma transaccional --- #
 def create_recurring_sessions(
     db: Session, create_data_list, current_user: User
 ) -> list[SessionModel]:
@@ -506,6 +516,97 @@ def create_recurring_sessions(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Datos de sesión inválidos",
+        )
+    except Exception:
+        db.rollback()
+        raise
+
+
+# --- Función para copiar sesiones de una semana a otra --- #
+def copy_week_sessions(
+    db: Session, source_week_start: date, target_week_start: date, trainer_id: int
+) -> list[SessionModel]:
+    """
+    Copia todas las sesiones (status 'active' o 'completed', nunca 'cancelled') de una semana a otra para un entrenador.
+    Las nuevas sesiones tendrán las mismas horas, clase, capacidad, etc., pero en la semana destino.
+    Si alguna sesión de destino solapa, se hace rollback de todas.
+    """
+    session_timezone = LOCAL_TIMEZONE
+    # Calcular rango de fechas origen y destino
+    source_start_dt = datetime.combine(
+        source_week_start, time.min, tzinfo=session_timezone
+    )
+    source_end_dt = source_start_dt + timedelta(days=7)
+    target_start_dt = datetime.combine(
+        target_week_start, time.min, tzinfo=session_timezone
+    )
+    # Buscar sesiones activas o completadas en la semana origen
+    sessions_to_copy = (
+        db.query(SessionModel)
+        .filter(SessionModel.trainer_id == trainer_id)
+        .filter(SessionModel.status.in_(["active", "completed"]))
+        .filter(SessionModel.start_time >= source_start_dt)
+        .filter(SessionModel.start_time < source_end_dt)
+        .all()
+    )
+    if not sessions_to_copy:
+        raise HTTPException(
+            status_code=404,
+            detail="No hay sesiones activas o completadas en la semana origen",
+        )
+
+    new_sessions = []
+    try:
+        for session in sessions_to_copy:
+            # Calcular el desfase de días entre origen y destino
+            day_offset = (session.start_time.date() - source_week_start).days
+            new_date = target_week_start + timedelta(days=day_offset)
+            # Mantener horas locales
+            start_local = (
+                session.start_time.astimezone(session_timezone)
+                .timetz()
+                .replace(tzinfo=None)
+            )
+            end_local = (
+                session.end_time.astimezone(session_timezone)
+                .timetz()
+                .replace(tzinfo=None)
+            )
+            new_start_dt = datetime.combine(
+                new_date, start_local, tzinfo=session_timezone
+            )
+            new_end_dt = datetime.combine(new_date, end_local, tzinfo=session_timezone)
+            _ensure_no_session_overlap(db, new_start_dt, new_end_dt)
+            new_session = SessionModel(
+                trainer_id=trainer_id,
+                start_time=new_start_dt,
+                end_time=new_end_dt,
+                capacity=session.capacity,
+                class_name=session.class_name,
+                notes=session.notes,
+                status="active",
+            )
+            new_sessions.append(new_session)
+        for s in new_sessions:
+            db.add(s)
+        db.commit()
+        for s in new_sessions:
+            db.refresh(s)
+        # Añadir trainer_name dinámicamente
+        trainer = db.query(User).filter(User.id == trainer_id).first()
+        for s in new_sessions:
+            setattr(s, "trainer_name", trainer.name if trainer else "")
+        return new_sessions
+    except IntegrityError as exc:
+        db.rollback()
+        if "no_overlap_sessions" in str(exc.orig):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Alguna sesión copiada se solapa con otra existente en la semana destino",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Error al copiar sesiones",
         )
     except Exception:
         db.rollback()

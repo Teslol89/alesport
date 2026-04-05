@@ -1,8 +1,9 @@
+# ------------------------------ #
+# --- Esquemas para sesiones --- #
+# ------------------------------ #
 from datetime import date, datetime, time
 from typing import Literal
-
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
-
 from app.utils.utils import LOCAL_TIMEZONE
 
 
@@ -40,6 +41,16 @@ class SessionRecurringCreateList(BaseModel):
     """Lista de sesiones a crear de forma recurrente (transaccional)."""
 
     sessions: list[SessionCreate]
+
+
+# --- Esquema para copiar el horario de una semana a otra --- #
+class SessionCopyWeekRequest(BaseModel):
+    """Datos necesarios para copiar sesiones de una semana a otra.
+    El trainer_id se obtiene del usuario autenticado (o se requiere para admins)."""
+
+    source_week_start_date: date
+    target_week_start_date: date
+    trainer_id: int | None = None  # Opcional, solo para admins
 
 
 # --- Esquemas para respuestas y actualizaciones de sesiones concretas --- #

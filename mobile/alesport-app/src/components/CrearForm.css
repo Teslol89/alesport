@@ -1,3 +1,54 @@
+/* Copiar semana estilos */
+.crear-copy-week-btn-wrapper {
+  margin: 16px 0;
+}
+.crear-copy-week-btn {
+  width: 100%;
+  font-size: 1.05em;
+}
+.calendar-copy-week-modal {
+  padding: 24px 18px 18px 18px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 350px;
+  margin: 0 auto;
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.08);
+}
+.calendar-copy-week-modal-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+.calendar-btn-primary {
+  background: #0089a6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-weight: 500;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.calendar-btn-primary:disabled {
+  background: #b2c6cc;
+  cursor: not-allowed;
+}
+.calendar-btn-secondary {
+  background: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-weight: 500;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.calendar-copy-week-cancel {
+  margin-left: 0 !important;
+}
 .crear-day-checkbox input[type='checkbox'] {
   position: absolute;
   opacity: 0;

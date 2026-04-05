@@ -162,8 +162,30 @@ const CrearForm: React.FC = () => {
     const [showRecurringTrainerPicker, setShowRecurringTrainerPicker] = useState(false);
     const recurringTrainerPanelRef = useRef<HTMLDivElement | null>(null);
 
-    // Estado para mostrar/ocultar el date picker recurrente semanal
+    // Estado para mostrar/ocultar el date picker y capacity picker recurrente semanal
     const [showRecurringDatePicker, setShowRecurringDatePicker] = useState(false);
+    const [showRecurringCapacityPicker, setShowRecurringCapacityPicker] = useState(false);
+    const recurringCapacityPanelRef = useRef<HTMLDivElement | null>(null);
+    // Cierra todos los submodales de la clase recurrente semanal
+    function closeAllRecurringSubmodals() {
+        setShowRecurringTrainerPicker(false);
+        setShowRecurringDatePicker(false);
+        setShowRecurringTimePicker(false);
+        setShowRecurringCapacityPicker(false);
+    }
+
+    // Abre/cierra el picker de capacidad recurrente semanal
+    function toggleRecurringCapacityPicker() {
+        const nextOpen = !showRecurringCapacityPicker;
+        closeAllRecurringSubmodals();
+        setShowRecurringCapacityPicker(nextOpen);
+    }
+
+    // Selecciona la capacidad en recurrente semanal
+    function pickRecurringCapacity(value: number) {
+        setRecurringDraft((prev) => ({ ...prev, capacity: value }));
+        closeAllRecurringSubmodals();
+    }
 
     function toggleRecurringTrainerPicker() {
         setShowRecurringDatePicker(false);
@@ -180,7 +202,7 @@ const CrearForm: React.FC = () => {
 
     function closeRecurringSubmodalsOnEmptyClick(e: React.MouseEvent<HTMLElement>) {
         if (e.target === e.currentTarget) {
-            setShowRecurringTrainerPicker(false);
+            closeAllRecurringSubmodals();
         }
     }
 
@@ -189,8 +211,7 @@ const CrearForm: React.FC = () => {
             setShowRecurringDatePicker(false);
             return;
         }
-        setShowRecurringTrainerPicker(false);
-        setShowRecurringTimePicker(false);
+        closeAllRecurringSubmodals();
         setTimeout(() => {
             setShowRecurringDatePicker(true);
             setTimeout(() => {
@@ -201,6 +222,15 @@ const CrearForm: React.FC = () => {
             }, 50);
         }, 10);
     }
+    // Centrar el panel de capacidad recurrente al abrirlo
+    useEffect(() => {
+        if (showRecurringCapacityPicker && recurringCapacityPanelRef.current && recurringModalBodyRef.current) {
+            const timerId = window.setTimeout(() => {
+                scrollRecurringSubpanelIntoView(recurringCapacityPanelRef.current);
+            }, 40);
+            return () => window.clearTimeout(timerId);
+        }
+    }, [showRecurringCapacityPicker]);
 
     const isSingleTimeRangeValid = singleDraft.startTime < singleDraft.endTime;
     const isSingleCapacityValid = singleDraft.capacity >= 1 && singleDraft.capacity <= 10;
@@ -967,17 +997,31 @@ const CrearForm: React.FC = () => {
                                 </div>
                             ) : null}
 
-                            {/* Capacidad */}
-                            <label className="crear-field-label" htmlFor="rec-capacity">Capacidad</label>
-                            <input
+                            {/* Capacidad (picker visual igual que puntual) */}
+                            <label className="crear-field-label" htmlFor="rec-capacity">Capacidad (1-10)</label>
+                            <button
                                 id="rec-capacity"
-                                className="crear-input"
-                                type="number"
-                                min={1}
-                                max={10}
-                                value={recurringDraft.capacity}
-                                onChange={e => setRecurringDraft(d => ({ ...d, capacity: Number(e.target.value) }))}
-                            />
+                                type="button"
+                                className="crear-input crear-date-btn"
+                                onClick={toggleRecurringCapacityPicker}
+                            >
+                                {recurringDraft.capacity}
+                            </button>
+
+                            {showRecurringCapacityPicker ? (
+                                <div className="crear-capacity-picker-panel" ref={recurringCapacityPanelRef}>
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            className={`crear-capacity-option ${recurringDraft.capacity === value ? 'selected' : ''}`}
+                                            onClick={() => pickRecurringCapacity(value)}
+                                        >
+                                            {value}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : null}
 
                             {/* Notas */}
                             <label className="crear-field-label" htmlFor="rec-notes">Notas (Opcional)</label>

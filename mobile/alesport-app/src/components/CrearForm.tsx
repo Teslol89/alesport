@@ -76,6 +76,11 @@ const CrearForm: React.FC = () => {
 
     // Abre el time picker para hora de inicio o fin en clase recurrente semanal
     function openRecurringTimePicker(target: 'start' | 'end') {
+        if (showRecurringTimePicker && recurringTimePickerTarget === target) {
+            setShowRecurringTimePicker(false);
+            setRecurringTimePickerTarget(null);
+            return;
+        }
         setShowRecurringTrainerPicker(false);
         setShowRecurringDatePicker(false);
         setTimeout(() => {
@@ -180,6 +185,10 @@ const CrearForm: React.FC = () => {
     }
 
     function toggleRecurringDatePicker() {
+        if (showRecurringDatePicker) {
+            setShowRecurringDatePicker(false);
+            return;
+        }
         setShowRecurringTrainerPicker(false);
         setShowRecurringTimePicker(false);
         setTimeout(() => {
@@ -319,12 +328,19 @@ const CrearForm: React.FC = () => {
 
     // Abre el time picker para hora de inicio o fin en clase puntual
     function openTimePicker(target: 'start' | 'end') {
-        const currentValue = target === 'start' ? singleDraft.startTime : singleDraft.endTime;
-        const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
+        if (showSingleTimePicker && timePickerTarget === target) {
+            setShowSingleTimePicker(false);
+            setTimePickerTarget(null);
+            return;
+        }
         closeAllSingleSubmodals();
-        setTimePickerTarget(target);
-        setTimePickerValue(toPickerTimeIso(normalizedValue, TIME_PICKER_BASE_DATE));
-        setShowSingleTimePicker(true);
+        setTimeout(() => {
+            const currentValue = target === 'start' ? singleDraft.startTime : singleDraft.endTime;
+            const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
+            setTimePickerTarget(target);
+            setTimePickerValue(toPickerTimeIso(normalizedValue, TIME_PICKER_BASE_DATE));
+            setShowSingleTimePicker(true);
+        }, 10);
     }
 
     function applyPickedTime() {

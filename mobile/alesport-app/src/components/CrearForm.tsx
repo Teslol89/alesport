@@ -8,8 +8,6 @@ import { copyWeekSessions } from '../api/sessions';
 import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso, getMondayOfWeek, getSundayOfWeek } from '../utils/funcionesGeneral';
 import CustomToast from './CustomStyles';
 import './CrearForm.css';
-// --- Estilos mínimos para el modal de copiar semana anterior ---
-// Puedes mover esto a tu CSS global si lo prefieres
 
 /* =================== TIPOS Y CONSTANTES =================== */
 type CreateMode = 'single' | 'recurring' | null;
@@ -880,11 +878,10 @@ const CrearForm: React.FC = () => {
                         </div>
                         <form className="crear-single-form">
                             {/* Botón para abrir el modal de copiar semana */}
-                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                            <div className="crear-copy-week-btn-row">
                                 <button
                                     type="button"
-                                    className="crear-btn-primary"
-                                    style={{ minWidth: 180 }}
+                                    className="crear-btn-primary crear-copy-week-btn"
                                     onClick={() => setShowCopyWeekModal(true)}
                                 >
                                     Copiar semana anterior
@@ -895,20 +892,12 @@ const CrearForm: React.FC = () => {
                             <IonModal
                                 isOpen={showCopyWeekModal}
                                 onDidDismiss={() => setShowCopyWeekModal(false)}
-                                className="crear-copy-week-modal-wrapper"
+                                className="crear-single-modal-wrapper"
                                 backdropDismiss={true}
                             >
-                                <div style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    minHeight: '40vh',
-                                    padding: 24,
-                                    gap: 18
-                                }}>
-                                    <h3 style={{ marginBottom: 10 }}>Copiar semana</h3>
-                                    <div style={{ width: '100%', maxWidth: 320, marginBottom: 12 }}>
+                                <div className="crear-single-modal crear-copy-week-modal-content">
+                                    <h3 className="crear-copy-week-title">Copiar semana</h3>
+                                    <div className="crear-copy-week-row">
                                         <label className="crear-field-label">Semana a copiar (origen)</label>
                                         <button
                                             type="button"
@@ -918,7 +907,7 @@ const CrearForm: React.FC = () => {
                                             {getWeekRange(copyWeekSource)}
                                         </button>
                                         {showSourcePicker && (
-                                            <div className="crear-single-date-panel" style={{ marginTop: 8 }}>
+                                            <div className="crear-single-date-panel crear-copy-week-date-panel">
                                                 <IonDatetime
                                                     className="crear-single-date-calendar"
                                                     presentation="date"
@@ -945,7 +934,7 @@ const CrearForm: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div style={{ width: '100%', maxWidth: 320, marginBottom: 12 }}>
+                                    <div className="crear-copy-week-row">
                                         <label className="crear-field-label">Semana destino</label>
                                         <button
                                             type="button"
@@ -955,7 +944,7 @@ const CrearForm: React.FC = () => {
                                             {getWeekRange(copyWeekTarget)}
                                         </button>
                                         {showTargetPicker && (
-                                            <div className="crear-single-date-panel" style={{ marginTop: 8 }}>
+                                            <div className="crear-single-date-panel crear-copy-week-date-panel">
                                                 <IonDatetime
                                                     className="crear-single-date-calendar"
                                                     presentation="date"
@@ -982,7 +971,7 @@ const CrearForm: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
+                                    <div className="crear-copy-week-actions">
                                         <button
                                             type="button"
                                             className="crear-btn-primary"
@@ -1064,7 +1053,7 @@ const CrearForm: React.FC = () => {
                                                     days = [...draft.daysOfWeek, value];
                                                 }
                                                 // Always keep days sorted L->D: 1,2,3,4,5,6,0
-                                                const sortedDays = [1,2,3,4,5,6,0].filter(d => days.includes(d));
+                                                const sortedDays = [1, 2, 3, 4, 5, 6, 0].filter(d => days.includes(d));
                                                 return { ...draft, daysOfWeek: sortedDays };
                                             })}
                                         />
@@ -1227,7 +1216,7 @@ const CrearForm: React.FC = () => {
                                 <p>Fecha fin: {recurringDraft.endDate ? formatIsoDateForUi(recurringDraft.endDate, '/') : '-'}</p>
                                 <p>Días: {
                                     recurringDraft.daysOfWeek.length > 0
-                                        ? [1,2,3,4,5,6,0]
+                                        ? [1, 2, 3, 4, 5, 6, 0]
                                             .filter(d => recurringDraft.daysOfWeek.includes(d))
                                             .map(d => ['L', 'M', 'X', 'J', 'V', 'S', 'D'][d === 0 ? 6 : d - 1])
                                             .join(', ')
@@ -1332,9 +1321,6 @@ const CrearForm: React.FC = () => {
                         </form>
                     </div>
                 </IonModal>
-
-
-
                 <CustomToast
                     show={toast.show}
                     message={toast.message}

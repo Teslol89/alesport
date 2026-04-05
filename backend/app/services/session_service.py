@@ -540,7 +540,7 @@ def copy_week_sessions(
     target_start_dt = datetime.combine(
         target_week_start, time.min, tzinfo=session_timezone
     )
-    # Buscar sesiones activas o completadas en la semana origen
+    # Buscar sesiones en la semana origen
     query = db.query(SessionModel).filter(SessionModel.status.in_(["active", "completed"]))
     if trainer_id is not None:
         query = query.filter(SessionModel.trainer_id == trainer_id)
@@ -550,7 +550,7 @@ def copy_week_sessions(
     if not sessions_to_copy:
         raise HTTPException(
             status_code=404,
-            detail="No hay sesiones activas o completadas en la semana origen",
+            detail="No hay clases en la semana seleccionada",
         )
     new_sessions = []
     try:

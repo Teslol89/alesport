@@ -8,6 +8,7 @@ import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso
 import CustomToast from './CustomStyles';
 import './CrearForm.css';
 
+/* =================== TIPOS Y CONSTANTES =================== */
 type CreateMode = 'single' | 'recurring' | null;
 
 type RecurrenceMode = 'weekly' | 'monthly';
@@ -44,36 +45,63 @@ const TIME_PICKER_BASE_DATE = '1970-01-01';
  que incluye la elección entre clase puntual o recurrente,
   y el formulario específico para clase puntual en un modal. */
 const CrearForm: React.FC = () => {
-        // Estado para mostrar/ocultar el time picker recurrente semanal
-        const [showRecurringTimePicker, setShowRecurringTimePicker] = useState(false);
-        const [recurringTimePickerTarget, setRecurringTimePickerTarget] = useState<'start' | 'end' | null>(null);
-        const [recurringTimePickerValue, setRecurringTimePickerValue] = useState(toPickerTimeIso('09:00', TIME_PICKER_BASE_DATE));
-        const recurringTimePanelRef = useRef<HTMLDivElement | null>(null);
+    // Estado y refs para el time picker recurrente semanal
+    const [showRecurringTimePicker, setShowRecurringTimePicker] = useState(false);
+    const [recurringTimePickerTarget, setRecurringTimePickerTarget] = useState<'start' | 'end' | null>(null);
+    const [recurringTimePickerValue, setRecurringTimePickerValue] = useState(toPickerTimeIso('09:00', TIME_PICKER_BASE_DATE));
+    const recurringTimePanelRef = useRef<HTMLDivElement | null>(null);
+    const recurringModalBodyRef = useRef<HTMLDivElement | null>(null);
 
-        // Abre el time picker para hora de inicio o fin en clase recurrente semanal
-        function openRecurringTimePicker(target: 'start' | 'end') {
+    // Centrar el time picker recurrente semanal al abrirlo
+    function scrollRecurringSubpanelIntoView(panelElement: HTMLDivElement | null) {
+        const container = recurringModalBodyRef.current;
+        if (!container || !panelElement) return;
+        const containerCenter = container.clientHeight / 2;
+        const panelTop = panelElement.offsetTop;
+        const panelCenter = panelTop + panelElement.offsetHeight / 2;
+        const targetScrollTop = panelCenter - containerCenter;
+        container.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: 'smooth',
+        });
+    }
+    useEffect(() => {
+        if (showRecurringTimePicker && recurringTimePanelRef.current) {
+            const timerId = window.setTimeout(() => {
+                scrollRecurringSubpanelIntoView(recurringTimePanelRef.current);
+            }, 40);
+            return () => window.clearTimeout(timerId);
+        }
+    }, [showRecurringTimePicker]);
+
+    // Abre el time picker para hora de inicio o fin en clase recurrente semanal
+    function openRecurringTimePicker(target: 'start' | 'end') {
+        setShowRecurringTrainerPicker(false);
+        setShowRecurringDatePicker(false);
+        setTimeout(() => {
             const currentValue = target === 'start' ? recurringDraft.startTime : recurringDraft.endTime;
             const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
             setRecurringTimePickerTarget(target);
             setRecurringTimePickerValue(toPickerTimeIso(normalizedValue, TIME_PICKER_BASE_DATE));
             setShowRecurringTimePicker(true);
-        }
+        }, 10);
+    }
 
-        function applyRecurringPickedTime() {
-            const hmValue = fromPickerTimeIso(recurringTimePickerValue);
-            if (!hmValue || !recurringTimePickerTarget) {
-                setShowRecurringTimePicker(false);
-                setRecurringTimePickerTarget(null);
-                return;
-            }
-            if (recurringTimePickerTarget === 'start') {
-                setRecurringDraft((prev) => ({ ...prev, startTime: hmValue }));
-            } else {
-                setRecurringDraft((prev) => ({ ...prev, endTime: hmValue }));
-            }
+    function applyRecurringPickedTime() {
+        const hmValue = fromPickerTimeIso(recurringTimePickerValue);
+        if (!hmValue || !recurringTimePickerTarget) {
             setShowRecurringTimePicker(false);
             setRecurringTimePickerTarget(null);
+            return;
         }
+        if (recurringTimePickerTarget === 'start') {
+            setRecurringDraft((prev) => ({ ...prev, startTime: hmValue }));
+        } else {
+            setRecurringDraft((prev) => ({ ...prev, endTime: hmValue }));
+        }
+        setShowRecurringTimePicker(false);
+        setRecurringTimePickerTarget(null);
+    }
     // =================== ESTADO Y REFERENCIAS (HOOKS) ===================
     const [createMode, setCreateMode] = useState<CreateMode>(null);
     const [recurrenceMode, setRecurrenceMode] = useState<RecurrenceMode | null>(null);
@@ -133,7 +161,11 @@ const CrearForm: React.FC = () => {
     const [showRecurringDatePicker, setShowRecurringDatePicker] = useState(false);
 
     function toggleRecurringTrainerPicker() {
-        setShowRecurringTrainerPicker((open) => !open);
+        setShowRecurringDatePicker(false);
+        setShowRecurringTimePicker(false);
+        setTimeout(() => {
+            setShowRecurringTrainerPicker(true);
+        }, 10);
     }
 
     function pickRecurringTrainer(trainer: AssignableTrainer) {
@@ -145,6 +177,20 @@ const CrearForm: React.FC = () => {
         if (e.target === e.currentTarget) {
             setShowRecurringTrainerPicker(false);
         }
+    }
+
+    function toggleRecurringDatePicker() {
+        setShowRecurringTrainerPicker(false);
+        setShowRecurringTimePicker(false);
+        setTimeout(() => {
+            setShowRecurringDatePicker(true);
+            setTimeout(() => {
+                const panel = document.querySelector('.crear-single-date-panel');
+                if (panel && recurringModalBodyRef.current) {
+                    scrollRecurringSubpanelIntoView(panel as HTMLDivElement);
+                }
+            }, 50);
+        }, 10);
     }
 
     const isSingleTimeRangeValid = singleDraft.startTime < singleDraft.endTime;
@@ -164,6 +210,12 @@ const CrearForm: React.FC = () => {
         const nextOpen = !showSingleDatePicker;
         closeAllSingleSubmodals();
         setShowSingleDatePicker(nextOpen);
+        // Si se va a abrir, centrar el panel tras un pequeño retardo
+        if (!showSingleDatePicker && singleDatePanelRef.current && singleModalBodyRef.current) {
+            setTimeout(() => {
+                scrollSubpanelIntoView(singleDatePanelRef.current);
+            }, 50);
+        }
     }
 
     function toggleCapacityPicker() {
@@ -715,7 +767,7 @@ const CrearForm: React.FC = () => {
                         setShowRecurringTrainerPicker(false);
                     }}
                 >
-                    <div className="crear-single-modal" onClick={closeRecurringSubmodalsOnEmptyClick}>
+                    <div className="crear-single-modal" onClick={closeRecurringSubmodalsOnEmptyClick} ref={recurringModalBodyRef}>
                         <div className="crear-single-modal-header">
                             <h3>Crear clase recurrente semanal</h3>
                             <button
@@ -797,7 +849,7 @@ const CrearForm: React.FC = () => {
                                 id="rec-start-date"
                                 type="button"
                                 className="crear-input crear-date-btn"
-                                onClick={() => setShowRecurringDatePicker(true)}
+                                onClick={toggleRecurringDatePicker}
                             >
                                 {formatIsoDateForUi(recurringDraft.startDate)}
                             </button>
@@ -912,13 +964,13 @@ const CrearForm: React.FC = () => {
                             />
 
                             {/* Notas */}
-                            <label className="crear-field-label" htmlFor="rec-notes">Notas</label>
+                            <label className="crear-field-label" htmlFor="rec-notes">Notas (Opcional)</label>
                             <textarea
                                 id="rec-notes"
                                 className="crear-input"
                                 value={recurringDraft.notes}
                                 onChange={e => setRecurringDraft(d => ({ ...d, notes: e.target.value }))}
-                                placeholder="Opcional"
+                                placeholder="Añade una observación para esta clase"
                             />
 
                         </form>

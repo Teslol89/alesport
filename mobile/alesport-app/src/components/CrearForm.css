@@ -1,3 +1,17 @@
+/* Checkboxes de días de la semana con fondo igual que la page */
+.crear-day-checkbox {
+  background: var(--background, #eeeeee);
+  border-radius: 0.4em;
+  padding: 0.1em 0.2em;
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0.05em;
+}
+.crear-day-checkbox input[type='checkbox'] {
+  accent-color: #bbbbbb;
+  background: var(--background, #eeeeee);
+  border-radius: 0.3em;
+}
 .crear-form-container {
   width: 100%;
   min-height: 100%;

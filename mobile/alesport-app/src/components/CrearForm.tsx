@@ -1057,10 +1057,15 @@ const CrearForm: React.FC = () => {
                                             type="checkbox"
                                             checked={recurringDraft.daysOfWeek.includes(value)}
                                             onChange={() => setRecurringDraft(draft => {
-                                                const days = draft.daysOfWeek.includes(value)
-                                                    ? draft.daysOfWeek.filter(day => day !== value)
-                                                    : [...draft.daysOfWeek, value];
-                                                return { ...draft, daysOfWeek: days };
+                                                let days;
+                                                if (draft.daysOfWeek.includes(value)) {
+                                                    days = draft.daysOfWeek.filter(day => day !== value);
+                                                } else {
+                                                    days = [...draft.daysOfWeek, value];
+                                                }
+                                                // Always keep days sorted L->D: 1,2,3,4,5,6,0
+                                                const sortedDays = [1,2,3,4,5,6,0].filter(d => days.includes(d));
+                                                return { ...draft, daysOfWeek: sortedDays };
                                             })}
                                         />
                                         <span className="custom-checkbox" />
@@ -1220,7 +1225,14 @@ const CrearForm: React.FC = () => {
                                 <p>Clase: {recurringDraft.className.trim() || 'Sin nombre'}</p>
                                 <p>Fecha inicio: {recurringDraft.startDate ? formatIsoDateForUi(recurringDraft.startDate, '/') : '-'}</p>
                                 <p>Fecha fin: {recurringDraft.endDate ? formatIsoDateForUi(recurringDraft.endDate, '/') : '-'}</p>
-                                <p>Días: {recurringDraft.daysOfWeek.length > 0 ? recurringDraft.daysOfWeek.map(d => ['L', 'M', 'X', 'J', 'V', 'S', 'D'][d]).join(', ') : '-'}</p>
+                                <p>Días: {
+                                    recurringDraft.daysOfWeek.length > 0
+                                        ? [1,2,3,4,5,6,0]
+                                            .filter(d => recurringDraft.daysOfWeek.includes(d))
+                                            .map(d => ['L', 'M', 'X', 'J', 'V', 'S', 'D'][d === 0 ? 6 : d - 1])
+                                            .join(', ')
+                                        : '-'
+                                }</p>
                                 <p>Horario: {recurringDraft.startTime} - {recurringDraft.endTime}</p>
                                 <p>Capacidad: {recurringDraft.capacity}</p>
                                 <p>Entrenador: {recurringDraft.trainerName.trim() || 'Sin asignar'}</p>
@@ -1258,7 +1270,11 @@ const CrearForm: React.FC = () => {
                                         const end = new Date(recurringDraft.endDate);
                                         const sessions = [];
                                         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                                            if (recurringDraft.daysOfWeek.includes(d.getDay())) {
+                                            // d.getDay(): 0=Dom, 1=Lun, ..., 6=Sab
+                                            // Our daysOfWeek: [1,2,3,4,5,6,0] (L->D)
+                                            const jsDay = d.getDay();
+                                            const mappedDay = jsDay === 0 ? 0 : jsDay; // 0=Domingo, 1=Lunes...
+                                            if (recurringDraft.daysOfWeek.includes(mappedDay)) {
                                                 sessions.push({
                                                     session_date: d.toISOString().slice(0, 10),
                                                     start_time: recurringDraft.startTime,

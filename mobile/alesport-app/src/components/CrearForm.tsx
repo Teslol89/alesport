@@ -1,9 +1,10 @@
+// =================== TIPOS Y CONSTANTES ===================
 import logoIcon from '../icons/icon.png';
 import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
 import { createSingleSession } from '../api/sessions';
-import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso } from '../utils/funcionesGeneral';
+import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso, getMondayOfWeek, getSundayOfWeek } from '../utils/funcionesGeneral';
 import CustomToast from './CustomStyles';
 import './CrearForm.css';
 
@@ -43,6 +44,37 @@ const TIME_PICKER_BASE_DATE = '1970-01-01';
  que incluye la elección entre clase puntual o recurrente,
   y el formulario específico para clase puntual en un modal. */
 const CrearForm: React.FC = () => {
+        // Estado para mostrar/ocultar el time picker recurrente semanal
+        const [showRecurringTimePicker, setShowRecurringTimePicker] = useState(false);
+        const [recurringTimePickerTarget, setRecurringTimePickerTarget] = useState<'start' | 'end' | null>(null);
+        const [recurringTimePickerValue, setRecurringTimePickerValue] = useState(toPickerTimeIso('09:00', TIME_PICKER_BASE_DATE));
+        const recurringTimePanelRef = useRef<HTMLDivElement | null>(null);
+
+        // Abre el time picker para hora de inicio o fin en clase recurrente semanal
+        function openRecurringTimePicker(target: 'start' | 'end') {
+            const currentValue = target === 'start' ? recurringDraft.startTime : recurringDraft.endTime;
+            const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
+            setRecurringTimePickerTarget(target);
+            setRecurringTimePickerValue(toPickerTimeIso(normalizedValue, TIME_PICKER_BASE_DATE));
+            setShowRecurringTimePicker(true);
+        }
+
+        function applyRecurringPickedTime() {
+            const hmValue = fromPickerTimeIso(recurringTimePickerValue);
+            if (!hmValue || !recurringTimePickerTarget) {
+                setShowRecurringTimePicker(false);
+                setRecurringTimePickerTarget(null);
+                return;
+            }
+            if (recurringTimePickerTarget === 'start') {
+                setRecurringDraft((prev) => ({ ...prev, startTime: hmValue }));
+            } else {
+                setRecurringDraft((prev) => ({ ...prev, endTime: hmValue }));
+            }
+            setShowRecurringTimePicker(false);
+            setRecurringTimePickerTarget(null);
+        }
+    // =================== ESTADO Y REFERENCIAS (HOOKS) ===================
     const [createMode, setCreateMode] = useState<CreateMode>(null);
     const [recurrenceMode, setRecurrenceMode] = useState<RecurrenceMode | null>(null);
     const [showRecurringModal, setShowRecurringModal] = useState(false);
@@ -78,7 +110,7 @@ const CrearForm: React.FC = () => {
         notes: '',
     });
 
-
+    /* El draft para la clase recurrente se inicializa con valores por defecto. */
     const [recurringDraft, setRecurringDraft] = useState<RecurringSessionDraft>({
         className: '',
         startDate: getTodayIsoDate(),
@@ -91,7 +123,6 @@ const CrearForm: React.FC = () => {
         trainerName: '',
         notes: '',
     });
-
 
     // --- Lógica del picker de entrenador recurrente ---
     // (Agrupada aquí para claridad, cerca del modal recurrente)
@@ -147,6 +178,7 @@ const CrearForm: React.FC = () => {
         setShowTrainerPicker(nextOpen);
     }
 
+    // =================== EFECTOS (useEffect) ===================
     useEffect(() => {
         let cancelled = false;
 
@@ -233,6 +265,7 @@ const CrearForm: React.FC = () => {
         closeAllSingleSubmodals();
     }
 
+    // Abre el time picker para hora de inicio o fin en clase puntual
     function openTimePicker(target: 'start' | 'end') {
         const currentValue = target === 'start' ? singleDraft.startTime : singleDraft.endTime;
         const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
@@ -326,8 +359,22 @@ const CrearForm: React.FC = () => {
         };
     }, []);
 
-    return (
+    // Cuando se selecciona semanal, poner lunes y domingo de la semana actual
+    useEffect(() => {
+        if (showRecurringModal && recurrenceMode === 'weekly') {
+            const todayIso = getTodayIsoDate();
+            const mondayIso = getMondayOfWeek(todayIso);
+            const sundayIso = getSundayOfWeek(mondayIso);
+            setRecurringDraft(draft => ({
+                ...draft,
+                startDate: mondayIso,
+                endDate: sundayIso,
+            }));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showRecurringModal, recurrenceMode]);
 
+    return (
         <div className="crear-form-container">
             <div className="crear-top-bar">
                 <img src={logoIcon} alt="Logo gimnasio" className="crear-top-logo" />
@@ -799,23 +846,58 @@ const CrearForm: React.FC = () => {
                                 readOnly
                             />
 
-                            {/* Hora inicio/fin */}
-                            <label className="crear-field-label" htmlFor="rec-start-time">Hora inicio</label>
-                            <input
-                                id="rec-start-time"
-                                className="crear-input"
-                                type="time"
-                                value={recurringDraft.startTime}
-                                onChange={e => setRecurringDraft(d => ({ ...d, startTime: e.target.value }))}
-                            />
-                            <label className="crear-field-label" htmlFor="rec-end-time">Hora fin</label>
-                            <input
-                                id="rec-end-time"
-                                className="crear-input"
-                                type="time"
-                                value={recurringDraft.endTime}
-                                onChange={e => setRecurringDraft(d => ({ ...d, endTime: e.target.value }))}
-                            />
+                            {/* Hora inicio/fin con picker visual */}
+                            <div className="crear-field-grid">
+                                <div>
+                                    <label className="crear-field-label" htmlFor="rec-start-time">Hora inicio</label>
+                                    <button
+                                        id="rec-start-time"
+                                        type="button"
+                                        className="crear-input crear-date-btn"
+                                        onClick={() => openRecurringTimePicker('start')}
+                                    >
+                                        {recurringDraft.startTime || '--:--'}
+                                    </button>
+                                </div>
+                                <div>
+                                    <label className="crear-field-label" htmlFor="rec-end-time">Hora fin</label>
+                                    <button
+                                        id="rec-end-time"
+                                        type="button"
+                                        className="crear-input crear-date-btn"
+                                        onClick={() => openRecurringTimePicker('end')}
+                                    >
+                                        {recurringDraft.endTime || '--:--'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {showRecurringTimePicker ? (
+                                <div className="crear-time-picker-panel" ref={recurringTimePanelRef}>
+                                    <h4>{recurringTimePickerTarget === 'start' ? 'Hora de inicio' : 'Hora de fin'}</h4>
+                                    <IonDatetime
+                                        className="crear-time-picker"
+                                        presentation="time"
+                                        preferWheel={true}
+                                        minuteValues="0,30"
+                                        value={recurringTimePickerValue}
+                                        onIonChange={(e: CustomEvent<{ value?: string | string[] | null }>) => {
+                                            const nextValue = e.detail.value;
+                                            if (typeof nextValue === 'string') {
+                                                setRecurringTimePickerValue(nextValue);
+                                            }
+                                        }}
+                                    />
+                                    <div className="crear-time-picker-actions">
+                                        <button type="button" className="crear-btn-primary" onClick={applyRecurringPickedTime}>
+                                            Aplicar
+                                        </button>
+                                        <button type="button" className="app-btn-danger" onClick={() => { setShowRecurringTimePicker(false); setRecurringTimePickerTarget(null); }}>
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : null}
 
                             {/* Capacidad */}
                             <label className="crear-field-label" htmlFor="rec-capacity">Capacidad</label>
@@ -873,3 +955,5 @@ const CrearForm: React.FC = () => {
 };
 
 export default CrearForm;
+
+

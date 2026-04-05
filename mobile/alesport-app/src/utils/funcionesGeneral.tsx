@@ -1,3 +1,23 @@
+/**
+ * Devuelve el lunes de la semana de una fecha dada (en formato ISO yyyy-mm-dd)
+ */
+export function getMondayOfWeek(dateIso: string): string {
+  const date = new Date(dateIso);
+  const day = date.getDay();
+  // Si es domingo (0), retrocede 6 días; si es lunes (1), retrocede 0; si es martes (2), retrocede 1...
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Devuelve el domingo de la semana de una fecha dada (en formato ISO yyyy-mm-dd)
+ */
+export function getSundayOfWeek(mondayIso: string): string {
+  const date = new Date(mondayIso);
+  date.setDate(date.getDate() + 6);
+  return date.toISOString().slice(0, 10);
+}
 /* Para obtener la fecha en formato ISO local (YYYY-MM-DD) */
 export function toLocalISODate(date: Date): string {
   const year = date.getFullYear();

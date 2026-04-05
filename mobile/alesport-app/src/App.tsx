@@ -115,7 +115,7 @@ function MainRoutes() {
           <IonLabel>Agenda</IonLabel>
         </IonTabButton>
         <IonTabButton tab="tab-search" href="/tab-search">
-          <img className="tabbar-search-icon" src={isSearchActive ? buscarActiveIcon : buscarIcon} alt="Buscar" aria-hidden="true" />
+          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isSearchActive ? buscarActiveIcon : buscarIcon} />
           <IonLabel>Buscar</IonLabel>
         </IonTabButton>
         <IonTabButton tab="crear" href="/crear">

@@ -1,3 +1,37 @@
+def create_test_recurring_sessions(token: str, trainer_id: int | None, start_date: str, end_date: str, days_of_week: list[int]) -> list[dict] | None:
+    """Crea varias sesiones recurrentes usando el endpoint /sessions/recurring."""
+    headers = auth_headers(token)
+    from datetime import datetime, timedelta
+    start = datetime.strptime(start_date, "%Y-%m-%d").date()
+    end = datetime.strptime(end_date, "%Y-%m-%d").date()
+    sessions = []
+    d = start
+    while d <= end:
+        if d.weekday() in days_of_week:
+            sessions.append({
+                "session_date": d.isoformat(),
+                "start_time": "10:00",
+                "end_time": "11:30",
+                "capacity": 8,
+                "class_name": f"Recurrente {d.isoformat()}",
+                "notes": "Test recurrente",
+                **({"trainer_id": trainer_id} if trainer_id is not None else {}),
+            })
+        d += timedelta(days=1)
+    if not sessions:
+        print("[RECURRING TEST] No hay días válidos para crear sesiones recurrentes.")
+        return None
+    response = requests.post(
+        f"{BASE_URL}/sessions/recurring",
+        json={"sessions": sessions},
+        headers=headers,
+        timeout=30,
+    )
+    if response.status_code in (200, 201):
+        print(f"[RECURRING TEST] {len(sessions)} sesiones creadas correctamente.")
+        return response.json()
+    print(f"[RECURRING TEST ERROR] {response.status_code} {response.text}")
+    return None
 import os
 from datetime import datetime, timedelta, time as dt_time
 

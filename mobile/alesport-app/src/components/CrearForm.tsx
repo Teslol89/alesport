@@ -496,14 +496,14 @@ const CrearForm: React.FC = () => {
         return `${formatDateDMY(isoMonday)} - ${formatDateDMY(sunday.toISOString().slice(0, 10))}`;
     }
 
-    // Handler para copiar semana usando el backend real
+    // Handler para copiar semana usando el backend real (opción 1: sin trainer_id)
     async function handleCopyWeek() {
         if (!copyWeekSource || !copyWeekTarget) return;
         try {
             await copyWeekSessions({
                 source_week_start_date: copyWeekSource,
-                target_week_start_date: copyWeekTarget,
-                trainer_id: recurringDraft.trainerId || undefined,
+                target_week_start_date: copyWeekTarget
+                // NO enviar trainer_id
             });
             setToast({
                 show: true,

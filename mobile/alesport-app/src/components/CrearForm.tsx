@@ -166,6 +166,7 @@ const CrearForm: React.FC = () => {
     const [showRecurringDatePicker, setShowRecurringDatePicker] = useState(false);
     const [showRecurringCapacityPicker, setShowRecurringCapacityPicker] = useState(false);
     const recurringCapacityPanelRef = useRef<HTMLDivElement | null>(null);
+
     // Cierra todos los submodales de la clase recurrente semanal
     function closeAllRecurringSubmodals() {
         setShowRecurringTrainerPicker(false);
@@ -1024,35 +1025,59 @@ const CrearForm: React.FC = () => {
                             ) : null}
 
                             {/* Notas */}
-                            <label className="crear-field-label" htmlFor="rec-notes">Notas (Opcional)</label>
+
+                            <label className="crear-field-label" htmlFor="week-rec-notes">Notas (Opcional)</label>
                             <textarea
-                                id="rec-notes"
-                                className="crear-input"
+                                id="week-rec-notes"
+                                className="crear-textarea"
                                 value={recurringDraft.notes}
                                 onChange={e => setRecurringDraft(d => ({ ...d, notes: e.target.value }))}
                                 placeholder="Añade una observación para esta clase"
                             />
 
+                            {/* Vista previa recurrente semanal */}
+                            <div className="crear-preview-card crear-single-preview">
+                                <p><strong>Vista previa</strong></p>
+                                <p>Clase: {recurringDraft.className.trim() || 'Sin nombre'}</p>
+                                <p>Fecha inicio: {recurringDraft.startDate ? formatIsoDateForUi(recurringDraft.startDate, '/') : '-'}</p>
+                                <p>Fecha fin: {recurringDraft.endDate ? formatIsoDateForUi(recurringDraft.endDate, '/') : '-'}</p>
+                                <p>Días: {recurringDraft.daysOfWeek.length > 0 ? recurringDraft.daysOfWeek.map(d => ['L','M','X','J','V','S','D'][d]).join(', ') : '-'}</p>
+                                <p>Horario: {recurringDraft.startTime} - {recurringDraft.endTime}</p>
+                                <p>Capacidad: {recurringDraft.capacity}</p>
+                                <p>Entrenador: {recurringDraft.trainerName.trim() || 'Sin asignar'}</p>
+                            </div>
+
+                            <div className="crear-actions-row">
+                                <button
+                                    type="button"
+                                    className="crear-btn-secondary"
+                                    onClick={() => {
+                                        setRecurringDraft({
+                                            className: '',
+                                            startDate: getTodayIsoDate(),
+                                            endDate: getTodayIsoDate(),
+                                            daysOfWeek: [],
+                                            startTime: '09:00',
+                                            endTime: '10:00',
+                                            capacity: 10,
+                                            trainerId: null,
+                                            trainerName: '',
+                                            notes: '',
+                                        });
+                                        closeAllRecurringSubmodals();
+                                    }}
+                                >
+                                    Limpiar
+                                </button>
+                                <button type="button" className="crear-btn-primary" disabled={recurringDraft.className.trim().length === 0 || recurringDraft.trainerId === null}>
+                                    Continuar
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </IonModal>
 
-                <section className="crear-form-section crear-form-section-preview">
-                    <h2 className="crear-form-section-title">Siguiente paso</h2>
-                    <div className="crear-preview-card">
-                        {createMode === null ? (
-                            <p>Primero elige si quieres crear una clase puntual o un horario recurrente.</p>
-                        ) : createMode === 'single' ? (
-                            <p>
-                                El siguiente bloque será el formulario de clase puntual: fecha, hora inicio, hora fin, capacidad y entrenador.
-                            </p>
-                        ) : (
-                            <p>
-                                El siguiente bloque será el formulario de recurrencia {recurrenceMode === 'weekly' ? 'semanal' : 'mensual'}, con vista previa de sesiones generadas.
-                            </p>
-                        )}
-                    </div>
-                </section>
+
 
                 <CustomToast
                     show={toast.show}

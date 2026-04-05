@@ -688,26 +688,10 @@ const CrearForm: React.FC = () => {
                                                     const next = e.detail.value;
                                                     if (typeof next === 'string') {
                                                         setSingleDraft((prev) => ({ ...prev, sessionDate: next.slice(0, 10) }));
+                                                        setShowSingleDatePicker(false);
                                                     }
                                                 }}
                                             />
-
-                                            <div className="crear-single-date-modal-actions">
-                                                <button
-                                                    type="button"
-                                                    className="crear-btn-primary"
-                                                    onClick={closeAllSingleSubmodals}
-                                                >
-                                                    Aceptar
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="app-btn-danger"
-                                                    onClick={closeAllSingleSubmodals}
-                                                >
-                                                    Cancelar
-                                                </button>
-                                            </div>
                                         </div>
                                     ) : null}
                                 </div>
@@ -877,22 +861,17 @@ const CrearForm: React.FC = () => {
                             </button>
                         </div>
                         <form className="crear-single-form">
-                            {/* Botón para abrir el modal de copiar semana */}
-                            <div className="crear-copy-week-btn-row">
-                                <button
-                                    type="button"
-                                    className="crear-btn-primary crear-copy-week-btn"
-                                    onClick={() => setShowCopyWeekModal(true)}
-                                >
-                                    Copiar semana anterior
-                                </button>
-                            </div>
-
                             {/* Modal de copiar semana: permite elegir semana origen y destino */}
                             <IonModal
                                 className="crear-single-modal-wrapper"
                                 isOpen={showCopyWeekModal}
-                                onDidDismiss={() => setShowCopyWeekModal(false)}
+                                onDidDismiss={() => {
+                                    setShowCopyWeekModal(false);
+                                    setCopyWeekSource("");
+                                    setCopyWeekTarget("");
+                                    setShowSourcePicker(false);
+                                    setShowTargetPicker(false);
+                                }}
                                 backdropDismiss={true}
                             >
                                 <div className="crear-single-modal">
@@ -925,13 +904,13 @@ const CrearForm: React.FC = () => {
                                                             const value = e.detail.value;
                                                             if (typeof value === 'string') {
                                                                 const d = new Date(value);
-                                                                if (d.getDay() === 1) setCopyWeekSource(value.slice(0, 10));
+                                                                if (d.getDay() === 1) {
+                                                                    setCopyWeekSource(value.slice(0, 10));
+                                                                    setShowSourcePicker(false);
+                                                                }
                                                             }
                                                         }}
                                                     />
-                                                    <div className="crear-single-date-modal-actions">
-                                                        <button type="button" className="crear-btn-primary" onClick={() => setShowSourcePicker(false)}>Aceptar</button>
-                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -962,13 +941,13 @@ const CrearForm: React.FC = () => {
                                                             const value = e.detail.value;
                                                             if (typeof value === 'string') {
                                                                 const d = new Date(value);
-                                                                if (d.getDay() === 1) setCopyWeekTarget(value.slice(0, 10));
+                                                                if (d.getDay() === 1) {
+                                                                    setCopyWeekTarget(value.slice(0, 10));
+                                                                    setShowTargetPicker(false);
+                                                                }
                                                             }
                                                         }}
                                                     />
-                                                    <div className="crear-single-date-modal-actions">
-                                                        <button type="button" className="crear-btn-primary" onClick={() => setShowTargetPicker(false)}>Aceptar</button>
-                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -983,7 +962,13 @@ const CrearForm: React.FC = () => {
                                             <button
                                                 type="button"
                                                 className="app-btn-danger"
-                                                onClick={() => setShowCopyWeekModal(false)}
+                                                onClick={() => {
+                                                    setShowCopyWeekModal(false);
+                                                    setCopyWeekSource("");
+                                                    setCopyWeekTarget("");
+                                                    setShowSourcePicker(false);
+                                                    setShowTargetPicker(false);
+                                                }}
                                             >
                                                 Cancelar
                                             </button>
@@ -1105,9 +1090,6 @@ const CrearForm: React.FC = () => {
                                             setShowRecurringDatePicker(false);
                                         }}
                                     />
-                                    <div className="crear-single-date-modal-actions">
-                                        <button type="button" className="crear-btn-primary" onClick={() => setShowRecurringDatePicker(false)}>Cancelar</button>
-                                    </div>
                                 </div>
                             )}
                             <label className="crear-field-label" htmlFor="rec-end-date">Fecha fin (domingo)</label>
@@ -1317,6 +1299,16 @@ const CrearForm: React.FC = () => {
                                     }}
                                 >
                                     Continuar
+                                </button>
+                            </div>
+                            {/* Botón para abrir el modal de copiar semana (ahora abajo) */}
+                            <div className="crear-copy-week-btn-row">
+                                <button
+                                    type="button"
+                                    className="crear-btn-primary crear-copy-week-btn"
+                                    onClick={() => setShowCopyWeekModal(true)}
+                                >
+                                    Copiar semana anterior
                                 </button>
                             </div>
                         </form>

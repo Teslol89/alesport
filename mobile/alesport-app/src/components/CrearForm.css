@@ -10,11 +10,24 @@
   background: rgba(0, 0, 0, 0.48) !important;
   opacity: 1 !important;
 }
+
 /* Botón para abrir el modal de copiar semana anterior */
 .crear-copy-week-btn-row {
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+}
+
+.crear-copy-week-btn-row .crear-btn-primary,
+.crear-copy-week-btn-row button {
+  background: #77b154 !important;
+  color: #fff !important;
+  border: none;
+  box-shadow: 0 2px 8px rgba(27, 191, 58, 0.08);
+  transition: background 0.2s;
+}
+.crear-copy-week-btn-row .crear-btn-primary:hover,
+.crear-copy-week-btn-row button:hover {
+  background: #77b154 !important;
 }
 
 .crear-copy-week-btn {

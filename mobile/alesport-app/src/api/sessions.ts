@@ -133,10 +133,14 @@ export async function copyWeekSessions({
   trainer_id?: number;
 }) {
   const url = `${baseApiUrl}/sessions/copy-week`;
+  const body: any = { source_week_start_date, target_week_start_date };
+  if (typeof trainer_id !== 'undefined') {
+    body.trainer_id = trainer_id;
+  }
   const response = await fetchWithAuth(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ source_week_start_date, target_week_start_date, trainer_id }),
+    body: JSON.stringify(body),
   });
   if (!response.ok) {
     throw new Error(await getResponseErrorDetail(response, 'Error al copiar el horario de la semana'));

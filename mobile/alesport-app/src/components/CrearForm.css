@@ -1,26 +1,68 @@
-.crear-day-checkbox-day {
-  margin-left: 0.25em;
-  font-size: 1em;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  color: #000000;
+.crear-day-checkbox input[type='checkbox'] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
 }
+
 /* Checkboxes de días de la semana con fondo igual que la page */
 .crear-day-checkbox {
   position: relative;
   cursor: pointer;
   background: #ffffff !important;
   border-radius: 0.4em;
-  padding: 0.4em 0.4em;
+  padding: 0.1em 0.1em;
   display: inline-flex;
   align-items: center;
   color: #000000;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: 2.1em;
+  min-height: 2.1em;
+  padding: 0.15em 0.15em;
 }
 
-.crear-day-checkbox input[type='checkbox'] {
-  accent-color: #bbbbbb;
-  background: var(--background, #eeeeee);
+.crear-day-checkbox-day {
+  margin-right: 6px;
+  font-size: 1em;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: #000000;
+}
+
+.crear-day-checkbox .custom-checkbox {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  background: #fff;
+  border: 1.5px solid #b2c6cc;
   border-radius: 0.3em;
+  vertical-align: middle;
+  margin-right: 0.45em;
+  box-sizing: border-box;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.crear-day-checkbox input[type='checkbox']:checked + .custom-checkbox {
+  background: #0089a6;
+  border-color: #0089a6;
+}
+
+.crear-day-checkbox input[type='checkbox']:checked + .custom-checkbox::after {
+  content: '';
+  position: absolute;
+  left: 0.32em;
+  top: 0.08em;
+  width: 0.35em;
+  height: 0.7em;
+  border: solid #fff;
+  border-width: 0 0.18em 0.18em 0;
+  transform: rotate(45deg);
+  pointer-events: none;
 }
 
 .crear-form-container {

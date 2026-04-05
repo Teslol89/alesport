@@ -3,7 +3,7 @@ import logoIcon from '../icons/icon.png';
 import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
-import { createSingleSession } from '../api/sessions';
+import { createSingleSession, createRecurringSessions } from '../api/sessions';
 import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso, getMondayOfWeek, getSundayOfWeek } from '../utils/funcionesGeneral';
 import CustomToast from './CustomStyles';
 import './CrearForm.css';
@@ -1069,7 +1069,68 @@ const CrearForm: React.FC = () => {
                                 >
                                     Limpiar
                                 </button>
-                                <button type="button" className="crear-btn-primary" disabled={recurringDraft.className.trim().length === 0 || recurringDraft.trainerId === null}>
+                                <button
+                                    type="button"
+                                    className="crear-btn-primary"
+                                    disabled={recurringDraft.className.trim().length === 0 || recurringDraft.trainerId === null || recurringDraft.daysOfWeek.length === 0 || recurringDraft.startTime >= recurringDraft.endTime}
+                                    onClick={async () => {
+                                        // Generar todas las fechas de la recurrencia semanal
+                                        const start = new Date(recurringDraft.startDate);
+                                        const end = new Date(recurringDraft.endDate);
+                                        const sessions = [];
+                                        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                                            if (recurringDraft.daysOfWeek.includes(d.getDay())) {
+                                                sessions.push({
+                                                    session_date: d.toISOString().slice(0, 10),
+                                                    start_time: recurringDraft.startTime,
+                                                    end_time: recurringDraft.endTime,
+                                                    capacity: recurringDraft.capacity,
+                                                    class_name: recurringDraft.className.trim(),
+                                                    notes: recurringDraft.notes.trim() || undefined,
+                                                    trainer_id: recurringDraft.trainerId || undefined,
+                                                });
+                                            }
+                                        }
+                                        if (sessions.length === 0) {
+                                            setToast({
+                                                show: true,
+                                                message: 'Selecciona al menos un día válido en el rango.',
+                                                type: 'danger',
+                                            });
+                                            return;
+                                        }
+                                        try {
+                                            await createRecurringSessions(sessions);
+                                            setToast({
+                                                show: true,
+                                                message: '✓ Clases recurrentes creadas exitosamente',
+                                                type: 'success',
+                                            });
+                                            setTimeout(() => {
+                                                setShowRecurringModal(false);
+                                                setRecurringDraft({
+                                                    className: '',
+                                                    startDate: getTodayIsoDate(),
+                                                    endDate: getTodayIsoDate(),
+                                                    daysOfWeek: [],
+                                                    startTime: '09:00',
+                                                    endTime: '10:00',
+                                                    capacity: 10,
+                                                    trainerId: null,
+                                                    trainerName: '',
+                                                    notes: '',
+                                                });
+                                                closeAllRecurringSubmodals();
+                                            }, 1000);
+                                        } catch (error: any) {
+                                            setToast({
+                                                show: true,
+                                                message: `Error: ${error.message || 'No se pudieron crear las clases'}`,
+                                                type: 'danger',
+                                            });
+                                        }
+                                    }}
+                                >
                                     Continuar
                                 </button>
                             </div>

@@ -1,8 +1,36 @@
+/* Importante: Este módulo se centra exclusivamente en la gestión de sesiones,
+  incluyendo creación, actualización, cancelación y consulta por rango de fechas.
+  No incluye funciones relacionadas con reservas o usuarios, que deben gestionarse
+  en módulos separados para mantener una arquitectura limpia y modular. */
 import { fetchWithAuth } from "./fetchWithAuth";
 
+/* API para gestionar sesiones: creación, actualización, cancelación y consulta por rango de fechas. */
 const baseApiUrl = import.meta.env.VITE_API_URL || "https://verdeguerlabs.es/api";
 
-async function getResponseErrorDetail(response: Response, fallbackMessage: string) {
+/* POST para crear varias sesiones recurrentes de forma transaccional */
+export async function createRecurringSessions(sessions: Array<{
+  session_date: string;
+  start_time: string;
+  end_time: string;
+  capacity: number;
+  class_name: string;
+  notes?: string;
+  trainer_id?: number;
+}>) {
+  const url = `${baseApiUrl}/sessions/recurring`;
+  const response = await fetchWithAuth(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessions }),
+  });
+  if (!response.ok) {
+    throw new Error(await getResponseErrorDetail(response, 'Error al crear sesiones recurrentes'));
+  }
+  return response.json();
+}
+
+/* GET para obtener el detalle de error de una respuesta */
+export async function getResponseErrorDetail(response: Response, fallbackMessage: string) {
   try {
     const data = await response.json();
     if (typeof data?.detail === 'string' && data.detail.trim()) {
@@ -14,6 +42,7 @@ async function getResponseErrorDetail(response: Response, fallbackMessage: strin
   return fallbackMessage;
 }
 
+/* POST para crear una sesión única */
 export async function createSingleSession(payload: {
   session_date: string;
   start_time: string;
@@ -35,6 +64,7 @@ export async function createSingleSession(payload: {
   return response.json();
 }
 
+/* GET para obtener sesiones por rango de fechas (formato YYYY-MM-DD) */
 export async function getSessionsByDateRange(startDate: string, endDate: string) {
   const url = `${baseApiUrl}/sessions/?start_date=${startDate}&end_date=${endDate}`;
   const response = await fetchWithAuth(url);
@@ -44,7 +74,7 @@ export async function getSessionsByDateRange(startDate: string, endDate: string)
   return response.json();
 }
 
-// PATCH para actualizar hora de una sesión
+/* PATCH para actualizar hora de una sesión */
 export async function patchSessionHour(sessionId: number, start_time: string, end_time: string) {
   const url = `${baseApiUrl}/sessions/${sessionId}`;
   const body = JSON.stringify({ start_time, end_time });
@@ -59,6 +89,7 @@ export async function patchSessionHour(sessionId: number, start_time: string, en
   return response.json();
 }
 
+/* PATCH para actualizar capacidad, nombre de clase, notas o entrenador de una sesión */
 export async function updateSession(sessionId: number, payload: {
   start_time?: string;
   end_time?: string;
@@ -78,7 +109,7 @@ export async function updateSession(sessionId: number, payload: {
   return response.json();
 }
 
-// DELETE para cancelar una sesión (soft delete: cambia status a 'cancelled')
+/* DELETE para cancelar una sesión (soft delete: cambia status a 'cancelled') */
 export async function cancelSession(sessionId: number) {
   const url = `${baseApiUrl}/sessions/${sessionId}`;
   const response = await fetchWithAuth(url, {

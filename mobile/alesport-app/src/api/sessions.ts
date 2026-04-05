@@ -121,3 +121,25 @@ export async function cancelSession(sessionId: number) {
   }
   return response.json();
 }
+
+// POST para copiar el horario de una semana a otra
+export async function copyWeekSessions({
+  source_week_start_date,
+  target_week_start_date,
+  trainer_id
+}: {
+  source_week_start_date: string;
+  target_week_start_date: string;
+  trainer_id?: number;
+}) {
+  const url = `${baseApiUrl}/sessions/copy-week`;
+  const response = await fetchWithAuth(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source_week_start_date, target_week_start_date, trainer_id }),
+  });
+  if (!response.ok) {
+    throw new Error(await getResponseErrorDetail(response, 'Error al copiar el horario de la semana'));
+  }
+  return response.json();
+}

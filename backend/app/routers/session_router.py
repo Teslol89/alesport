@@ -13,6 +13,7 @@ from app.schemas.session import (
     SessionUpdate,
     SessionWeekUpdate,
     SessionRecurringCreateList,
+    SessionCopyWeekRequest,
 )
 from app.services.session_service import (
     create_session,
@@ -21,8 +22,10 @@ from app.services.session_service import (
     update_session,
     update_sessions_in_week,
     create_recurring_sessions,
+    copy_week_sessions,
 )
 
+# --- RUTAS PARA GESTIÓN DE SESIONES DE ENTRENAMIENTO --- #
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 
@@ -137,3 +140,25 @@ def create_recurring_sessions_endpoint(
 ):
     """Crea varias sesiones recurrentes en una sola transacción. Si alguna falla, se hace rollback de todas."""
     return create_recurring_sessions(db, create_data_list.sessions, current_user)
+
+
+# --- Endpoint para copiar el horario de una semana a otra --- #
+@router.post("/copy-week", response_model=list[SessionResponse], status_code=201)
+def copy_week_endpoint(
+    req: SessionCopyWeekRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Copia todas las sesiones activas o completadas de una semana a otra para el entrenador actual (o el indicado por admin)."""
+    if current_user.role == "admin":
+        if req.trainer_id is None:
+            raise HTTPException(
+                status_code=422,
+                detail="Los administradores deben especificar trainer_id",
+            )
+        trainer_id = req.trainer_id
+    else:
+        trainer_id = current_user.id
+    return copy_week_sessions(
+        db, req.source_week_start_date, req.target_week_start_date, trainer_id
+    )

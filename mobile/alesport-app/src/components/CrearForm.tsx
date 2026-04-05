@@ -3,7 +3,7 @@ import logoIcon from '../icons/icon.png';
 import { useEffect, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
-import { createSingleSession, createRecurringSessions } from '../api/sessions';
+import { createSingleSession, createRecurringSessions, copyWeekSessions } from '../api/sessions';
 import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso, getMondayOfWeek, getSundayOfWeek } from '../utils/funcionesGeneral';
 import CustomToast from './CustomStyles';
 import './CrearForm.css';
@@ -108,6 +108,18 @@ const CrearForm: React.FC = () => {
         setRecurringTimePickerTarget(null);
     }
     // =================== ESTADO Y REFERENCIAS (HOOKS) ===================
+    // Estado y lógica para copiar semana
+    const [showCopyWeekModal, setShowCopyWeekModal] = useState(false);
+    const [copyTargetDate, setCopyTargetDate] = useState('');
+    const [copying, setCopying] = useState(false);
+    function getMonday(dateStr: string) {
+        const d = new Date(dateStr);
+        const day = d.getDay();
+        const diff = (day === 0 ? -6 : 1) - day; // lunes=1, domingo=0
+        d.setDate(d.getDate() + diff);
+        return d.toISOString().slice(0, 10);
+    }
+    const todayMonday = getMonday(getTodayIsoDate());
     const [createMode, setCreateMode] = useState<CreateMode>(null);
     const [recurrenceMode, setRecurrenceMode] = useState<RecurrenceMode | null>(null);
     const [showRecurringModal, setShowRecurringModal] = useState(false);
@@ -831,6 +843,62 @@ const CrearForm: React.FC = () => {
                         </div>
                         <form className="crear-single-form">
                             {/* Campo Entrenador */}
+                            {/* Botón para abrir el modal de copiar semana */}
+                                                        <div className="crear-copy-week-btn-wrapper">
+                                                            <button
+                                                                type="button"
+                                                                className="crear-btn-primary crear-copy-week-btn"
+                                                                onClick={() => {
+                                                                    setCopyTargetDate('');
+                                                                    setShowCopyWeekModal(true);
+                                                                }}
+                                                            >
+                                                                Copiar semana actual a otra semana
+                                                            </button>
+                                                        </div>
+                            {/* Modal copiar semana SOLO visible dentro de clase recurrente semanal */}
+                                <IonModal isOpen={showCopyWeekModal} onDidDismiss={() => setShowCopyWeekModal(false)}>
+                                    <div className="calendar-copy-week-modal">
+                                        <h4>Copiar horario a otra semana</h4>
+                                        <p>Semana origen: <b>{todayMonday}</b></p>
+                                        <label>Selecciona lunes de la semana destino:</label>
+                                        <input
+                                            type="date"
+                                            value={copyTargetDate}
+                                            min={todayMonday}
+                                            onChange={e => setCopyTargetDate(e.target.value)}
+                                        />
+                                        <div className="calendar-copy-week-modal-actions">
+                                            <button
+                                                className="calendar-btn-primary"
+                                                disabled={!copyTargetDate || copying}
+                                                onClick={async () => {
+                                                    setCopying(true);
+                                                    try {
+                                                        await copyWeekSessions({
+                                                            source_week_start_date: todayMonday,
+                                                            target_week_start_date: copyTargetDate,
+                                                        });
+                                                        setToast((prev) => ({ ...prev, show: true, message: 'Horario copiado correctamente', type: 'success' }));
+                                                        setShowCopyWeekModal(false);
+                                                    } catch (error: any) {
+                                                        setToast((prev) => ({ ...prev, show: true, message: error.message || 'Error al copiar horario', type: 'danger' }));
+                                                    } finally {
+                                                        setCopying(false);
+                                                    }
+                                                }}
+                                            >
+                                                Copiar
+                                            </button>
+                                            <button
+                                                className="calendar-btn-secondary calendar-copy-week-cancel"
+                                                onClick={() => setShowCopyWeekModal(false)}
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </IonModal>
                             <label className="crear-field-label" htmlFor="rec-trainer-role">Entrenador</label>
                             <button
                                 id="rec-trainer-role"
@@ -872,20 +940,29 @@ const CrearForm: React.FC = () => {
 
                             {/* Selección de días de la semana */}
                             <div className="crear-days-row">
-                                {["L", "M", "X", "J", "V", "S", "D"].map((d, i) => (
-                                    <label key={i} className={`crear-day-checkbox ${recurringDraft.daysOfWeek.includes(i) ? 'selected' : ''}`}>
+                                {/* Mostrar visualmente Lunes-Domingo, pero guardar el valor real de getDay() */}
+                                {[
+                                    { label: "L", value: 1 },
+                                    { label: "M", value: 2 },
+                                    { label: "X", value: 3 },
+                                    { label: "J", value: 4 },
+                                    { label: "V", value: 5 },
+                                    { label: "S", value: 6 },
+                                    { label: "D", value: 0 },
+                                ].map(({ label, value }) => (
+                                    <label key={value} className={`crear-day-checkbox ${recurringDraft.daysOfWeek.includes(value) ? 'selected' : ''}`}>
                                         <input
                                             type="checkbox"
-                                            checked={recurringDraft.daysOfWeek.includes(i)}
+                                            checked={recurringDraft.daysOfWeek.includes(value)}
                                             onChange={() => setRecurringDraft(draft => {
-                                                const days = draft.daysOfWeek.includes(i)
-                                                    ? draft.daysOfWeek.filter(day => day !== i)
-                                                    : [...draft.daysOfWeek, i];
+                                                const days = draft.daysOfWeek.includes(value)
+                                                    ? draft.daysOfWeek.filter(day => day !== value)
+                                                    : [...draft.daysOfWeek, value];
                                                 return { ...draft, daysOfWeek: days };
                                             })}
                                         />
                                         <span className="custom-checkbox" />
-                                        <span className="crear-day-checkbox-day">{d}</span>
+                                        <span className="crear-day-checkbox-day">{label}</span>
                                     </label>
                                 ))}
                             </div>
@@ -1041,7 +1118,7 @@ const CrearForm: React.FC = () => {
                                 <p>Clase: {recurringDraft.className.trim() || 'Sin nombre'}</p>
                                 <p>Fecha inicio: {recurringDraft.startDate ? formatIsoDateForUi(recurringDraft.startDate, '/') : '-'}</p>
                                 <p>Fecha fin: {recurringDraft.endDate ? formatIsoDateForUi(recurringDraft.endDate, '/') : '-'}</p>
-                                <p>Días: {recurringDraft.daysOfWeek.length > 0 ? recurringDraft.daysOfWeek.map(d => ['L','M','X','J','V','S','D'][d]).join(', ') : '-'}</p>
+                                <p>Días: {recurringDraft.daysOfWeek.length > 0 ? recurringDraft.daysOfWeek.sort((a, b) => ((a === 0 ? 7 : a) - (b === 0 ? 7 : b))).map(d => ['L', 'M', 'X', 'J', 'V', 'S', 'D'][d === 0 ? 6 : d - 1]).join(', ') : '-'}</p>
                                 <p>Horario: {recurringDraft.startTime} - {recurringDraft.endTime}</p>
                                 <p>Capacidad: {recurringDraft.capacity}</p>
                                 <p>Entrenador: {recurringDraft.trainerName.trim() || 'Sin asignar'}</p>

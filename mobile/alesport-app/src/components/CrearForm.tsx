@@ -7,6 +7,8 @@ import { createSingleSession, createRecurringSessions } from '../api/sessions';
 import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso, getMondayOfWeek, getSundayOfWeek } from '../utils/funcionesGeneral';
 import CustomToast from './CustomStyles';
 import './CrearForm.css';
+// --- Estilos mínimos para el modal de copiar semana anterior ---
+// Puedes mover esto a tu CSS global si lo prefieres
 
 /* =================== TIPOS Y CONSTANTES =================== */
 type CreateMode = 'single' | 'recurring' | null;
@@ -473,6 +475,21 @@ const CrearForm: React.FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showRecurringModal, recurrenceMode]);
 
+    // Estado para el modal de copiar semana
+    const [showCopyWeekModal, setShowCopyWeekModal] = useState(false);
+
+    // Handler para copiar semana anterior (debe implementarse la lógica real)
+    function handleCopyPreviousWeek() {
+        // Aquí va la lógica para copiar la semana anterior
+        // Por ejemplo: llamar a un servicio backend y actualizar recurringDraft
+        // setRecurringDraft(...)
+        setToast({
+            show: true,
+            message: 'Semana anterior copiada (demo)',
+            type: 'success',
+        });
+    }
+
     return (
         <div className="crear-form-container">
             <div className="crear-top-bar">
@@ -830,6 +847,56 @@ const CrearForm: React.FC = () => {
                             </button>
                         </div>
                         <form className="crear-single-form">
+                                                        {/* Botón para abrir el modal de copiar semana */}
+                                                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                                                            <button
+                                                                type="button"
+                                                                className="crear-btn-primary"
+                                                                style={{ minWidth: 180 }}
+                                                                onClick={() => setShowCopyWeekModal(true)}
+                                                            >
+                                                                Copiar semana anterior
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Modal de copiar semana anterior */}
+                                                        <IonModal
+                                                            isOpen={showCopyWeekModal}
+                                                            onDidDismiss={() => setShowCopyWeekModal(false)}
+                                                            className="crear-copy-week-modal-wrapper"
+                                                            backdropDismiss={true}
+                                                        >
+                                                            <div style={{
+                                                                display: 'flex',
+                                                                flexDirection: 'column',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                minHeight: '40vh',
+                                                                padding: 24
+                                                            }}>
+                                                                <h3 style={{ marginBottom: 16 }}>Copiar semana anterior</h3>
+                                                                <p style={{ marginBottom: 24 }}>¿Quieres copiar la configuración de la semana anterior a esta?</p>
+                                                                <div style={{ display: 'flex', gap: 16 }}>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="crear-btn-primary"
+                                                                        onClick={() => {
+                                                                            setShowCopyWeekModal(false);
+                                                                            handleCopyPreviousWeek();
+                                                                        }}
+                                                                    >
+                                                                        Copiar
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="app-btn-danger"
+                                                                        onClick={() => setShowCopyWeekModal(false)}
+                                                                    >
+                                                                        Cancelar
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </IonModal>
                             {/* Campo Entrenador */}
                             <label className="crear-field-label" htmlFor="rec-trainer-role">Entrenador</label>
                             <button
@@ -1049,7 +1116,7 @@ const CrearForm: React.FC = () => {
                                 <p>Clase: {recurringDraft.className.trim() || 'Sin nombre'}</p>
                                 <p>Fecha inicio: {recurringDraft.startDate ? formatIsoDateForUi(recurringDraft.startDate, '/') : '-'}</p>
                                 <p>Fecha fin: {recurringDraft.endDate ? formatIsoDateForUi(recurringDraft.endDate, '/') : '-'}</p>
-                                <p>Días: {recurringDraft.daysOfWeek.length > 0 ? recurringDraft.daysOfWeek.map(d => ['L','M','X','J','V','S','D'][d]).join(', ') : '-'}</p>
+                                <p>Días: {recurringDraft.daysOfWeek.length > 0 ? recurringDraft.daysOfWeek.map(d => ['L', 'M', 'X', 'J', 'V', 'S', 'D'][d]).join(', ') : '-'}</p>
                                 <p>Horario: {recurringDraft.startTime} - {recurringDraft.endTime}</p>
                                 <p>Capacidad: {recurringDraft.capacity}</p>
                                 <p>Entrenador: {recurringDraft.trainerName.trim() || 'Sin asignar'}</p>

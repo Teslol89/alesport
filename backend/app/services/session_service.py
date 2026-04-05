@@ -61,7 +61,7 @@ def _ensure_no_session_overlap(
 
 def create_session(db: Session, create_data, current_user: User) -> SessionModel:
     """Crea una nueva sesión puntual concreta.
-    
+
     Si current_user.role == 'admin' y create_data.trainer_id está especificado,
     se usa ese trainer_id. Caso contrario, se usa el del usuario autenticado
     (solo trainers y admins pueden crear sesiones).
@@ -227,7 +227,9 @@ def get_sessions_by_date_range(
     return sessions
 
 
-def _notify_session_time_change(db: Session, session: SessionModel, old_start_time) -> None:
+def _notify_session_time_change(
+    db: Session, session: SessionModel, old_start_time
+) -> None:
     """Notifica por push a todos los alumnos con reserva activa en la sesión que cambió de hora."""
     bookings = (
         db.query(Booking)
@@ -238,7 +240,9 @@ def _notify_session_time_change(db: Session, session: SessionModel, old_start_ti
         return
 
     user_ids = [b.user_id for b in bookings]
-    users = db.query(User).filter(User.id.in_(user_ids), User.fcm_token.isnot(None)).all()
+    users = (
+        db.query(User).filter(User.id.in_(user_ids), User.fcm_token.isnot(None)).all()
+    )
     tokens = [u.fcm_token for u in users if u.fcm_token]
 
     if not tokens:
@@ -400,10 +404,109 @@ def update_sessions_in_week(
             )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Datos de sesion inválidos",
+            detail="Datos de sesión inválidos",
         )
 
     for session in sessions:
         db.refresh(session)
 
     return sessions
+
+
+def create_recurring_sessions(
+    db: Session, create_data_list, current_user: User
+) -> list[SessionModel]:
+    """
+    Crea múltiples sesiones (recurrentes) de forma transaccional.
+    Si alguna sesión falla (solape, integridad, etc.), se hace rollback de todas.
+    - create_data_list: lista de objetos tipo SessionCreate (Pydantic o similar)
+    - current_user: usuario autenticado (admin o trainer)
+    Devuelve la lista de sesiones creadas.
+    """
+    if current_user.role not in ("trainer", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo entrenadores o administradores pueden crear sesiones",
+        )
+
+    new_sessions = []
+    trainer_id = None
+    try:
+        # Validar y preparar todas las sesiones antes de insertar
+        for create_data in create_data_list:
+            # Determinar trainer_id
+            if (
+                current_user.role == "admin"
+                and getattr(create_data, "trainer_id", None) is not None
+            ):
+                trainer_id = create_data.trainer_id
+                trainer = db.query(User).filter(User.id == trainer_id).first()
+                if not trainer:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Usuario/entrenador con id {trainer_id} no encontrado",
+                    )
+            else:
+                trainer_id = current_user.id
+
+            # Normalizar horas a local
+            start_local_time = _to_local_naive_time(create_data.start_time)
+            end_local_time = _to_local_naive_time(create_data.end_time)
+            session_timezone = LOCAL_TIMEZONE
+            start_dt = datetime.combine(
+                create_data.session_date,
+                start_local_time,
+                tzinfo=session_timezone,
+            )
+            end_dt = datetime.combine(
+                create_data.session_date,
+                end_local_time,
+                tzinfo=session_timezone,
+            )
+
+            # Validar solape global (con otras sesiones activas)
+            _ensure_no_session_overlap(db, start_dt, end_dt)
+
+            # Validar coherencia de horas
+            if start_dt >= end_dt:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="start_time debe ser anterior a end_time",
+                )
+
+            new_session = SessionModel(
+                trainer_id=trainer_id,
+                start_time=start_dt,
+                end_time=end_dt,
+                capacity=create_data.capacity,
+                class_name=create_data.class_name,
+                notes=getattr(create_data, "notes", None) or None,
+                status="active",
+            )
+            new_sessions.append(new_session)
+
+        # Si todas las validaciones pasan, insertar todas en bloque
+        for session in new_sessions:
+            db.add(session)
+        db.commit()
+        for session in new_sessions:
+            db.refresh(session)
+        # Añadir trainer_name dinámicamente
+        trainer = db.query(User).filter(User.id == trainer_id).first()
+        for session in new_sessions:
+            setattr(session, "trainer_name", trainer.name if trainer else "")
+        return new_sessions
+    except IntegrityError as exc:
+        db.rollback()
+        if "no_overlap_sessions" in str(exc.orig):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Alguna sesión se solapa con otra no cancelada del mismo entrenador",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Datos de sesión inválidos",
+        )
+    except Exception:
+        db.rollback()
+        raise

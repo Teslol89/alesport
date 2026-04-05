@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validat
 from app.utils.utils import LOCAL_TIMEZONE
 
 
+# --- Esquemas relacionados con las sesiones concretas (no recurrentes) --- #
 class SessionCreate(BaseModel):
     """Schema para crear una sesión puntual concreta.
     El trainer_id se obtiene del usuario autenticado (o se requiere para admins).
@@ -34,6 +35,14 @@ class SessionCreate(BaseModel):
         return self
 
 
+# --- Esquema para crear sesiones recurrentes (transaccional) --- #
+class SessionRecurringCreateList(BaseModel):
+    """Lista de sesiones a crear de forma recurrente (transaccional)."""
+
+    sessions: list[SessionCreate]
+
+
+# --- Esquemas para respuestas y actualizaciones de sesiones concretas --- #
 class SessionResponse(BaseModel):
     """Datos de una sesión concreta devueltos al cliente."""
 
@@ -69,9 +78,12 @@ class SessionResponse(BaseModel):
     @property
     def end_time(self) -> time:
         """Hora local de fin sin offset, pensada para mostrar en móvil."""
-        return self.end_datetime.astimezone(LOCAL_TIMEZONE).timetz().replace(tzinfo=None)
+        return (
+            self.end_datetime.astimezone(LOCAL_TIMEZONE).timetz().replace(tzinfo=None)
+        )
 
 
+# --- Esquemas para actualizaciones de sesiones --- #
 class SessionUpdate(BaseModel):
     """Campos que el entrenador puede ajustar manualmente en una sesión.
     Todos los campos son opcionales: solo se envían los que se quieren cambiar (PATCH parcial).
@@ -93,6 +105,7 @@ class SessionUpdate(BaseModel):
     status: Literal["active", "cancelled", "completed"] | None = None
 
 
+# --- Esquema para actualizaciones masivas de sesiones de una semana concreta --- #
 class SessionWeekUpdate(BaseModel):
     """Actualización masiva de sesiones de una semana concreta para un entrenador.
     Los admins deben incluir trainer_id para indicar de qué entrenador modifican la semana.

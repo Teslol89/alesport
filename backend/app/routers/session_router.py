@@ -12,6 +12,7 @@ from app.schemas.session import (
     SessionResponse,
     SessionUpdate,
     SessionWeekUpdate,
+    SessionRecurringCreateList,
 )
 from app.services.session_service import (
     create_session,
@@ -19,13 +20,13 @@ from app.services.session_service import (
     get_sessions_by_date_range,
     update_session,
     update_sessions_in_week,
+    create_recurring_sessions,
 )
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
-# Rutas para gestionar sesiones de entrenamiento. Solo accesibles por entrenadores y admins.
 
-
+# --- Rutas para gestionar sesiones de entrenamiento. Solo accesibles por entrenadores y admins. --- #
 @router.post("/", response_model=SessionResponse, status_code=201)
 def create_single_session(
     create_data: SessionCreate,
@@ -40,6 +41,7 @@ def create_single_session(
     return create_session(db, create_data, current_user)
 
 
+# --- Endpoint para obtener sesiones, con opción de filtrar por rango de fechas --- #
 @router.get("/", response_model=list[SessionResponse])
 def read_sessions(
     start_date: Optional[date] = Query(
@@ -55,6 +57,7 @@ def read_sessions(
     return get_sessions(db)
 
 
+# --- Endpoint para actualizar sesiones (PATCH parcial) y cancelar sesiones (soft delete) --- #
 @router.patch("/week", response_model=list[SessionResponse])
 def patch_week_sessions(
     update_data: SessionWeekUpdate,
@@ -83,6 +86,7 @@ def patch_week_sessions(
     )
 
 
+# --- Endpoint para generar sesiones recurrentes automáticamente a partir de horarios semanales --- #
 @router.patch("/{session_id}", response_model=SessionResponse)
 def patch_session(
     session_id: int,
@@ -102,6 +106,7 @@ def patch_session(
     return update_session(db, session_id, update_data, current_user)
 
 
+# --- Endpoint para cancelar sesiones (soft delete) --- #
 @router.delete("/{session_id}", response_model=SessionResponse)
 def delete_session(
     session_id: int,
@@ -121,3 +126,14 @@ def delete_session(
     # Llamar a update_session con status='cancelled'
     cancel_data = SessionUpdate(status="cancelled")
     return update_session(db, session_id, cancel_data, current_user)
+
+
+# --- Endpoint para crear sesiones recurrentes de forma transaccional --- #
+@router.post("/recurring", response_model=list[SessionResponse], status_code=201)
+def create_recurring_sessions_endpoint(
+    create_data_list: SessionRecurringCreateList,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Crea varias sesiones recurrentes en una sola transacción. Si alguna falla, se hace rollback de todas."""
+    return create_recurring_sessions(db, create_data_list.sessions, current_user)

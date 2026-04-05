@@ -46,12 +46,12 @@
   transition: background 0.2s, border-color 0.2s;
 }
 
-.crear-day-checkbox input[type='checkbox']:checked + .custom-checkbox {
+.crear-day-checkbox input[type='checkbox']:checked+.custom-checkbox {
   background: #0089a6;
   border-color: #0089a6;
 }
 
-.crear-day-checkbox input[type='checkbox']:checked + .custom-checkbox::after {
+.crear-day-checkbox input[type='checkbox']:checked+.custom-checkbox::after {
   content: '';
   position: absolute;
   left: 0.32em;
@@ -642,28 +642,6 @@
   margin: 0;
 }
 
-@media (max-width: 600px) {
-  .crear-form-content {
-    padding: 0.9rem;
-  }
-
-  .crear-field-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .crear-actions-row {
-    flex-direction: column;
-  }
-
-  .crear-single-modal {
-    padding: 0.9rem;
-  }
-
-  .crear-single-date-modal-actions {
-    flex-direction: column;
-  }
-}
-
 /* Modal de copiar semana anterior */
 .crear-copy-week-modal-wrapper {
   --width: min(88vw, 400px);
@@ -684,4 +662,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .crear-form-content {
+    padding: 0.9rem;
+  }
+
+  .crear-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .crear-actions-row {
+    flex-direction: column;
+  }
+
+  .crear-single-modal {
+    padding: 0.9rem;
+  }
+
+  .crear-single-date-modal-actions {
+    flex-direction: column;
+  }
 }

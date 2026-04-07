@@ -49,6 +49,9 @@ export async function updateUserProfile(payload: UserProfileUpdatePayload): Prom
       if (typeof data?.detail === "string" && data.detail.trim().length > 0) {
         throw new Error(data.detail);
       }
+      if (Array.isArray(data?.detail) && typeof data.detail[0]?.msg === "string") {
+        throw new Error(data.detail[0].msg);
+      }
     } catch (error) {
       if (error instanceof Error) {
         throw error;

@@ -155,9 +155,9 @@ const ForgotPasswordVerifyForm: React.FC = () => {
         </button>
       </form>
       <div className="fp-steps-indicator">
-        <span className="fp-step">―</span>
-        <span className="fp-step fp-step-active">―</span>
-        <span className="fp-step">―</span>
+        <span className="fp-step"></span>
+        <span className="fp-step fp-step-active"></span>
+        <span className="fp-step"></span>
       </div>
       <CustomToast
         show={toast.show}

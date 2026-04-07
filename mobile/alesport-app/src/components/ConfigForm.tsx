@@ -63,14 +63,6 @@ const ConfigForm: React.FC = () => {
           <div className="config-profile-email">{profile.email || 'john.doe@example.com'}</div>
         </IonCard>
 
-        {/* Sección de edición de perfil */}
-        <IonCard className="config-card">
-          <IonItem>
-            <IonLabel position="stacked">Nombre</IonLabel>
-            <IonInput value={name} onIonChange={e => setName(e.detail.value ?? '')} />
-          </IonItem>
-        </IonCard>
-
         {/* Preferencias */}
         <IonCard className="config-card">
           <IonItem>
@@ -111,11 +103,10 @@ const ConfigForm: React.FC = () => {
         </IonCard>
 
         {/* Botón logout */}
-        <div className="config-logout-row">
-          <IonButton expand="block" fill="clear" className="config-logout-btn" onClick={handleLogout}>
-            <IonIcon slot="start" icon={logOutOutline} />
+        <div className="config-logout">
+          <button type="button" className="app-btn-danger config-logout-btn" onClick={handleLogout}>
             <span>Cerrar sesión</span>
-          </IonButton>
+          </button>
         </div>
       </div>
     </div>

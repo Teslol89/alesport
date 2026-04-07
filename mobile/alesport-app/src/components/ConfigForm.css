@@ -32,7 +32,8 @@
 .config-profile-card,
 .config-card,
 .config-stat-card {
-  background: #ffffff !important; /* color hueso */
+  background: #ffffff !important;
+  /* color hueso */
   border-radius: 18px !important;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important;
   margin-bottom: 1.2rem;
@@ -139,4 +140,9 @@
     margin-top: 0.7rem;
     margin-bottom: 0.7rem;
   }
+}
+
+/* Mejora visual para la barrita del toggle sobre fondo claro */
+ion-toggle {
+  --track-background: #eeeeee;
 }

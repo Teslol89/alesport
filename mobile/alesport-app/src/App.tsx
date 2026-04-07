@@ -82,7 +82,7 @@ function MainRoutes() {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   const isAgendaActive = location.pathname.startsWith('/admin-calendar');
-  const isSearchActive = location.pathname.startsWith('/tab-search');
+  const isSearchActive = location.pathname.startsWith('/search');
   const isCrearActive = location.pathname.startsWith('/crear');
   const isConfigActive = location.pathname.startsWith('/config');
 
@@ -103,8 +103,8 @@ function MainRoutes() {
   return (
     <IonTabs>
       <IonRouterOutlet>
-        <PrivateRoute exact path="/tab-search" component={TabSearch} />
         <PrivateRoute exact path="/admin-calendar" component={AdminCalendarPage} />
+        <PrivateRoute exact path="/search" component={TabSearch} />
         <PrivateRoute exact path="/crear" component={Crear} />
         <PrivateRoute path="/config" component={Config} />
         <Route exact path="/" component={RootRedirect} />
@@ -114,7 +114,7 @@ function MainRoutes() {
           <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isAgendaActive ? agendaActiveIcon : agendaIcon} />
           <IonLabel>Agenda</IonLabel>
         </IonTabButton>
-        <IonTabButton tab="tab-search" href="/tab-search">
+        <IonTabButton tab="search" href="/search">
           <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isSearchActive ? buscarActiveIcon : buscarIcon} />
           <IonLabel>Buscar</IonLabel>
         </IonTabButton>

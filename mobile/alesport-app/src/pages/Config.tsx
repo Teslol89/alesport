@@ -1,5 +1,5 @@
 import { IonContent, IonHeader, IonPage } from '@ionic/react';
-import LogoutButton from '../components/LogoutButton';
+import ConfigForm from '../components/ConfigForm';
 import './Config.css';
 
 const Config: React.FC = () => {
@@ -8,7 +8,7 @@ const Config: React.FC = () => {
       <IonHeader />
       <IonContent fullscreen scrollY={true} scrollEvents={true} forceOverscroll={true}>
         <div className="config-center-wrapper">
-          <LogoutButton />
+          <ConfigForm />
         </div>
       </IonContent>
     </IonPage>

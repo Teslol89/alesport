@@ -209,6 +209,16 @@ body,
   color: #c62828;
 }
 
+/* --------------------------------- */
+/* 4.1) Mensaje de "no hay sesiones" */
+/* --------------------------------- */
+.calendar-sessions-section p {
+  text-align: center;  
+  color: #000000;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+}
+
 /* ------------------------------------------- */
 /* 5) Tarjetas de sesión (contenedor y estado) */
 /* ------------------------------------------- */
@@ -589,7 +599,8 @@ body,
 /* Wrapper del modal principal de edición de hora */
 .calendar-hour-modal-wrapper {
   --width: min(90vw, 460px);
-  --height: auto; /* This line remains unchanged */
+  --height: auto;
+  /* This line remains unchanged */
   --border-radius: 22px;
   --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
 }
@@ -648,6 +659,7 @@ body,
   grid-template-columns: 1fr 1fr;
   gap: 0.8rem;
 }
+
 .calendar-edit-session-block {
   margin-top: 0.9rem;
 }

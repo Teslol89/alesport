@@ -1,0 +1,142 @@
+/* Estilos para la página de configuración (ConfigForm) */
+/* Avatar grande y centrado para la tarjeta de perfil */
+.config-profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #e7edf3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.2rem;
+  color: #b0b8c9;
+  margin: 0 auto 0.7rem auto;
+}
+
+.config-profile-name {
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 0.18rem;
+}
+
+.config-profile-email {
+  text-align: center;
+  font-size: 1.01rem;
+  color: #7a7a7a;
+  margin-bottom: 0.2rem;
+}
+
+/* Tarjetas blancas y modernas */
+.config-profile-card,
+.config-card,
+.config-stat-card {
+  background: #ffffff !important; /* color hueso */
+  border-radius: 18px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important;
+  margin-bottom: 1.2rem;
+  color: #222 !important;
+  border: none !important;
+}
+
+.config-card ion-list,
+.config-card ion-item {
+  background: transparent !important;
+  --background: transparent !important;
+  color: #222 !important;
+}
+
+.config-profile-card {
+  padding: 2.2rem 2rem 1.2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 410px;
+  margin: 1.5rem auto 1.2rem auto;
+}
+
+.config-card {
+  max-width: 410px;
+  margin: 0 auto 1.2rem auto;
+}
+
+.config-stat-card {
+  min-width: 80px;
+  padding: 0.7rem 1.2rem 0.6rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.config-stats-row {
+  display: flex;
+  gap: 1.1rem;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+}
+
+.config-stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+}
+
+.config-stat-label {
+  font-size: 0.98rem;
+  color: #7a7a7a;
+}
+
+.config-center-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+}
+
+.ion-list {
+  margin-top: 1.2rem;
+  margin-bottom: 1.2rem;
+}
+
+/* Botón logout moderno */
+.config-logout-row {
+  width: 100%;
+  max-width: 410px;
+  margin: 1.2rem auto 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.config-logout-btn {
+  width: 100%;
+  background: #fff0f0 !important;
+  color: #e53935 !important;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 1.08rem;
+  box-shadow: 0 1px 6px rgba(229, 57, 53, 0.06);
+  padding: 1.1rem 0;
+  margin: 0;
+  --background-hover: #ffeaea;
+}
+
+.config-logout-btn span {
+  margin-left: 0.5rem;
+}
+
+
+@media (max-width: 600px) {
+
+  .config-profile-card,
+  .config-card,
+  .config-stat-card {
+    max-width: 98vw;
+  }
+
+  .ion-list {
+    margin-top: 0.7rem;
+    margin-bottom: 0.7rem;
+  }
+}

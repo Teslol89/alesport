@@ -15,11 +15,13 @@ export type UserProfile = {
   is_active: boolean;
   membership_active: boolean;
   phone?: string | null;
+  avatar_url?: string | null;
 };
 
 type UserProfileUpdatePayload = {
   name?: string;
   phone?: string | null;
+  avatar_url?: string | null;
 };
 
 // Ejemplo: obtener datos del usuario autenticado

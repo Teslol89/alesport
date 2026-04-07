@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(20) NOT NULL DEFAULT 'client'
         CHECK (role IN ('admin','trainer','client')),
     phone VARCHAR(20),
+    avatar_url TEXT,
     fcm_token TEXT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     membership_active BOOLEAN NOT NULL DEFAULT TRUE,

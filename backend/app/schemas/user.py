@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 PHONE_REGEX = re.compile(r"^(?:\+34)?[6789]\d{8}$")
+MAX_AVATAR_URL_LENGTH = 2_000_000
 
 
 def normalize_phone(value: Optional[str]) -> Optional[str]:
@@ -35,6 +36,24 @@ def normalize_phone(value: Optional[str]) -> Optional[str]:
     return formatted_number
 
 
+def normalize_avatar_url(value: Optional[str]) -> Optional[str]:
+    """Acepta una imagen en data URL o una URL pública y normaliza vacío a None."""
+    if value is None:
+        return None
+
+    raw_value = value.strip()
+    if raw_value == "":
+        return None
+
+    if len(raw_value) > MAX_AVATAR_URL_LENGTH:
+        raise ValueError("La foto de perfil supera el tamaño permitido")
+
+    if raw_value.startswith("data:image/") or raw_value.startswith("https://") or raw_value.startswith("http://"):
+        return raw_value
+
+    raise ValueError("La foto de perfil debe ser una imagen válida")
+
+
 # --- SCHEMA PARA REGISTRO DE USUARIO ---
 class UserCreate(BaseModel):
     """Datos necesarios para registrar un nuevo usuario.
@@ -45,11 +64,17 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6, max_length=128)
     phone: Optional[str] = Field(None, max_length=15)
+    avatar_url: Optional[str] = Field(None, max_length=MAX_AVATAR_URL_LENGTH)
 
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, value: Optional[str]) -> Optional[str]:
         return normalize_phone(value)
+
+    @field_validator("avatar_url")
+    @classmethod
+    def validate_avatar_url(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_avatar_url(value)
 
 
 # --- SCHEMA PARA ACTUALIZAR PERFIL PROPIO ---
@@ -59,11 +84,17 @@ class UserProfileUpdate(BaseModel):
 
     name: Optional[str] = Field(None, min_length=2, max_length=100)
     phone: Optional[str] = Field(None, max_length=15)
+    avatar_url: Optional[str] = Field(None, max_length=MAX_AVATAR_URL_LENGTH)
 
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, value: Optional[str]) -> Optional[str]:
         return normalize_phone(value)
+
+    @field_validator("avatar_url")
+    @classmethod
+    def validate_avatar_url(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_avatar_url(value)
 
 
 # --- SCHEMA PARA RESPUESTA DE USUARIO ---
@@ -80,6 +111,7 @@ class UserResponse(BaseModel):
     is_active: bool
     membership_active: bool
     phone: Optional[str] = None
+    avatar_url: Optional[str] = None
 
     # Permite a Pydantic leer datos directamente desde objetos ORM de SQLAlchemy
     model_config = {"from_attributes": True}

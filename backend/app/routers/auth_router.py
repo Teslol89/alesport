@@ -72,6 +72,9 @@ def get_me(current_user: User = Depends(get_current_user)):
         "name": current_user.name,
         "role": current_user.role,
         "is_active": current_user.is_active,
+        "membership_active": current_user.membership_active,
+        "phone": current_user.phone,
+        "avatar_url": current_user.avatar_url,
     }
 
 

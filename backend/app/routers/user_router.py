@@ -72,11 +72,16 @@ def update_my_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Permite al usuario autenticado actualizar su nombre y/o teléfono."""
-    if update.name is not None:
+    """Permite al usuario autenticado actualizar su nombre, teléfono y foto."""
+    provided_fields = update.model_dump(exclude_unset=True)
+
+    if "name" in provided_fields and update.name is not None:
         current_user.name = update.name
-    if update.phone is not None:
+    if "phone" in provided_fields:
         current_user.phone = update.phone
+    if "avatar_url" in provided_fields:
+        current_user.avatar_url = update.avatar_url
+
     db.commit()
     db.refresh(current_user)
     return current_user

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
-import { helpCircleOutline, logoWhatsapp, moonOutline, pencilOutline, personCircleOutline, settingsOutline, sunnyOutline } from 'ionicons/icons';
+import { cameraOutline, helpCircleOutline, logoWhatsapp, moonOutline, pencilOutline, personCircleOutline, settingsOutline, sunnyOutline, trashOutline } from 'ionicons/icons';
 import logoIcon from '../icons/icon.png';
 import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
@@ -13,6 +13,8 @@ const APP_VERSION = '1.0.0';
 const SUPPORT_EMAIL = 'verdeguerlabs@verdeguerlabs.es';
 const SUPPORT_WEBSITE = 'https://www.verdeguerlabs.es';
 const PHONE_COMPACT_REGEX = /^(?:\+34)?[6789]\d{8}$/;
+const MAX_AVATAR_FILE_SIZE = 2 * 1024 * 1024;
+const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 /* Función para formatear los dígitos del teléfono en grupos de 3 */
 const formatPhoneGroups = (digits: string) => {
@@ -86,7 +88,9 @@ const ConfigForm: React.FC = () => {
   const [profile, setProfile] = useState<Partial<UserProfile>>({});
   const [editName, setEditName] = useState('');
   const [phone, setPhone] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState('');
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [notifications, setNotifications] = useState(true);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -106,6 +110,7 @@ const ConfigForm: React.FC = () => {
           setProfile(data);
           setEditName(data.name || '');
           setPhone(data.phone || '');
+          setAvatarPreview(data.avatar_url || '');
         }
       })
       .catch(() => { });
@@ -125,6 +130,7 @@ const ConfigForm: React.FC = () => {
   const openEditProfileModal = () => {
     setEditName(profile.name || '');
     setPhone(profile.phone || '');
+    setAvatarPreview(profile.avatar_url || '');
     setShowEditProfileModal(true);
   };
 
@@ -148,11 +154,13 @@ const ConfigForm: React.FC = () => {
       const updatedProfile = await updateUserProfile({
         name: trimmedName,
         phone: normalizedPhone,
+        avatar_url: avatarPreview || null,
       });
 
       setProfile(updatedProfile);
       setEditName(updatedProfile.name || '');
       setPhone(updatedProfile.phone || normalizedPhone || '');
+      setAvatarPreview(updatedProfile.avatar_url || '');
       setShowEditProfileModal(false);
       setToast({ show: true, message: t('config.profileUpdated'), type: 'success' });
     } catch (error) {
@@ -160,6 +168,47 @@ const ConfigForm: React.FC = () => {
       setToast({ show: true, message, type: 'danger' });
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handleAvatarPicker = () => {
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      setToast({ show: true, message: t('config.photoInvalidType'), type: 'danger' });
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_FILE_SIZE) {
+      setToast({ show: true, message: t('config.photoTooLarge'), type: 'danger' });
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setAvatarPreview(reader.result);
+      }
+    };
+    reader.onerror = () => {
+      setToast({ show: true, message: t('config.photoInvalidType'), type: 'danger' });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarPreview('');
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = '';
     }
   };
 
@@ -186,7 +235,15 @@ const ConfigForm: React.FC = () => {
 
         <IonCard className="config-profile-card">
           <div className="config-profile-avatar">
-            <IonIcon icon={personCircleOutline} />
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={t('config.profilePhotoAlt')}
+                className="config-profile-avatar-image"
+              />
+            ) : (
+              <IonIcon icon={personCircleOutline} />
+            )}
           </div>
           <div className="config-profile-name">{profile.name || t('config.nameFallback')}</div>
           <div className="config-profile-email">{profile.email || t('config.emailFallback')}</div>
@@ -257,6 +314,52 @@ const ConfigForm: React.FC = () => {
           </div>
 
           <div className="config-edit-form">
+            <div className="config-avatar-editor">
+              <div className="config-profile-avatar config-profile-avatar--editable">
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt={t('config.profilePhotoAlt')}
+                    className="config-profile-avatar-image"
+                  />
+                ) : (
+                  <IonIcon icon={personCircleOutline} />
+                )}
+              </div>
+
+              <input
+                ref={avatarInputRef}
+                className="config-avatar-input"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleAvatarChange}
+              />
+
+              <div className="config-avatar-actions">
+                <button
+                  type="button"
+                  className="app-btn-primary config-avatar-action-btn"
+                  onClick={handleAvatarPicker}
+                >
+                  <IonIcon icon={cameraOutline} />
+                  <span>{avatarPreview ? t('config.changePhoto') : t('config.addPhoto')}</span>
+                </button>
+
+                {avatarPreview ? (
+                  <button
+                    type="button"
+                    className="app-btn-danger config-avatar-action-btn"
+                    onClick={handleRemoveAvatar}
+                  >
+                    <IonIcon icon={trashOutline} />
+                    <span>{t('config.removePhoto')}</span>
+                  </button>
+                ) : null}
+              </div>
+
+              <p className="config-avatar-hint">{t('config.photoHint')}</p>
+            </div>
+
             <label className="config-field-label" htmlFor="config-edit-name">{t('config.fullName')}</label>
             <input
               id="config-edit-name"
@@ -333,7 +436,7 @@ const ConfigForm: React.FC = () => {
             </div>
             <div className="config-readonly-card">
               <span className="config-readonly-label">{t('config.developedByLabel')}</span>
-              <span className="config-readonly-value">Verdeguer Labs · Llíria, Valencia</span>
+              <span className="config-readonly-value">Verdeguer Labs · 46160 Llíria, Valencia</span>
             </div>
             <div className="config-readonly-card">
               <span className="config-readonly-label">{t('config.supportEmailLabel')}</span>

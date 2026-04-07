@@ -106,12 +106,12 @@ const BuscarForm: React.FC = () => {
                     <p className="search-form-empty">Solo administradores pueden ver todas las reservas.</p>
                 ) : (
                     <div className="search-form-body">
-                                                <input
-                                                        className="search-form-search-input"
-                                                        placeholder="Buscar por alumno, email o estado (activa/inactiva)"
-                                                        value={query}
-                                                        onChange={(e) => setQuery(e.target.value)}
-                                                />
+                        <input
+                            className="search-form-search-input"
+                            placeholder="Buscar por alumno, email o estado (activa/inactiva)"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                        />
 
                         <div className="search-form-filters-row">
                             <select

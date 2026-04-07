@@ -296,12 +296,12 @@
 
 .config-avatar-source-modal-btn {
   width: 100%;
-  min-height: 44px !important;
+  min-width: 100%;
+  flex: none;
+  min-height: auto !important;
   padding: 0.6em 1.15em !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
+  font-size: 1rem;
+  line-height: 1.1;
 }
 
 .config-edit-modal-wrapper {
@@ -353,40 +353,6 @@
   width: 100%;
 }
 
-.config-avatar-editor {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.35rem 0 0.25rem;
-}
-
-.config-avatar-input {
-  display: none;
-}
-
-.config-avatar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.55rem;
-}
-
-.config-avatar-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.9rem !important;
-  min-height: auto !important;
-}
-
-.config-avatar-hint {
-  margin: 0;
-  font-size: 0.82rem;
-  text-align: center;
-  color: #60777d;
-}
 
 .config-readonly-grid {
   display: grid;
@@ -469,6 +435,7 @@
 .config-edit-action-btn {
   flex: 1;
   min-width: 140px;
+
 }
 
 /* ------------------------------- */
@@ -487,10 +454,6 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-}
-
-.config-logout-btn span {
-  margin-left: 0.5rem;
 }
 
 /* ------------------------------- */

@@ -57,7 +57,8 @@ const translations: Record<Language, Record<string, unknown>> = {
       profileUpdated: 'Perfil actualizado correctamente',
       profileUpdateError: 'No se pudo actualizar el perfil',
       profileNameRequired: 'El nombre debe tener al menos 2 caracteres',
-      phoneTooLong: 'El teléfono no puede superar 20 caracteres',
+      phoneInvalid: 'Introduce un teléfono válido de 9 dígitos (opcional +34)',
+      phoneTooLong: 'El teléfono no puede superar 15 caracteres',
     },
     search: {
       title: 'Buscar reservas',
@@ -197,7 +198,8 @@ const translations: Record<Language, Record<string, unknown>> = {
       profileUpdated: 'Profile updated successfully',
       profileUpdateError: 'Profile could not be updated',
       profileNameRequired: 'Name must be at least 2 characters long',
-      phoneTooLong: 'Phone number cannot exceed 20 characters',
+      phoneInvalid: 'Enter a valid 9-digit phone number (optional +34)',
+      phoneTooLong: 'Phone number cannot exceed 15 characters',
     },
     search: {
       title: 'Search bookings',

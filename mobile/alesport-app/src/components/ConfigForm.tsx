@@ -9,6 +9,63 @@ import { useLanguage } from '../i18n/LanguageContext';
 import './ConfigForm.css';
 
 const DARK_MODE_STORAGE_KEY = 'alesport-dark-mode';
+const PHONE_COMPACT_REGEX = /^(?:\+34)?[6789]\d{8}$/;
+
+const formatPhoneGroups = (digits: string) => {
+  const sanitizedDigits = digits.replace(/\D/g, '').slice(0, 9);
+  return sanitizedDigits.replace(/(\d{0,3})(\d{0,3})(\d{0,3}).*/, (_match, a: string, b: string, c: string) =>
+    [a, b, c].filter(Boolean).join(' ')
+  );
+};
+
+const normalizePhoneValue = (value: string): string | null => {
+  const digits = value.replace(/\D/g, '');
+
+  if (!digits) {
+    return null;
+  }
+
+  if (digits.startsWith('34')) {
+    if (digits.length !== 11) {
+      return null;
+    }
+
+    const nationalNumber = digits.slice(2);
+    if (!PHONE_COMPACT_REGEX.test(`+34${nationalNumber}`)) {
+      return null;
+    }
+
+    return `+34 ${formatPhoneGroups(nationalNumber)}`;
+  }
+
+  if (digits.length !== 9 || !PHONE_COMPACT_REGEX.test(digits)) {
+    return null;
+  }
+
+  return formatPhoneGroups(digits);
+};
+
+const sanitizePhoneInput = (value: string): string => {
+  const cleaned = value.replace(/[^\d+\s]/g, '');
+  const trimmed = cleaned.trimStart();
+  const digits = cleaned.replace(/\D/g, '');
+
+  if (!digits) {
+    return trimmed.startsWith('+') ? '+' : '';
+  }
+
+  if (trimmed.startsWith('+') || digits.startsWith('34')) {
+    const countryDigits = digits.slice(0, 11);
+    if (!countryDigits.startsWith('34')) {
+      return `+${countryDigits}`;
+    }
+
+    const nationalNumber = countryDigits.slice(2);
+    return nationalNumber ? `+34 ${formatPhoneGroups(nationalNumber)}` : '+34';
+  }
+
+  return formatPhoneGroups(digits);
+};
 
 const ConfigForm: React.FC = () => {
   const { logout } = useAuth();
@@ -60,14 +117,15 @@ const ConfigForm: React.FC = () => {
   const handleSaveProfile = async () => {
     const trimmedName = editName.trim();
     const trimmedPhone = phone.trim();
+    const normalizedPhone = normalizePhoneValue(trimmedPhone);
 
     if (trimmedName.length < 2) {
       setToast({ show: true, message: t('config.profileNameRequired'), type: 'danger' });
       return;
     }
 
-    if (trimmedPhone.length > 20) {
-      setToast({ show: true, message: t('config.phoneTooLong'), type: 'danger' });
+    if (trimmedPhone && !normalizedPhone) {
+      setToast({ show: true, message: t('config.phoneInvalid'), type: 'danger' });
       return;
     }
 
@@ -75,12 +133,12 @@ const ConfigForm: React.FC = () => {
     try {
       const updatedProfile = await updateUserProfile({
         name: trimmedName,
-        phone: trimmedPhone || null,
+        phone: normalizedPhone,
       });
 
       setProfile(updatedProfile);
       setEditName(updatedProfile.name || '');
-      setPhone(updatedProfile.phone || '');
+      setPhone(updatedProfile.phone || normalizedPhone || '');
       setShowEditProfileModal(false);
       setToast({ show: true, message: t('config.profileUpdated'), type: 'success' });
     } catch (error) {
@@ -196,9 +254,11 @@ const ConfigForm: React.FC = () => {
               id="config-edit-phone"
               className="app-input config-edit-input"
               type="tel"
+              inputMode="tel"
+              autoComplete="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              maxLength={20}
+              onChange={(e) => setPhone(sanitizePhoneInput(e.target.value))}
+              maxLength={15}
               placeholder={t('config.phonePlaceholder')}
             />
 

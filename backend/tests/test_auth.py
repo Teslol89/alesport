@@ -112,4 +112,17 @@ def test_users_me_patch_updates_name_and_phone(client, auth_headers, seed_data):
 
     body = response.json()
     assert body["name"] == "Cliente Editado"
-    assert body["phone"] == "+34 600123456"
+    assert body["phone"] == "+34 600 123 456"
+
+
+def test_users_me_patch_rejects_invalid_phone(client, auth_headers, seed_data):
+    """Test: El perfil no debe aceptar teléfonos imposibles o con demasiados dígitos."""
+    headers = auth_headers(seed_data["client"].email, "client1234")
+
+    response = client.patch(
+        "/api/users/me",
+        headers=headers,
+        json={"phone": "666 666 666 666"},
+    )
+
+    assert response.status_code == 422

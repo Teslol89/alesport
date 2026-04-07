@@ -12,7 +12,6 @@
   padding: 0.85rem 0.9rem 1rem;
 }
 
-
 /* ------------------------------- */
 /* 2) Top bar de búsqueda */
 /* ------------------------------- */
@@ -205,4 +204,42 @@
 /* Mejora visual para la barrita del toggle sobre fondo claro */
 ion-toggle {
   --track-background: #eeeeee;
+}
+
+.ion-palette-dark .config-form-container {
+  background: var(--app-page-background, #0f131a);
+}
+
+.ion-palette-dark .config-top-bar {
+  background: #161b22;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+.ion-palette-dark .config-top-title,
+.ion-palette-dark .config-profile-name,
+.ion-palette-dark .config-card ion-item,
+.ion-palette-dark .config-card ion-label,
+.ion-palette-dark .config-card ion-input,
+.ion-palette-dark .config-card ion-icon,
+.ion-palette-dark .config-logout-btn {
+  color: var(--app-text-primary, #f5f7fa) !important;
+}
+
+.ion-palette-dark .config-profile-email {
+  color: var(--app-text-secondary, #aeb6c2) !important;
+}
+
+.ion-palette-dark .config-profile-card,
+.ion-palette-dark .config-card,
+.ion-palette-dark .config-stat-card {
+  background-color: var(--app-surface-background, #1b212c) !important;
+}
+
+.ion-palette-dark .config-profile-avatar {
+  background: #2a3342;
+  color: #d8deea;
+}
+
+.ion-palette-dark ion-toggle {
+  --track-background: #394150;
 }

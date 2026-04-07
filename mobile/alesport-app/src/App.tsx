@@ -61,8 +61,8 @@ import '@ionic/react/css/display.css';
  */
 
 /* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-import '@ionic/react/css/palettes/dark.system.css';
+import '@ionic/react/css/palettes/dark.class.css';
+/* import '@ionic/react/css/palettes/dark.system.css'; */
 
 /* Theme variables */
 import './theme/variables.css';
@@ -131,11 +131,22 @@ function MainRoutes() {
   );
 }
 
+const DARK_MODE_STORAGE_KEY = 'alesport-dark-mode';
+
 const App: React.FC = () => {
 
   const [splashDone, setSplashDone] = useState(false);
   const [showToast, setShowToast] = useState<{ show: boolean; message: string }>({ show: false, message: "" });
   const history = useHistory();
+
+  useEffect(() => {
+    const isDarkMode = localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true';
+    const ionApp = document.querySelector('ion-app');
+    document.body.classList.toggle('ion-palette-dark', isDarkMode);
+    document.documentElement.classList.toggle('ion-palette-dark', isDarkMode);
+    ionApp?.classList.toggle('ion-palette-dark', isDarkMode);
+    document.body.classList.toggle('dark', isDarkMode);
+  }, []);
 
   // Al abrir la app, si hay un email pendiente de verificación y no hay sesión,
   // se limpia/elimina el usuario pendiente y se redirige siempre a /login.

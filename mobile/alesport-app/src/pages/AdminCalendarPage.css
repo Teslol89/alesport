@@ -1,10 +1,9 @@
-/* Fondo blanco para la página de agenda */
+/* Fondo de la página de agenda */
 .ion-page.admin-calendar-page,
 .ion-page.admin-calendar-page ion-content,
 .ion-page.admin-calendar-page .ion-content {
-  --background: #eeeeee !important;
-  /* Blanco "TIZA" */
-  background: #eeeeee !important;
+  --background: var(--app-page-background, #eeeeee) !important;
+  background: var(--app-page-background, #eeeeee) !important;
 }
 
 /* Puedes añadir más estilos personalizados aquí */

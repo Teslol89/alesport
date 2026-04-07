@@ -1,5 +1,5 @@
 def test_login_returns_access_token(client, seed_data):
-    """Test: El endpoint /auth/login retorna un JWT válido.
+    """Test: El endpoint /api/auth/login retorna un JWT válido.
     
     Verifica:
     - Status 200 (exitoso)
@@ -10,9 +10,9 @@ def test_login_returns_access_token(client, seed_data):
     - client: Cliente HTTP para hacer POST
     - seed_data: Proporciona usuario "client" con email/contraseña
     """
-    # Hacer POST a /auth/login con credenciales válidas
+    # Hacer POST a /api/auth/login con credenciales válidas
     response = client.post(
-        "/auth/login",
+        "/api/auth/login",
         json={"email": seed_data["client"].email, "password": "client1234"},
     )
 
@@ -28,7 +28,7 @@ def test_login_returns_access_token(client, seed_data):
 
 
 def test_login_rejects_invalid_credentials(client, seed_data):
-    """Test: El endpoint /auth/login rechaza contraseñas incorrectas.
+    """Test: El endpoint /api/auth/login rechaza contraseñas incorrectas.
     
     Verifica:
     - Status 401 (Unauthorized)
@@ -39,7 +39,7 @@ def test_login_rejects_invalid_credentials(client, seed_data):
     """
     # Intentar login con contraseña incorrecta
     response = client.post(
-        "/auth/login",
+        "/api/auth/login",
         json={"email": seed_data["client"].email, "password": "bad-password"},
     )
 
@@ -51,7 +51,7 @@ def test_login_rejects_invalid_credentials(client, seed_data):
 
 
 def test_auth_me_requires_token(client):
-    """Test: El endpoint /auth/me requiere JWT en header Authorization.
+    """Test: El endpoint /api/auth/me requiere JWT en header Authorization.
     
     Verifica:
     - Status 401 (Unauthorized)
@@ -59,19 +59,19 @@ def test_auth_me_requires_token(client):
     Seguridad: Endpoint protegido sin token -> rechazo
     (Middleware de autenticación lo valida)
     """
-    # GET a /auth/me SIN headers -> no hay token
-    response = client.get("/auth/me")
+    # GET a /api/auth/me SIN headers -> no hay token
+    response = client.get("/api/auth/me")
 
     # Verificar que fue rechazado
     assert response.status_code == 401
 
 
 def test_auth_me_returns_authenticated_user_profile(client, auth_headers, seed_data):
-    """Test: El endpoint /auth/me retorna el perfil del usuario autenticado.
+    """Test: El endpoint /api/auth/me retorna el perfil del usuario autenticado.
     
     Flujo:
     1. auth_headers(): Hace login y obtiene JWT
-    2. GET /auth/me con JWT en header
+    2. GET /api/auth/me con JWT en header
     3. Servidor verifica JWT y retorna user profile
     
     Verifica:
@@ -85,8 +85,8 @@ def test_auth_me_returns_authenticated_user_profile(client, auth_headers, seed_d
     # Obtener headers con JWT válido
     headers = auth_headers(seed_data["client"].email, "client1234")
 
-    # GET /auth/me con headers de autorización
-    response = client.get("/auth/me", headers=headers)
+    # GET /api/auth/me con headers de autorización
+    response = client.get("/api/auth/me", headers=headers)
 
     # Verificar que fue exitoso
     assert response.status_code == 200
@@ -96,3 +96,20 @@ def test_auth_me_returns_authenticated_user_profile(client, auth_headers, seed_d
     assert body["email"] == seed_data["client"].email  # Email correcto
     assert body["role"] == "client"  # Role correcto
     assert body["is_active"] is True  # Usuario activo
+
+
+def test_users_me_patch_updates_name_and_phone(client, auth_headers, seed_data):
+    """Test: El endpoint PATCH /api/users/me actualiza el perfil del usuario autenticado."""
+    headers = auth_headers(seed_data["client"].email, "client1234")
+
+    response = client.patch(
+        "/api/users/me",
+        headers=headers,
+        json={"name": "Cliente Editado", "phone": "+34 600123456"},
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["name"] == "Cliente Editado"
+    assert body["phone"] == "+34 600123456"

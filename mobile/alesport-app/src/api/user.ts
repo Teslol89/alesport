@@ -7,8 +7,23 @@ export type AssignableTrainer = {
   role: "admin" | "trainer";
 };
 
+export type UserProfile = {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+  membership_active: boolean;
+  phone?: string | null;
+};
+
+type UserProfileUpdatePayload = {
+  name?: string;
+  phone?: string | null;
+};
+
 // Ejemplo: obtener datos del usuario autenticado
-export async function getUserProfile(logout: () => void) {
+export async function getUserProfile(logout: () => void): Promise<UserProfile> {
   try {
     const response = await fetchWithAuth(`${baseApiUrl}/auth/me`);
     return await response.json();
@@ -19,6 +34,31 @@ export async function getUserProfile(logout: () => void) {
     }
     throw err;
   }
+}
+
+export async function updateUserProfile(payload: UserProfileUpdatePayload): Promise<UserProfile> {
+  const response = await fetchWithAuth(`${baseApiUrl}/users/me`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    try {
+      const data = await response.json();
+      if (typeof data?.detail === "string" && data.detail.trim().length > 0) {
+        throw new Error(data.detail);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+    }
+
+    throw new Error("No se pudo actualizar el perfil");
+  }
+
+  return await response.json();
 }
 
 export async function saveFcmToken(token: string): Promise<void> {

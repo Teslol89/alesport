@@ -212,8 +212,7 @@ body,
 /* --------------------------------- */
 /* 4.1) Mensaje de "no hay sesiones" */
 /* --------------------------------- */
-.calendar-sessions-section p {
-  text-align: center;  
+.calendar-sessions-section>p {
   color: #000000;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   font-size: 1rem;
@@ -251,6 +250,10 @@ body,
 .session-card .ion-card-title {
   font-size: 1.1rem;
   font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
 }
 
 .session-card ion-card-header {
@@ -318,10 +321,11 @@ body,
 }
 
 .session-class-name {
-  margin: 0 0 0.55rem 0;
+  display: block;
+  width: 100%;
+  margin: 0 0 0.55rem 0.2rem;
   font-size: 1.1rem;
   font-weight: 700;
-  margin-left: 0.2rem;
   color: #000000;
 }
 
@@ -333,6 +337,7 @@ body,
   color: #33535b;
   font-size: 0.95rem;
   line-height: 1.4;
+  text-align: left;
   white-space: pre-wrap;
 }
 

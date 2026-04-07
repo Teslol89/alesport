@@ -141,7 +141,7 @@ const translations: Record<Language, Record<string, unknown>> = {
   },
   en: {
     tabs: {
-      agenda: 'Agenda',
+      agenda: 'Diary',
       search: 'Search',
       create: 'Create',
       options: 'Options',

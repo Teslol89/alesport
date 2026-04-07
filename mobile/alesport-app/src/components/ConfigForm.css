@@ -242,6 +242,68 @@
 /* ------------------------------- */
 /* 6) Modal editar perfil */
 /* ------------------------------- */
+.config-avatar-source-modal-wrapper {
+  --width: min(90vw, 340px);
+  --height: auto;
+  --border-radius: 12px;
+  --box-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
+  --backdrop-opacity: 1 !important;
+}
+
+.config-avatar-source-modal-wrapper.ion-modal-overlay {
+  --backdrop-opacity: 1 !important;
+}
+
+.config-avatar-source-modal-wrapper::part(backdrop),
+.config-avatar-source-modal-wrapper .ion-backdrop,
+.config-avatar-source-modal-wrapper .modal-backdrop,
+.config-avatar-source-modal-wrapper .ion-modal-backdrop {
+  background: rgba(0, 0, 0, 0.48) !important;
+  opacity: 1 !important;
+}
+
+.config-avatar-source-modal-wrapper::part(content) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.config-avatar-source-modal {
+  padding: 1rem;
+  background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.config-avatar-source-modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #0b2d34;
+}
+
+.config-avatar-source-modal-header p {
+  margin: 0.35rem 0 0;
+  color: #4c6970;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.config-avatar-source-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.config-avatar-source-modal-btn {
+  width: 100%;
+  min-height: 44px !important;
+  padding: 0.6em 1.15em !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
 .config-edit-modal-wrapper {
   --width: min(92vw, 460px);
   --height: auto;
@@ -265,7 +327,7 @@
 .config-edit-modal-header h3 {
   margin: 0;
   font-size: 1.2rem;
-  color: #0b2d34;
+  color: #000000;
 }
 
 .config-edit-modal-header p {
@@ -284,7 +346,7 @@
 .config-field-label {
   font-size: 0.86rem;
   font-weight: 600;
-  color: #1a4650;
+  color: #000000;
 }
 
 .config-edit-input {
@@ -345,7 +407,7 @@
   margin-bottom: 0.25rem;
   font-size: 0.78rem;
   font-weight: 700;
-  color: #60777d;
+  color: #000000;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }

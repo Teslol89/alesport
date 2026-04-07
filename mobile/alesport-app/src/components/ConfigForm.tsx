@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { IonAlert, IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
+import { IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
 import { cameraOutline, helpCircleOutline, logoWhatsapp, moonOutline, pencilOutline, personCircleOutline, settingsOutline, sunnyOutline, trashOutline } from 'ionicons/icons';
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -411,8 +411,6 @@ const ConfigForm: React.FC = () => {
                   </button>
                 ) : null}
               </div>
-
-              <p className="config-avatar-hint">{t('config.photoHint')}</p>
             </div>
 
             <label className="config-field-label" htmlFor="config-edit-name">{t('config.fullName')}</label>
@@ -473,30 +471,50 @@ const ConfigForm: React.FC = () => {
         </div>
       </IonModal>
 
-      <IonAlert
+      <IonModal
+        className="config-avatar-source-modal-wrapper"
         isOpen={showAvatarSourceAlert}
+        showBackdrop={true}
+        backdropDismiss={true}
         onDidDismiss={() => setShowAvatarSourceAlert(false)}
-        header={t('config.photoSourceTitle')}
-        message={t('config.photoSourceMessage')}
-        buttons={[
-          {
-            text: t('config.takePhoto'),
-            handler: () => {
-              void handleAvatarSelection(CameraSource.Camera);
-            },
-          },
-          {
-            text: t('config.chooseFromGallery'),
-            handler: () => {
-              void handleAvatarSelection(CameraSource.Photos);
-            },
-          },
-          {
-            text: t('common.cancel'),
-            role: 'cancel',
-          },
-        ]}
-      />
+      >
+        <div className="config-avatar-source-modal">
+          <div className="config-avatar-source-modal-header">
+            <h3>{t('config.photoSourceTitle')}</h3>
+            <p>{t('config.photoSourceMessage')}</p>
+          </div>
+
+          <div className="config-avatar-source-modal-actions">
+            <button
+              type="button"
+              className="app-btn-primary config-avatar-source-modal-btn"
+              onClick={() => {
+                void handleAvatarSelection(CameraSource.Camera);
+              }}
+            >
+              {t('config.takePhoto')}
+            </button>
+
+            <button
+              type="button"
+              className="app-btn-primary config-avatar-source-modal-btn"
+              onClick={() => {
+                void handleAvatarSelection(CameraSource.Photos);
+              }}
+            >
+              {t('config.chooseFromGallery')}
+            </button>
+
+            <button
+              type="button"
+              className="app-btn-danger config-avatar-source-modal-btn"
+              onClick={() => setShowAvatarSourceAlert(false)}
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      </IonModal>
 
       <IonModal
         className="config-edit-modal-wrapper"

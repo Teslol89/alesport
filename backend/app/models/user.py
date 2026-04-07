@@ -3,7 +3,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
-from sqlalchemy.types import Boolean, Integer, String, TIMESTAMP
+from sqlalchemy.types import Boolean, Integer, String, Text, TIMESTAMP
 
 from app.database.db import Base
 
@@ -28,6 +28,8 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="client")
     # Teléfono de contacto (opcional)
     phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    # URL o data URL de la foto de perfil (opcional)
+    avatar_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     # Token FCM para push notifications (opcional, se actualiza al iniciar sesión en la app)
     fcm_token: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     # Indica si la cuenta está activa (false = cuenta bloqueada)

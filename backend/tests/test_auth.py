@@ -126,3 +126,20 @@ def test_users_me_patch_rejects_invalid_phone(client, auth_headers, seed_data):
     )
 
     assert response.status_code == 422
+
+
+def test_users_me_patch_updates_avatar_url(client, auth_headers, seed_data):
+    """Test: El perfil permite guardar una foto/avatar del usuario autenticado."""
+    headers = auth_headers(seed_data["client"].email, "client1234")
+    avatar_url = "data:image/png;base64,ZmFrZS1hdmF0YXI="
+
+    response = client.patch(
+        "/api/users/me",
+        headers=headers,
+        json={"avatar_url": avatar_url},
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["avatar_url"] == avatar_url

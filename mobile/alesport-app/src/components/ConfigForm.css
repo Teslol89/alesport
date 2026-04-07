@@ -103,6 +103,17 @@
   font-size: 3.2rem;
   color: #b0b8c9;
   margin: 0 auto 0.7rem auto;
+  overflow: hidden;
+}
+
+.config-profile-avatar--editable {
+  margin-bottom: 0.3rem;
+}
+
+.config-profile-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .config-profile-name {
@@ -241,6 +252,41 @@
 
 .config-edit-input {
   width: 100%;
+}
+
+.config-avatar-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0 0.25rem;
+}
+
+.config-avatar-input {
+  display: none;
+}
+
+.config-avatar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.config-avatar-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem !important;
+  min-height: auto !important;
+}
+
+.config-avatar-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  text-align: center;
+  color: #60777d;
 }
 
 .config-readonly-grid {

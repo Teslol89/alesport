@@ -17,8 +17,10 @@ import {
 import { getSessionsByDateRange, updateSession, cancelSession } from '../api/sessions';
 import { getUserProfile } from '../api/user';
 import { BookingItem, cancelBooking, getBookingsBySession, reactivateBooking } from '../api/bookings';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const Calendar: React.FC = () => {
+  const { t, dateLocale, language } = useLanguage();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
 
   type SessionItem = {
@@ -37,7 +39,7 @@ const Calendar: React.FC = () => {
   const initialWeekDays = getCurrentWeekDays();
   const todayDate = initialWeekDays.find((d: any) => d.isToday)?.date || initialWeekDays[0].date;
   const [weekAnchorDate, setWeekAnchorDate] = useState(todayDate);
-  const weekDays = useMemo(() => getCurrentWeekDays(weekAnchorDate), [weekAnchorDate]);
+  const weekDays = useMemo(() => getCurrentWeekDays(weekAnchorDate), [weekAnchorDate, language]);
   const [selectedDate, setSelectedDate] = useState(todayDate);
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
@@ -485,7 +487,7 @@ const Calendar: React.FC = () => {
             e.currentTarget.blur();
           }}
         >
-          Ver mes
+          {t('calendar.viewMonth')}
         </button>
       </div>
       {/* Scroll de días debajo */}
@@ -511,7 +513,7 @@ const Calendar: React.FC = () => {
         ) : error ? (
           <p className="calendar-error-state">{error}</p>
         ) : sessionsForDate.length === 0 ? (
-          <p>No hay clases para hoy.</p>
+          <p>{t('calendar.noClassesToday')}</p>
         ) : (
           sessionsForDate.map(session => {
             const occupancy = sessionOccupancy[session.id] ?? 0;
@@ -544,8 +546,8 @@ const Calendar: React.FC = () => {
                     <img src={aforoIcon} alt="Aforo" className="session-aforo-icon" />
                     {`${occupancy}/${session.capacity}`}
                     <div className='calendar-details-btn-container'>
-                      <button className="calendar-details-btn" title="Detalles" onClick={() => openDetailsModal(session)}>
-                        <img src={infoIcon} alt="Detalles" className="calendar-details-btn-icon" />
+                      <button className="calendar-details-btn" title={t('common.details')} onClick={() => openDetailsModal(session)}>
+                        <img src={infoIcon} alt={t('common.details')} className="calendar-details-btn-icon" />
                       </button>
                     </div>
                   </div>
@@ -562,12 +564,12 @@ const Calendar: React.FC = () => {
       {/* Modal de mes completo */}
       <IonModal className="calendar-month-modal-wrapper" isOpen={showMonthModal} onDidDismiss={() => setShowMonthModal(false)}>
         <div className="calendar-month-modal">
-          <h4>Seleccionar fecha</h4>
+          <h4>{t('calendar.selectDate')}</h4>
           <IonDatetime
             className="calendar-month-date-calendar"
             presentation="date"
             firstDayOfWeek={1}
-            locale="es-ES"
+            locale={dateLocale}
             value={selectedDate}
             onIonChange={(e) => {
               const next = e.detail.value;
@@ -585,7 +587,7 @@ const Calendar: React.FC = () => {
               e.currentTarget.blur();
             }}
           >
-            Cerrar
+            {t('common.close')}
           </button>
         </div>
       </IonModal>
@@ -598,30 +600,30 @@ const Calendar: React.FC = () => {
         setIsTimePickerPresented(false);
       }}>
         <div className={`calendar-hour-modal ${isTimePickerPresented ? 'calendar-hour-modal--dimmed' : ''}`}>
-          <h3>Editar sesión</h3>
-          <p className="calendar-hour-modal-subtitle">Ajusta horario, capacidad y detalles de la clase</p>
+          <h3>{t('calendar.editSession')}</h3>
+          <p className="calendar-hour-modal-subtitle">{t('calendar.editSubtitle')}</p>
           <div className="calendar-edit-session-block">
             <label className="calendar-hour-modal-label">
-              <span>Nombre de la clase</span>
+              <span>{t('calendar.className')}</span>
               <input
                 type="text"
                 className="app-input calendar-edit-text-input"
                 value={editClassName}
                 onChange={(e) => setEditClassName(e.target.value)}
                 maxLength={120}
-                placeholder="Ej. Funcional"
+                placeholder={t('calendar.classNamePlaceholder')}
               />
             </label>
           </div>
           <div className="calendar-hour-modal-fields">
             <label className="calendar-hour-modal-label">
-              <span>Inicio</span>
+              <span>{t('calendar.start')}</span>
               <button type="button" className="calendar-hour-picker-field" onClick={() => openTimePicker('start')}>
                 {newStartTime || '--:--'}
               </button>
             </label>
             <label className="calendar-hour-modal-label">
-              <span>Fin</span>
+              <span>{t('calendar.end')}</span>
               <button type="button" className="calendar-hour-picker-field" onClick={() => openTimePicker('end')}>
                 {newEndTime || '--:--'}
               </button>
@@ -629,7 +631,7 @@ const Calendar: React.FC = () => {
           </div>
           <div className="calendar-edit-session-block">
             <label className="calendar-hour-modal-label">
-              <span>Capacidad</span>
+              <span>{t('calendar.capacity')}</span>
               <button
                 type="button"
                 className="calendar-hour-picker-field"
@@ -658,24 +660,24 @@ const Calendar: React.FC = () => {
           </div>
           <div className="calendar-edit-session-block">
             <label className="calendar-hour-modal-label">
-              <span>Notas</span>
+              <span>{t('calendar.notes')}</span>
               <textarea
                 className="app-input calendar-edit-textarea"
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
                 maxLength={1000}
                 rows={4}
-                placeholder="Indicaciones internas u observaciones"
+                placeholder={t('calendar.notesPlaceholder')}
               />
             </label>
           </div>
           <div className="calendar-hour-modal-actions">
-            <button onClick={handleSaveSession} className="calendar-hour-modal-save">Guardar</button>
-            <button onClick={() => setShowHourModal(false)} className="calendar-hour-modal-cancel">Cerrar</button>
+            <button onClick={handleSaveSession} className="calendar-hour-modal-save">{t('common.save')}</button>
+            <button onClick={() => setShowHourModal(false)} className="calendar-hour-modal-cancel">{t('common.close')}</button>
           </div>
           {editingSession ? (
             <div className="calendar-modal-danger-zone">
-              <button onClick={() => handleDeleteSession(editingSession)} className="calendar-hour-modal-delete">Eliminar sesión</button>
+              <button onClick={() => handleDeleteSession(editingSession)} className="calendar-hour-modal-delete">{t('calendar.deleteSession')}</button>
             </div>
           ) : null}
         </div>
@@ -690,7 +692,7 @@ const Calendar: React.FC = () => {
         onDidDismiss={() => setShowTimePickerModal(false)}
       >
         <div className="calendar-time-picker-modal">
-          <h4>{timePickerTarget === 'start' ? 'Hora de inicio' : 'Hora de fin'}</h4>
+          <h4>{timePickerTarget === 'start' ? t('create.startTimeTitle') : t('create.endTimeTitle')}</h4>
           <IonDatetime
             className="calendar-time-picker"
             presentation="time"
@@ -705,8 +707,8 @@ const Calendar: React.FC = () => {
             }}
           />
           <div className="calendar-hour-modal-actions">
-            <button onClick={applyPickedTime} className="calendar-hour-modal-save">Aplicar</button>
-            <button onClick={() => setShowTimePickerModal(false)} className="calendar-hour-modal-cancel">Cancelar</button>
+            <button onClick={applyPickedTime} className="calendar-hour-modal-save">{t('common.apply')}</button>
+            <button onClick={() => setShowTimePickerModal(false)} className="calendar-hour-modal-cancel">{t('common.cancel')}</button>
           </div>
         </div>
       </IonModal>
@@ -725,7 +727,7 @@ const Calendar: React.FC = () => {
         }}
       >
         <div className="calendar-bookings-modal">
-          <h3>Detalles de la clase</h3>
+          <h3>{t('calendar.detailsTitle')}</h3>
           {detailsSession ? (
             <>
               {detailsSession.class_name ? (
@@ -735,10 +737,10 @@ const Calendar: React.FC = () => {
                 {formatDateDdMmYy(detailsSession.session_date)} · {formatHour(detailsSession.start_time, detailsSession.session_date)} - {formatHour(detailsSession.end_time, detailsSession.session_date)}
               </p>
               {isDetailsSessionPast ? (
-                <p className="calendar-bookings-modal-capacity">Clase pasada: solo lectura.</p>
+                <p className="calendar-bookings-modal-capacity">{t('calendar.pastClassReadOnly')}</p>
               ) : null}
               <p className="calendar-bookings-modal-capacity">
-                Ocupación: {activeBookingsCount}/{detailsSession.capacity}
+                {t('calendar.occupancy')}: {activeBookingsCount}/{detailsSession.capacity}
               </p>
               {detailsSession.notes ? (
                 <p className="calendar-bookings-modal-notes">{detailsSession.notes}</p>
@@ -758,26 +760,26 @@ const Calendar: React.FC = () => {
                     </div>
                   </div>
                 ) : bookings.length === 0 ? (
-                  <p className="calendar-bookings-empty">No hay alumnos apuntados.</p>
+                  <p className="calendar-bookings-empty">{t('calendar.noStudents')}</p>
                 ) : (
                   <div className="calendar-bookings-list">
                     {bookings.map(booking => (
                       <div key={booking.id} className="calendar-booking-item">
                         <div>
-                          <div className="calendar-booking-name">{booking.user_name || `Alumno #${booking.user_id}`}</div>
-                          <div className="calendar-booking-email">{booking.user_email || 'Sin email disponible'}</div>
+                          <div className="calendar-booking-name">{booking.user_name || `${t('search.student')} #${booking.user_id}`}</div>
+                          <div className="calendar-booking-email">{booking.user_email || t('calendar.noEmailAvailable')}</div>
                           <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : 'cancelled'}`}>
-                            {booking.status === 'active' ? 'Activa' : 'Inactiva'}
+                            {booking.status === 'active' ? t('calendar.active') : t('calendar.inactive')}
                           </div>
                         </div>
                         {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast ? (
                           booking.status === 'active' ? (
                             <button className="calendar-booking-action-cancel" onClick={() => handleCancelBooking(booking.id)}>
-                              Cancelar
+                              {t('calendar.cancelBooking')}
                             </button>
                           ) : (
                             <button className="calendar-booking-action-reactivate" onClick={() => handleReactivateBooking(booking.id)}>
-                              Reactivar
+                              {t('calendar.reactivate')}
                             </button>
                           )
                         ) : null}
@@ -791,10 +793,10 @@ const Calendar: React.FC = () => {
           <div className="calendar-hour-modal-actions">
             {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast && detailsSession ? (
               <button className="calendar-hour-modal-save" onClick={() => openEditSessionModal(detailsSession)}>
-                Editar Sesión
+                {t('common.edit')}
               </button>
             ) : null}
-            <button className="calendar-hour-modal-cancel" onClick={() => setShowDetailsModal(false)}>Cerrar</button>
+            <button className="calendar-hour-modal-cancel" onClick={() => setShowDetailsModal(false)}>{t('common.close')}</button>
           </div>
         </div>
       </IonModal>

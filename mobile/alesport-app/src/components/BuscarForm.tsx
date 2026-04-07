@@ -4,12 +4,14 @@ import logoIcon from '../icons/icon.png';
 import { IonDatetime, IonModal, IonSpinner } from '@ionic/react';
 import { BookingItem, getAllBookings } from '../api/bookings';
 import { getUserProfile } from '../api/user';
-import { formatDateDdMmYy, formatHour, isSameDay, isSameWeek, mapBookingStatus, toLocalISODate } from '../utils/funcionesGeneral';
+import { formatDateDdMmYy, formatHour, isSameDay, isSameWeek, toLocalISODate } from '../utils/funcionesGeneral';
+import { useLanguage } from '../i18n/LanguageContext';
 import './BuscarForm.css';
 
 type PeriodFilter = 'all' | 'today' | 'week' | 'month';
 
 const BuscarForm: React.FC = () => {
+    const { t, dateLocale } = useLanguage();
     const todayIso = toLocalISODate(new Date());
     const [bookings, setBookings] = useState<BookingItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,9 +39,9 @@ const BuscarForm: React.FC = () => {
         setError(null);
         getAllBookings()
             .then(data => setBookings(data))
-            .catch(() => setError('No se pudieron cargar las reservas'))
+            .catch(() => setError(t('search.loadError')))
             .finally(() => setLoading(false));
-    }, [userRole]);
+    }, [userRole, t]);
 
     const filteredBookings = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -48,11 +50,11 @@ const BuscarForm: React.FC = () => {
         return bookings.filter(b => {
             const byName = (b.user_name || '').toLowerCase().includes(q);
             const byEmail = (b.user_email || '').toLowerCase().includes(q);
-            const statusText = mapBookingStatus(b.status).toLowerCase();
+            const statusText = (b.status === 'active' ? t('search.statusActive') : t('search.statusCancelled')).toLowerCase();
             const byStatus = statusText.includes(q);
             return byName || byEmail || byStatus;
         });
-    }, [bookings, query]);
+    }, [bookings, query, t]);
 
     const periodFilteredBookings = useMemo(() => {
         if (periodFilter === 'all') {
@@ -98,17 +100,17 @@ const BuscarForm: React.FC = () => {
         <div className="search-form-container">
             <div className="search-top-bar">
                 <img src={logoIcon} alt="Logo gimnasio" className="search-top-logo" />
-                <div className="search-top-title search-top-title-absolute">Buscar reservas</div>
+                <div className="search-top-title search-top-title-absolute">{t('search.title')}</div>
             </div>
             {/* Contenido principal de la búsqueda */}
             <div className="search-form-content">
                 {userRole !== 'admin' ? (
-                    <p className="search-form-empty">Solo administradores pueden ver todas las reservas.</p>
+                    <p className="search-form-empty">{t('search.adminOnly')}</p>
                 ) : (
                     <div className="search-form-body">
                         <input
                             className="search-form-search-input"
-                            placeholder="Buscar por alumno, email o estado (activa/inactiva)"
+                            placeholder={t('search.placeholder')}
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
@@ -125,10 +127,10 @@ const BuscarForm: React.FC = () => {
                                     }
                                 }}
                             >
-                                <option value="all">Todas</option>
-                                <option value="today">Hoy</option>
-                                <option value="week">Semana</option>
-                                <option value="month">Mes</option>
+                                <option value="all">{t('search.all')}</option>
+                                <option value="today">{t('search.today')}</option>
+                                <option value="week">{t('search.week')}</option>
+                                <option value="month">{t('search.month')}</option>
                             </select>
                             {periodFilter !== 'all' && periodFilter !== 'today' ? (
                                 <button
@@ -147,12 +149,12 @@ const BuscarForm: React.FC = () => {
                             onDidDismiss={() => setShowPeriodCalendar(false)}
                         >
                             <div className="search-form-date-modal">
-                                <h4>Seleccionar fecha</h4>
+                                <h4>{t('search.selectDate')}</h4>
                                 <IonDatetime
                                     className="search-form-date-calendar"
                                     presentation="date"
                                     firstDayOfWeek={1}
-                                    locale="es-ES"
+                                    locale={dateLocale}
                                     value={periodDate}
                                     onIonChange={(e) => {
                                         const next = e.detail.value;
@@ -163,10 +165,10 @@ const BuscarForm: React.FC = () => {
                                 />
                                 <div className="search-form-date-modal-actions">
                                     <button type="button" className="app-btn-primary" onClick={() => setShowPeriodCalendar(false)}>
-                                        Aceptar
+                                        {t('common.accept')}
                                     </button>
                                     <button type="button" className="app-btn-danger" onClick={() => setShowPeriodCalendar(false)}>
-                                        Cancelar
+                                        {t('common.cancel')}
                                     </button>
                                 </div>
                             </div>
@@ -174,11 +176,11 @@ const BuscarForm: React.FC = () => {
 
                         {!loading && !error ? (
                             <div className="search-form-summary">
-                                <span className="search-form-summary-total">{bookingSummary.total} Reservas</span>
+                                <span className="search-form-summary-total">{bookingSummary.total} {t('search.total')}</span>
                                 <span className="search-form-summary-separator">·</span>
-                                <span className="search-form-summary-active">{bookingSummary.active} Activas</span>
+                                <span className="search-form-summary-active">{bookingSummary.active} {t('search.active')}</span>
                                 <span className="search-form-summary-separator">·</span>
-                                <span className="search-form-summary-inactive">{bookingSummary.inactive} Canceladas</span>
+                                <span className="search-form-summary-inactive">{bookingSummary.inactive} {t('search.cancelled')}</span>
                             </div>
                         ) : null}
 
@@ -189,23 +191,23 @@ const BuscarForm: React.FC = () => {
                         ) : error ? (
                             <p className="search-form-error">{error}</p>
                         ) : periodFilteredBookings.length === 0 ? (
-                            <p className="search-form-empty">No se encontraron reservas.</p>
+                            <p className="search-form-empty">{t('search.empty')}</p>
                         ) : (
                             <div className="search-form-list">
                                 {periodFilteredBookings.map((booking) => {
-                                    const statusLabel = mapBookingStatus(booking.status);
+                                    const statusLabel = booking.status === 'active' ? t('search.statusActive') : t('search.statusCancelled');
                                     const statusClass = booking.status === 'active' ? 'active' : 'inactive';
 
                                     return (
                                         <div key={booking.id} className="search-form-item">
-                                            <div className="search-form-item-name">{booking.user_name || `Alumno #${booking.user_id}`}</div>
-                                            <div className="search-form-item-email">{booking.user_email || 'Sin email'}</div>
+                                            <div className="search-form-item-name">{booking.user_name || `${t('search.student')} #${booking.user_id}`}</div>
+                                            <div className="search-form-item-email">{booking.user_email || t('search.noEmail')}</div>
                                             <div className="search-form-item-meta">
-                                                <strong>Estado:</strong> <span className={`search-form-status-badge ${statusClass}`}>{statusLabel}</span>
+                                                <strong>{t('search.status')}:</strong> <span className={`search-form-status-badge ${statusClass}`}>{statusLabel}</span>
                                                 <span className="search-form-item-meta-separator">·</span>
-                                                <strong>Hora:</strong> {formatHour(booking.session_start_time || booking.created_at)}
+                                                <strong>{t('search.time')}:</strong> {formatHour(booking.session_start_time || booking.created_at)}
                                                 <span className="search-form-item-meta-separator">·</span>
-                                                <strong>Fecha:</strong> {formatDateDdMmYy(booking.session_start_time || booking.created_at)}
+                                                <strong>{t('search.date')}:</strong> {formatDateDdMmYy(booking.session_start_time || booking.created_at)}
                                             </div>
                                         </div>
                                     );

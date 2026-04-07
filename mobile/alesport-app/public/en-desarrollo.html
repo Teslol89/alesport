@@ -4,58 +4,239 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Verdeguer Labs · En desarrollo</title>
+    <meta name="description" content="La web oficial de Verdeguer Labs está en desarrollo." />
     <style>
       :root {
         color-scheme: light;
-        font-family: 'Open Sans', Arial, sans-serif;
+        --bg-1: #f4fbff;
+        --bg-2: #e8f1f8;
+        --card: rgba(255, 255, 255, 0.9);
+        --border: rgba(11, 45, 52, 0.08);
+        --primary: #0089a6;
+        --primary-dark: #0b2d34;
+        --muted: #4c6970;
       }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
         min-height: 100vh;
         display: grid;
         place-items: center;
-        background: linear-gradient(160deg, #f4fbff 0%, #eef3f8 100%);
-        color: #12313a;
+        padding: 24px;
+        font-family: "Open Sans", Arial, sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(0, 137, 166, 0.16), transparent 0 28%),
+          radial-gradient(circle at bottom right, rgba(11, 45, 52, 0.12), transparent 0 24%),
+          linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
+        color: var(--primary-dark);
       }
-      .card {
-        width: min(92vw, 560px);
-        background: #ffffff;
-        border-radius: 18px;
-        box-shadow: 0 18px 40px rgba(11, 45, 52, 0.14);
-        padding: 2rem 1.4rem;
+
+      .shell {
+        width: min(92vw, 760px);
+        background: var(--card);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow: 0 24px 60px rgba(11, 45, 52, 0.16);
+        padding: 28px 22px;
         text-align: center;
       }
-      h1 {
-        margin: 0 0 0.75rem;
-        font-size: clamp(1.7rem, 2vw + 1rem, 2.3rem);
-      }
-      p {
-        margin: 0.5rem 0;
-        line-height: 1.55;
-        color: #49656c;
-      }
-      .badge {
-        display: inline-block;
-        margin-bottom: 1rem;
-        padding: 0.35rem 0.7rem;
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding: 8px 14px;
         border-radius: 999px;
-        background: rgba(0, 137, 166, 0.12);
-        color: #0089a6;
+        background: rgba(0, 137, 166, 0.1);
+        color: var(--primary);
         font-weight: 700;
         letter-spacing: 0.02em;
       }
-      a {
-        color: #0089a6;
-        font-weight: 600;
+
+      .repair-zone {
+        position: relative;
+        width: 210px;
+        height: 160px;
+        margin: 4px auto 18px;
+      }
+
+      .gear {
+        position: absolute;
+        border-radius: 50%;
+        border: 10px solid rgba(0, 137, 166, 0.22);
+        background: radial-gradient(circle, #ffffff 35%, rgba(0, 137, 166, 0.14) 36% 100%);
+        box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.92);
+      }
+
+      .gear::before,
+      .gear::after {
+        content: "";
+        position: absolute;
+        inset: -12px;
+        border-radius: 50%;
+        background: conic-gradient(
+          from 0deg,
+          rgba(0, 137, 166, 0.18) 0deg 12deg,
+          transparent 12deg 30deg,
+          rgba(0, 137, 166, 0.18) 30deg 42deg,
+          transparent 42deg 60deg,
+          rgba(0, 137, 166, 0.18) 60deg 72deg,
+          transparent 72deg 90deg,
+          rgba(0, 137, 166, 0.18) 90deg 102deg,
+          transparent 102deg 120deg,
+          rgba(0, 137, 166, 0.18) 120deg 132deg,
+          transparent 132deg 150deg,
+          rgba(0, 137, 166, 0.18) 150deg 162deg,
+          transparent 162deg 180deg,
+          rgba(0, 137, 166, 0.18) 180deg 192deg,
+          transparent 192deg 210deg,
+          rgba(0, 137, 166, 0.18) 210deg 222deg,
+          transparent 222deg 240deg,
+          rgba(0, 137, 166, 0.18) 240deg 252deg,
+          transparent 252deg 270deg,
+          rgba(0, 137, 166, 0.18) 270deg 282deg,
+          transparent 282deg 300deg,
+          rgba(0, 137, 166, 0.18) 300deg 312deg,
+          transparent 312deg 330deg,
+          rgba(0, 137, 166, 0.18) 330deg 342deg,
+          transparent 342deg 360deg
+        );
+        z-index: -1;
+      }
+
+      .gear-large {
+        width: 108px;
+        height: 108px;
+        left: 22px;
+        top: 34px;
+        animation: spin 7s linear infinite;
+      }
+
+      .gear-small {
+        width: 72px;
+        height: 72px;
+        right: 26px;
+        top: 18px;
+        animation: spin-reverse 4.5s linear infinite;
+      }
+
+      .wrench {
+        position: absolute;
+        right: 36px;
+        bottom: 10px;
+        font-size: 3.25rem;
+        transform-origin: 70% 75%;
+        animation: repair 2.4s ease-in-out infinite;
+        filter: drop-shadow(0 8px 14px rgba(11, 45, 52, 0.18));
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(1.9rem, 2vw + 1rem, 2.6rem);
+        line-height: 1.1;
+      }
+
+      p {
+        margin: 0 auto;
+        max-width: 560px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+
+      .status {
+        margin: 18px auto 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .dots {
+        display: inline-flex;
+        gap: 5px;
+      }
+
+      .dots span {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--primary);
+        animation: blink 1.2s infinite ease-in-out;
+      }
+
+      .dots span:nth-child(2) { animation-delay: 0.15s; }
+      .dots span:nth-child(3) { animation-delay: 0.3s; }
+
+      .footer {
+        margin-top: 22px;
+        font-size: 0.95rem;
+      }
+
+      .footer a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      @keyframes spin-reverse {
+        from { transform: rotate(360deg); }
+        to { transform: rotate(0deg); }
+      }
+
+      @keyframes repair {
+        0%, 100% { transform: rotate(-10deg) translateY(0); }
+        25% { transform: rotate(8deg) translateY(-4px); }
+        50% { transform: rotate(-14deg) translateY(2px); }
+        75% { transform: rotate(10deg) translateY(-3px); }
+      }
+
+      @keyframes blink {
+        0%, 80%, 100% { opacity: 0.25; transform: scale(0.9); }
+        40% { opacity: 1; transform: scale(1.15); }
       }
     </style>
   </head>
   <body>
-    <main class="card">
-      <div class="badge">Web en desarrollo</div>
-      <h1>Estamos preparando la nueva web de Verdeguer Labs</h1>
-      <p>Muy pronto esta página mostrará la web oficial.</p>
-      <p>Mientras tanto, si necesitas ayuda puedes escribir a <a href="mailto:verdeguerlabs@verdeguerlabs.es">verdeguerlabs@verdeguerlabs.es</a>.</p>
+    <main class="shell">
+      <div class="brand">Verdeguer Labs</div>
+
+      <div class="repair-zone" aria-hidden="true">
+        <div class="gear gear-large"></div>
+        <div class="gear gear-small"></div>
+        <div class="wrench">🔧</div>
+      </div>
+
+      <h1>Web oficial en desarrollo</h1>
+      <p>
+        Estamos trabajando en la nueva página de Verdeguer Labs para mostrar nuestras aplicaciones,
+        servicios y próximos lanzamientos de una forma mucho más completa.
+      </p>
+
+      <div class="status">
+        Reparando y preparando el sitio
+        <span class="dots"><span></span><span></span><span></span></span>
+      </div>
+
+      <p class="footer">
+        Mientras tanto, puedes contactar en
+        <a href="mailto:verdeguerlabs@verdeguerlabs.es">verdeguerlabs@verdeguerlabs.es</a>
+      </p>
     </main>
   </body>
 </html>

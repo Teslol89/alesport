@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
-import { calendarOutline, helpCircleOutline, moonOutline, notificationsOutline, pencilOutline, personCircleOutline, settingsOutline, sunnyOutline } from 'ionicons/icons';
+import { helpCircleOutline, logoWhatsapp, moonOutline, pencilOutline, personCircleOutline, settingsOutline, sunnyOutline } from 'ionicons/icons';
 import logoIcon from '../icons/icon.png';
 import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
@@ -11,6 +11,7 @@ import './ConfigForm.css';
 const DARK_MODE_STORAGE_KEY = 'alesport-dark-mode';
 const PHONE_COMPACT_REGEX = /^(?:\+34)?[6789]\d{8}$/;
 
+/* Función para formatear los dígitos del teléfono en grupos de 3 */
 const formatPhoneGroups = (digits: string) => {
   const sanitizedDigits = digits.replace(/\D/g, '').slice(0, 9);
   return sanitizedDigits.replace(/(\d{0,3})(\d{0,3})(\d{0,3}).*/, (_match, a: string, b: string, c: string) =>
@@ -18,6 +19,7 @@ const formatPhoneGroups = (digits: string) => {
   );
 };
 
+/* Función para normalizar el número de teléfono a formato +34 612 345 678 o 612 345 678 */
 const normalizePhoneValue = (value: string): string | null => {
   const digits = value.replace(/\D/g, '');
 
@@ -45,6 +47,7 @@ const normalizePhoneValue = (value: string): string | null => {
   return formatPhoneGroups(digits);
 };
 
+/* Función para formatear el número de teléfono en grupos de 3 dígitos mientras se escribe */
 const sanitizePhoneInput = (value: string): string => {
   const cleaned = value.replace(/[^\d+\s]/g, '');
   const trimmed = cleaned.trimStart();
@@ -65,6 +68,13 @@ const sanitizePhoneInput = (value: string): string => {
   }
 
   return formatPhoneGroups(digits);
+};
+
+/* Función para abrir WhatsApp con el número de Alex y un mensaje predefinido */
+const handleContactAlex = () => {
+  const phone = '34650951666'; // número real de Alex, sin espacios ni +
+  const message = encodeURIComponent('Hola Alex, te escribo desde la app de Alesport.');
+  window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
 };
 
 const ConfigForm: React.FC = () => {
@@ -202,13 +212,9 @@ const ConfigForm: React.FC = () => {
             <IonIcon icon={pencilOutline} slot="start" />
             <IonLabel>{t('config.editProfile')}</IonLabel>
           </IonItem>
-          <IonItem button detail={false} lines="none">
-            <IonIcon icon={notificationsOutline} slot="start" />
-            <IonLabel>{t('config.notifications')}</IonLabel>
-          </IonItem>
-          <IonItem button detail={false} lines="none">
-            <IonIcon icon={calendarOutline} slot="start" />
-            <IonLabel>{t('config.calendarSettings')}</IonLabel>
+          <IonItem button detail={false} lines="none" onClick={handleContactAlex}>
+            <IonIcon icon={logoWhatsapp} slot="start" />
+            <IonLabel>WhatsApp Alex</IonLabel>
           </IonItem>
           <IonItem button detail={false} lines="none">
             <IonIcon icon={settingsOutline} slot="start" />

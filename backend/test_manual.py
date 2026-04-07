@@ -38,7 +38,7 @@ from datetime import datetime, timedelta, time as dt_time
 import requests
 
 
-BASE_URL = os.getenv("API_BASE_URL", "https://www.verdeguerlabs.es/api")
+BASE_URL = os.getenv("API_BASE_URL", "https://api.verdeguerlabs.es/api")
 USERS = [
     {"email": "admin@demo.com", "password": "admin123", "role": "admin"},
     {"email": "trainer@demo.com", "password": "trainer123", "role": "trainer"},

@@ -9,6 +9,9 @@ import { useLanguage } from '../i18n/LanguageContext';
 import './ConfigForm.css';
 
 const DARK_MODE_STORAGE_KEY = 'alesport-dark-mode';
+const APP_VERSION = '1.0.0';
+const SUPPORT_EMAIL = 'verdeguerlabs@verdeguerlabs.es';
+const SUPPORT_WEBSITE = 'https://www.verdeguerlabs.es';
 const PHONE_COMPACT_REGEX = /^(?:\+34)?[6789]\d{8}$/;
 
 /* Función para formatear los dígitos del teléfono en grupos de 3 */
@@ -86,6 +89,7 @@ const ConfigForm: React.FC = () => {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
   const [notifications, setNotifications] = useState(true);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' }>({
     show: false,
@@ -159,6 +163,14 @@ const ConfigForm: React.FC = () => {
     }
   };
 
+  const handleOpenSupportEmail = () => {
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Soporte Alesport')}`;
+  };
+
+  const handleOpenSupportWebsite = () => {
+    window.open(SUPPORT_WEBSITE, '_blank', 'noopener,noreferrer');
+  };
+
   const handleLogout = () => {
     if (logout) logout();
     else alert(t('config.loggedOut'));
@@ -220,7 +232,7 @@ const ConfigForm: React.FC = () => {
             <IonIcon icon={settingsOutline} slot="start" />
             <IonLabel>{t('config.settings')}</IonLabel>
           </IonItem>
-          <IonItem button detail={false} lines="none">
+          <IonItem button detail={false} lines="none" onClick={() => setShowSupportModal(true)}>
             <IonIcon icon={helpCircleOutline} slot="start" />
             <IonLabel>{t('config.help')}</IonLabel>
           </IonItem>
@@ -298,6 +310,65 @@ const ConfigForm: React.FC = () => {
               disabled={isSavingProfile}
             >
               {isSavingProfile ? t('common.loading') : t('common.save')}
+            </button>
+          </div>
+        </div>
+      </IonModal>
+
+      <IonModal
+        className="config-edit-modal-wrapper"
+        isOpen={showSupportModal}
+        onDidDismiss={() => setShowSupportModal(false)}
+      >
+        <div className="config-edit-modal">
+          <div className="config-edit-modal-header">
+            <h3>{t('config.helpSupportTitle')}</h3>
+            <p>{t('config.helpSupportSubtitle')}</p>
+          </div>
+
+          <div className="config-support-stack">
+            <div className="config-readonly-card">
+              <span className="config-readonly-label">{t('config.versionLabel')}</span>
+              <span className="config-readonly-value">Alesport v{APP_VERSION}</span>
+            </div>
+            <div className="config-readonly-card">
+              <span className="config-readonly-label">{t('config.developedByLabel')}</span>
+              <span className="config-readonly-value">Verdeguer Labs · Llíria, Valencia</span>
+            </div>
+            <div className="config-readonly-card">
+              <span className="config-readonly-label">{t('config.supportEmailLabel')}</span>
+              <span className="config-readonly-value">{SUPPORT_EMAIL}</span>
+            </div>
+            <div className="config-readonly-card">
+              <span className="config-readonly-label">{t('config.websiteLabel')}</span>
+              <a
+                className="config-support-link"
+                href={SUPPORT_WEBSITE}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                www.verdeguerlabs.es
+              </a>
+            </div>
+          </div>
+
+          <div className="config-support-actions">
+            <button
+              type="button"
+              className="app-btn-primary config-edit-action-btn config-support-primary-btn"
+              onClick={handleOpenSupportEmail}
+            >
+              {t('config.contactSupport')}
+            </button>
+          </div>
+
+          <div className="config-edit-actions">
+            <button
+              type="button"
+              className="app-btn-danger config-edit-action-btn"
+              onClick={() => setShowSupportModal(false)}
+            >
+              {t('common.close')}
             </button>
           </div>
         </div>

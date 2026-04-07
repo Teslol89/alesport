@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
+import { IonAlert, IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
 import { cameraOutline, helpCircleOutline, logoWhatsapp, moonOutline, pencilOutline, personCircleOutline, settingsOutline, sunnyOutline, trashOutline } from 'ionicons/icons';
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -96,6 +96,7 @@ const ConfigForm: React.FC = () => {
   const [notifications, setNotifications] = useState(true);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [showAvatarSourceAlert, setShowAvatarSourceAlert] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' }>({
     show: false,
@@ -173,18 +174,15 @@ const ConfigForm: React.FC = () => {
     }
   };
 
-  const handleAvatarPicker = async () => {
-    if (!Capacitor.isNativePlatform()) {
-      avatarInputRef.current?.click();
-      return;
-    }
+  const handleAvatarSelection = async (source: CameraSource) => {
+    setShowAvatarSourceAlert(false);
 
     try {
       const photo = await Camera.getPhoto({
         quality: 85,
         allowEditing: true,
         resultType: CameraResultType.DataUrl,
-        source: CameraSource.Prompt,
+        source,
         width: 900,
         height: 900,
       });
@@ -200,6 +198,15 @@ const ConfigForm: React.FC = () => {
         setToast({ show: true, message: t('config.photoAccessError'), type: 'danger' });
       }
     }
+  };
+
+  const handleAvatarPicker = () => {
+    if (!Capacitor.isNativePlatform()) {
+      avatarInputRef.current?.click();
+      return;
+    }
+
+    setShowAvatarSourceAlert(true);
   };
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -466,6 +473,31 @@ const ConfigForm: React.FC = () => {
         </div>
       </IonModal>
 
+      <IonAlert
+        isOpen={showAvatarSourceAlert}
+        onDidDismiss={() => setShowAvatarSourceAlert(false)}
+        header={t('config.photoSourceTitle')}
+        message={t('config.photoSourceMessage')}
+        buttons={[
+          {
+            text: t('config.takePhoto'),
+            handler: () => {
+              void handleAvatarSelection(CameraSource.Camera);
+            },
+          },
+          {
+            text: t('config.chooseFromGallery'),
+            handler: () => {
+              void handleAvatarSelection(CameraSource.Photos);
+            },
+          },
+          {
+            text: t('common.cancel'),
+            role: 'cancel',
+          },
+        ]}
+      />
+
       <IonModal
         className="config-edit-modal-wrapper"
         isOpen={showSupportModal}
@@ -484,7 +516,7 @@ const ConfigForm: React.FC = () => {
             </div>
             <div className="config-readonly-card">
               <span className="config-readonly-label">{t('config.developedByLabel')}</span>
-              <span className="config-readonly-value">Verdeguer Labs · 46160 Llíria, Valencia</span>
+              <span className="config-readonly-value">Verdeguer Labs · 46160 Liria, Valencia</span>
             </div>
             <div className="config-readonly-card">
               <span className="config-readonly-label">{t('config.supportEmailLabel')}</span>

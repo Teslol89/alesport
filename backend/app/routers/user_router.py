@@ -43,27 +43,6 @@ def delete_pending_user_by_email(
 class UserUpdateIsActive(BaseModel):
     is_active: bool
 
-# --- ENDPOINT PATCH PARA is_active ---
-from fastapi import Body
-
-@router.patch("/{user_id}", response_model=UserResponse)
-def patch_user_is_active(
-    user_id: int = Path(..., description="ID del usuario a modificar"),
-    update: UserUpdateIsActive = Body(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Permite a un admin activar/desactivar usuarios (campo is_active)."""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Solo admin puede modificar usuarios")
-    user = db.query(UserModel).filter(UserModel.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    user.is_active = update.is_active
-    db.commit()
-    db.refresh(user)
-    return user
-
 
 @router.get("/", response_model=list[UserResponse])
 def get_users(
@@ -117,3 +96,23 @@ def update_fcm_token(
     current_user.fcm_token = payload.fcm_token
     db.commit()
     return
+
+
+# --- ENDPOINT PATCH PARA is_active ---
+@router.patch("/{user_id}", response_model=UserResponse)
+def patch_user_is_active(
+    user_id: int = Path(..., description="ID del usuario a modificar"),
+    update: UserUpdateIsActive = Body(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Permite a un admin activar/desactivar usuarios (campo is_active)."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Solo admin puede modificar usuarios")
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    user.is_active = update.is_active
+    db.commit()
+    db.refresh(user)
+    return user

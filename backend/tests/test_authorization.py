@@ -2,7 +2,7 @@ def test_client_cannot_list_users(client, auth_headers, seed_data):
     """Test: Solo admins pueden ver lista de todos los usuarios.
     
     Verificación de autorización por role:
-    - Client intenta GET /users/ -> Derecho denegado (403 Forbidden)
+    - Client intenta GET /api/users/ -> Derecho denegado (403 Forbidden)
     
     Control de acceso basado en rol (RBAC):
     El endpoint /users/ tiene validación: if current_user.role != "admin": raise 403
@@ -11,7 +11,7 @@ def test_client_cannot_list_users(client, auth_headers, seed_data):
     headers = auth_headers(seed_data["client"].email, "client1234")
 
     # Intentar listar usuarios
-    response = client.get("/users/", headers=headers)
+    response = client.get("/api/users/", headers=headers)
 
     # Verificar que fue denegado
     assert response.status_code == 403  # Forbidden
@@ -22,7 +22,7 @@ def test_trainer_cannot_create_booking(client, auth_headers, seed_data):
     """Test: Solo clients pueden crear bookings. Trainers no pueden.
     
     Verificación de autorización por role:
-    - Trainer intenta POST /bookings/ -> Derecho denegado (403 Forbidden)
+    - Trainer intenta POST /api/bookings/ -> Derecho denegado (403 Forbidden)
     
     Regla de negocio: Una reserva debe ser un client.
     El endpoint valida: if current_user.role != "client": raise 403
@@ -32,7 +32,7 @@ def test_trainer_cannot_create_booking(client, auth_headers, seed_data):
 
     # Intentar crear booking (reserva de sesión)
     response = client.post(
-        "/bookings/",
+        "/api/bookings/",
         headers=headers,
         json={"session_id": seed_data["session"].id},
     )
@@ -58,7 +58,7 @@ def test_client_can_create_booking(client, auth_headers, seed_data):
 
     # Crear booking (reserva de sesión)
     response = client.post(
-        "/bookings/",
+        "/api/bookings/",
         headers=headers,
         json={"session_id": seed_data["session"].id},
     )
@@ -77,7 +77,7 @@ def test_trainer_cannot_create_weekly_schedule(client, auth_headers, seed_data):
     """Test: Solo admins pueden crear horarios semanales.
     
     Verificación de autorización por role:
-    - Trainer intenta POST /schedule/ -> Derecho denegado (403)
+    - Trainer intenta POST /api/schedule/ -> Derecho denegado (403)
     
     Regla: Schedules (plantillas) solo se crean por administrador.
     El endpoint valida: if current_user.role != "admin": raise 403
@@ -87,7 +87,7 @@ def test_trainer_cannot_create_weekly_schedule(client, auth_headers, seed_data):
 
     # Intentar crear horario semanal
     response = client.post(
-        "/schedule/",
+        "/api/schedule/",
         headers=headers,
         json={
             "trainer_id": seed_data["trainer"].id,
@@ -120,7 +120,7 @@ def test_admin_can_create_weekly_schedule(client, auth_headers, seed_data):
 
     # Crear horario semanal
     response = client.post(
-        "/schedule/",
+        "/api/schedule/",
         headers=headers,
         json={
             "trainer_id": seed_data["trainer"].id,
@@ -146,7 +146,7 @@ def test_trainer_cannot_generate_sessions(client, auth_headers, seed_data):
     """Test: Solo admins pueden generar sesiones manualmente.
     
     Verificación de autorización por role:
-    - Trainer intenta POST /schedule/generate-sessions -> Denegado (403)
+    - Trainer intenta POST /api/schedule/generate-sessions -> Denegado (403)
     
     Explicación: La generación de sesiones es operación administrativa crítica.
     El endpoint valida: if current_user.role != "admin": raise 403
@@ -158,7 +158,7 @@ def test_trainer_cannot_generate_sessions(client, auth_headers, seed_data):
 
     # Intentar generar sesiones (operación admin)
     response = client.post(
-        "/schedule/generate-sessions",
+        "/api/schedule/generate-sessions",
         headers=headers,
         json={"weeks_ahead": 1},
     )

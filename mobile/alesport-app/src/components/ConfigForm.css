@@ -120,6 +120,12 @@
   margin-bottom: 0.2rem;
 }
 
+.config-profile-phone {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #5f6b76;
+}
+
 /* ------------------------------- */
 /* 4) Tarjetas y contenido */
 /* ------------------------------- */
@@ -186,7 +192,117 @@
 }
 
 /* ------------------------------- */
-/* 6) Botón logout */
+/* 6) Modal editar perfil */
+/* ------------------------------- */
+.config-edit-modal-wrapper {
+  --width: min(92vw, 460px);
+  --height: auto;
+  --border-radius: 20px;
+  --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
+}
+
+.config-edit-modal-wrapper::part(content) {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.config-edit-modal {
+  padding: 1.2rem;
+  background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.config-edit-modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #0b2d34;
+}
+
+.config-edit-modal-header p {
+  margin: 0.35rem 0 0;
+  color: #4c6970;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.config-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.config-field-label {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #1a4650;
+}
+
+.config-edit-input {
+  width: 100%;
+}
+
+.config-readonly-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+}
+
+.config-readonly-card {
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.config-readonly-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #60777d;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.config-readonly-value {
+  font-size: 0.95rem;
+  color: #0f3037;
+  word-break: break-word;
+}
+
+.config-membership-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.config-membership-badge.active {
+  background: rgba(45, 211, 111, 0.16);
+  color: #157a43;
+}
+
+.config-membership-badge.inactive {
+  background: rgba(235, 68, 90, 0.14);
+  color: #a63b4b;
+}
+
+.config-edit-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.config-edit-action-btn {
+  flex: 1;
+}
+
+/* ------------------------------- */
+/* 7) Botón logout */
 /* ------------------------------- */
 .config-logout {
   width: 100%;
@@ -208,7 +324,7 @@
 }
 
 /* ------------------------------- */
-/* 7) Responsive */
+/* 8) Responsive */
 /* ------------------------------- */
 @media (max-width: 600px) {
   .config-profile-card,
@@ -227,7 +343,7 @@ ion-toggle {
 }
 
 /* ------------------------------- */
-/* 8) Modo oscuro */
+/* 9) Modo oscuro */
 /* ------------------------------- */
 .ion-palette-dark .config-form-container {
   background: var(--app-page-background, #0f131a);
@@ -248,7 +364,8 @@ ion-toggle {
   color: var(--app-text-primary, #f5f7fa) !important;
 }
 
-.ion-palette-dark .config-profile-email {
+.ion-palette-dark .config-profile-email,
+.ion-palette-dark .config-profile-phone {
   color: var(--app-text-secondary, #aeb6c2) !important;
 }
 
@@ -269,6 +386,27 @@ ion-toggle {
 .ion-palette-dark .config-profile-avatar {
   background: #2a3342;
   color: #d8deea;
+}
+
+.ion-palette-dark .config-edit-modal {
+  background: linear-gradient(165deg, #161b22 0%, #1c2430 100%);
+  color: var(--app-text-primary, #f5f7fa);
+}
+
+.ion-palette-dark .config-edit-modal-header h3,
+.ion-palette-dark .config-field-label,
+.ion-palette-dark .config-readonly-value {
+  color: var(--app-text-primary, #f5f7fa);
+}
+
+.ion-palette-dark .config-edit-modal-header p,
+.ion-palette-dark .config-readonly-label {
+  color: var(--app-text-secondary, #aeb6c2);
+}
+
+.ion-palette-dark .config-readonly-card {
+  background: #222a36;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .ion-palette-dark ion-toggle {

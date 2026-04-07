@@ -114,6 +114,7 @@ def seed_data(db_session):
         role="admin",
         is_active=True,
         membership_active=True,
+        is_verified=True,
     )
     trainer = User(
         name="Trainer",
@@ -122,6 +123,7 @@ def seed_data(db_session):
         role="trainer",
         is_active=True,
         membership_active=True,
+        is_verified=True,
     )
     client = User(
         name="Client",
@@ -130,6 +132,7 @@ def seed_data(db_session):
         role="client",
         is_active=True,
         membership_active=True,
+        is_verified=True,
     )
 
     # Guardar usuarios en BD y obtener sus IDs autogenerados
@@ -202,7 +205,7 @@ def auth_headers(client):
     """Fixture: Helper para autenticar usuarios en tests.
     
     Retorna una función que:
-    1. Hace POST a /auth/login con email y contraseña
+    1. Hace POST a /api/auth/login con email y contraseña
     2. Extrae el JWT del response
     3. Retorna headers de Authorization con el token
     
@@ -213,9 +216,9 @@ def auth_headers(client):
     Depende de: client (necesita cliente HTTP)
     """
     def _auth_headers(email, password):
-        # Autenticarse contra el endpoint /auth/login
+        # Autenticarse contra el endpoint /api/auth/login
         response = client.post(
-            "/auth/login",
+            "/api/auth/login",
             json={"email": email, "password": password},
         )
         

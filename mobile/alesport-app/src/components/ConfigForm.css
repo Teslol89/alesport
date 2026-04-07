@@ -167,7 +167,26 @@
 }
 
 /* ------------------------------- */
-/* 5) Botón logout */
+/* 5) Switch de idioma */
+/* ------------------------------- */
+.config-language-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.config-language-option {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #7a7a7a;
+}
+
+.config-language-option.active {
+  color: #0089a6;
+}
+
+/* ------------------------------- */
+/* 6) Botón logout */
 /* ------------------------------- */
 .config-logout {
   width: 100%;
@@ -189,7 +208,7 @@
 }
 
 /* ------------------------------- */
-/* 6) Responsive */
+/* 7) Responsive */
 /* ------------------------------- */
 @media (max-width: 600px) {
   .config-profile-card,
@@ -208,7 +227,7 @@ ion-toggle {
 }
 
 /* ------------------------------- */
-/* 7) Modo oscuro */
+/* 8) Modo oscuro */
 /* ------------------------------- */
 .ion-palette-dark .config-form-container {
   background: var(--app-page-background, #0f131a);
@@ -231,6 +250,14 @@ ion-toggle {
 
 .ion-palette-dark .config-profile-email {
   color: var(--app-text-secondary, #aeb6c2) !important;
+}
+
+.ion-palette-dark .config-language-option {
+  color: var(--app-text-secondary, #aeb6c2);
+}
+
+.ion-palette-dark .config-language-option.active {
+  color: #76d1e1;
 }
 
 .ion-palette-dark .config-profile-card,

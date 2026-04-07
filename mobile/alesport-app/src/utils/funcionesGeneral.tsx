@@ -4,7 +4,6 @@
 export function getMondayOfWeek(dateIso: string): string {
   const date = new Date(dateIso);
   const day = date.getDay();
-  // Si es domingo (0), retrocede 6 días; si es lunes (1), retrocede 0; si es martes (2), retrocede 1...
   const diff = day === 0 ? -6 : 1 - day;
   date.setDate(date.getDate() + diff);
   return date.toISOString().slice(0, 10);
@@ -18,7 +17,7 @@ export function getSundayOfWeek(mondayIso: string): string {
   date.setDate(date.getDate() + 6);
   return date.toISOString().slice(0, 10);
 }
-/* Para obtener la fecha en formato ISO local (YYYY-MM-DD) */
+
 export function toLocalISODate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -26,12 +25,10 @@ export function toLocalISODate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-/* Devuelve la fecha actual en formato ISO local (YYYY-MM-DD) */
 export function getTodayIsoDate(): string {
   return toLocalISODate(new Date());
 }
 
-/* Devuelve una fecha ISO en formato legible para UI (DD / MM / YYYY o similar) */
 export function formatIsoDateForUi(isoDate: string, separator = ' / '): string {
   if (!isoDate || isoDate.length < 10) {
     return `--${separator}--${separator}----`;
@@ -41,7 +38,6 @@ export function formatIsoDateForUi(isoDate: string, separator = ' / '): string {
   return `${dd}${separator}${mm}${separator}${yyyy}`;
 }
 
-/* Devuelve la fecha de ayer en formato ISO local (YYYY-MM-DD) */
 export function formatDateDdMmYy(dateStr: string): string {
   const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (match) {
@@ -60,7 +56,6 @@ export function formatDateDdMmYy(dateStr: string): string {
   return `${dd}/${mm}/${yy}`;
 }
 
-/* Devuelve la hora en formato HH:MM a partir de un string ISO o un objeto Date */
 export function formatHour(dateInput: string | Date, sessionDate?: string, fallback = '-'): string {
   let date: Date;
 
@@ -86,11 +81,19 @@ export function formatHour(dateInput: string | Date, sessionDate?: string, fallb
   return `${hours}:${minutes}`;
 }
 
-/* Función para formatear fecha completa en español (ej: "Lunes, 5 de Junio de 2024") */
+export function getActiveLocale(): string {
+  if (typeof document === 'undefined') {
+    return 'es-ES';
+  }
+
+  return document.documentElement.lang === 'en' ? 'en-GB' : 'es-ES';
+}
+
 export function formatFullDateES(dateStr: string): { day: string; fullDate: string } {
   const date = new Date(dateStr);
-  const day = date.toLocaleDateString('es-ES', { weekday: 'long' });
-  const month = date.toLocaleDateString('es-ES', { month: 'long' });
+  const locale = getActiveLocale();
+  const day = date.toLocaleDateString(locale, { weekday: 'long' });
+  const month = date.toLocaleDateString(locale, { month: 'long' });
   const fullDate = `${capitalizeFirst(month)} ${date.getDate()}, ${date.getFullYear()}`;
 
   return {
@@ -99,9 +102,8 @@ export function formatFullDateES(dateStr: string): { day: string; fullDate: stri
   };
 }
 
-/* Función para formatear fecha en formato "5 Jun" */
 export function getMonthLabelES(date: Date): string {
-  return capitalizeFirst(date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }));
+  return capitalizeFirst(date.toLocaleDateString(getActiveLocale(), { month: 'long', year: 'numeric' }));
 }
 
 export function mapBookingStatus(status: string): string {
@@ -142,7 +144,6 @@ function capitalizeFirst(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-// Función para obtener los días de la semana (lunes a domingo) basada en una fecha
 export function getCurrentWeekDays(baseDate?: string | Date) {
   const today = new Date();
   const referenceDate =
@@ -156,31 +157,31 @@ export function getCurrentWeekDays(baseDate?: string | Date) {
     return getCurrentWeekDays();
   }
 
-  // Día de la semana (0=domingo, 1=lunes, ...)
   const dayOfWeek = referenceDate.getDay();
-  // Calcular el lunes de la semana actual
   const monday = new Date(referenceDate);
   monday.setDate(referenceDate.getDate() - ((dayOfWeek + 6) % 7));
-  // Generar los 7 días de la semana
   const days = [];
-  const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const locale = getActiveLocale();
+
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
+    const label = capitalizeFirst(
+      d.toLocaleDateString(locale, { weekday: 'short' }).replace('.', '')
+    );
+
     days.push({
-      label: dayNames[i],
+      label,
       date: toLocalISODate(d),
       num: d.getDate(),
-      isToday:
-        toLocalISODate(d) === toLocalISODate(today),
+      isToday: toLocalISODate(d) === toLocalISODate(today),
     });
   }
+
   return days;
 }
 
-// Función para obtener los días del mes
 export function getMonthDays(year: number, month: number) {
-  // Devuelve una grilla fija de 6 semanas (42 celdas) para un calendario mensual real.
   const todayIso = toLocalISODate(new Date());
   const days: {
     date: string;
@@ -190,7 +191,7 @@ export function getMonthDays(year: number, month: number) {
     isToday: boolean;
     isWeekend: boolean;
   }[] = [];
-  const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const locale = getActiveLocale();
   const firstDay = new Date(year, month, 1);
   const mondayOffset = (firstDay.getDay() + 6) % 7;
   const gridStart = new Date(year, month, 1 - mondayOffset);
@@ -203,7 +204,9 @@ export function getMonthDays(year: number, month: number) {
     days.push({
       date: isoDate,
       num: dateObj.getDate(),
-      label: dayNames[(dateObj.getDay() + 6) % 7],
+      label: capitalizeFirst(
+        dateObj.toLocaleDateString(locale, { weekday: 'short' }).replace('.', '')
+      ),
       isCurrentMonth: dateObj.getMonth() === month,
       isToday: isoDate === todayIso,
       isWeekend: dateObj.getDay() === 0 || dateObj.getDay() === 6,

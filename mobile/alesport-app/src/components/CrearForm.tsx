@@ -7,6 +7,7 @@ import { createSingleSession, createRecurringSessions } from '../api/sessions';
 import { copyWeekSessions } from '../api/sessions';
 import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso, getMondayOfWeek, getSundayOfWeek } from '../utils/funcionesGeneral';
 import CustomToast from './CustomStyles';
+import { useLanguage } from '../i18n/LanguageContext';
 import './CrearForm.css';
 
 /* =================== TIPOS Y CONSTANTES =================== */
@@ -46,6 +47,7 @@ const TIME_PICKER_BASE_DATE = '1970-01-01';
  que incluye la elección entre clase puntual o recurrente,
   y el formulario específico para clase puntual en un modal. */
 const CrearForm: React.FC = () => {
+    const { t, dateLocale } = useLanguage();
     // Estado y refs para el time picker recurrente semanal
     const [showRecurringTimePicker, setShowRecurringTimePicker] = useState(false);
     const [recurringTimePickerTarget, setRecurringTimePickerTarget] = useState<'start' | 'end' | null>(null);
@@ -524,14 +526,14 @@ const CrearForm: React.FC = () => {
         <div className="crear-form-container">
             <div className="crear-top-bar">
                 <img src={logoIcon} alt="Logo gimnasio" className="crear-top-logo" />
-                <div className="crear-top-title crear-top-title-absolute">Crear clases</div>
+                <div className="crear-top-title crear-top-title-absolute">{t('create.title')}</div>
             </div>
 
             <div className="crear-form-content">
 
                 {/* Elección de clase puntual o recurrente */}
                 <section className="crear-form-section">
-                    <h2 className="crear-form-section-title">¿Qué quieres hacer?</h2>
+                    <h2 className="crear-form-section-title">{t('create.actionsTitle')}</h2>
                     <div className="crear-mode-grid">
                         <button
                             type="button"
@@ -542,10 +544,10 @@ const CrearForm: React.FC = () => {
                                 setCreateMode('single');
                             }}
                         >
-                            <span className="crear-mode-card-kicker">Opción 1</span>
-                            <span className="crear-mode-card-title">Clase puntual</span>
+                            <span className="crear-mode-card-kicker">{t('create.option1')}</span>
+                            <span className="crear-mode-card-title">{t('create.singleClass')}</span>
                             <span className="crear-mode-card-text">
-                                Para una sesión concreta en una fecha y hora determinadas.
+                                {t('create.singleText')}
                             </span>
                         </button>
 
@@ -557,10 +559,10 @@ const CrearForm: React.FC = () => {
                                 setRecurrenceMode(null);
                             }}
                         >
-                            <span className="crear-mode-card-kicker">Opción 2</span>
-                            <span className="crear-mode-card-title">Horario recurrente</span>
+                            <span className="crear-mode-card-kicker">{t('create.option2')}</span>
+                            <span className="crear-mode-card-title">{t('create.recurringSchedule')}</span>
                             <span className="crear-mode-card-text">
-                                Para generar clases repetidas con patrón semanal o mensual.
+                                {t('create.recurringText')}
                             </span>
                         </button>
                     </div>
@@ -568,7 +570,7 @@ const CrearForm: React.FC = () => {
 
                 {createMode === 'recurring' && (
                     <section className="crear-form-section">
-                        <h2 className="crear-form-section-title">¿Qué frecuencia quieres?</h2>
+                        <h2 className="crear-form-section-title">{t('create.frequencyTitle')}</h2>
                         <div className="crear-frequency-row">
                             <button
                                 type="button"
@@ -578,7 +580,7 @@ const CrearForm: React.FC = () => {
                                     setShowRecurringModal(true);
                                 }}
                             >
-                                Semanal
+                                {t('create.weekly')}
                             </button>
                             <button
                                 type="button"
@@ -588,7 +590,7 @@ const CrearForm: React.FC = () => {
                                     // Aquí puedes abrir el modal mensual cuando lo implementes
                                 }}
                             >
-                                Mensual
+                                {t('create.monthly')}
                             </button>
                         </div>
                     </section>
@@ -607,7 +609,7 @@ const CrearForm: React.FC = () => {
                 >
                     <div className="crear-single-modal" onClick={closeSubmodalsOnEmptyClick} ref={singleModalBodyRef}>
                         <div className="crear-single-modal-header">
-                            <h3>Crear clase puntual</h3>
+                            <h3>{t('create.singleModalTitle')}</h3>
                             <button
                                 type="button"
                                 className="crear-single-modal-close"
@@ -615,7 +617,7 @@ const CrearForm: React.FC = () => {
                                     setShowSingleModal(false);
                                     closeAllSingleSubmodals();
                                 }}
-                                aria-label="Cerrar"
+                                aria-label={t('common.close')}
                             >
                                 ×
                             </button>
@@ -624,7 +626,7 @@ const CrearForm: React.FC = () => {
                         <form className="crear-single-form" onSubmit={handleSingleSubmit} onClick={closeSubmodalsOnEmptyClick}>
 
                             {/* Campo Entrenador */}
-                            <label className="crear-field-label" htmlFor="single-trainer-role">Entrenador</label>
+                            <label className="crear-field-label" htmlFor="single-trainer-role">{t('create.trainer')}</label>
                             <button
                                 id="single-trainer-role"
                                 type="button"
@@ -632,7 +634,7 @@ const CrearForm: React.FC = () => {
                                 disabled={isLoadingTrainers || trainerOptions.length === 0}
                                 onClick={toggleTrainerPicker}
                             >
-                                {isLoadingTrainers ? 'Cargando entrenadores...' : (singleDraft.trainerName || 'Selecciona entrenador')}
+                                {isLoadingTrainers ? t('create.loadingTrainers') : (singleDraft.trainerName || t('create.selectTrainer'))}
                             </button>
 
                             {showTrainerPicker ? (
@@ -653,20 +655,20 @@ const CrearForm: React.FC = () => {
                             {trainersError ? <p className="crear-validation-error">{trainersError}</p> : null}
 
                             {/* Campo Nombre de la clase */}
-                            <label className="crear-field-label" htmlFor="single-class-name">Nombre de la clase</label>
+                            <label className="crear-field-label" htmlFor="single-class-name">{t('create.className')}</label>
                             <input
                                 id="single-class-name"
                                 className="crear-input"
                                 type="text"
                                 value={singleDraft.className}
                                 onChange={(e) => setSingleDraft((prev) => ({ ...prev, className: e.target.value }))}
-                                placeholder="Ej: Fuerza, Spinning..."
+                                placeholder={t('create.singleClassNamePlaceholder')}
                             />
 
                             {/* Campo Fecha */}
                             <div className="crear-field-grid">
                                 <div>
-                                    <label className="crear-field-label" htmlFor="single-session-date-btn">Fecha</label>
+                                    <label className="crear-field-label" htmlFor="single-session-date-btn">{t('create.date')}</label>
                                     <button
                                         id="single-session-date-btn"
                                         type="button"
@@ -682,7 +684,7 @@ const CrearForm: React.FC = () => {
                                                 className="crear-single-date-calendar"
                                                 presentation="date"
                                                 firstDayOfWeek={1}
-                                                locale="es-ES"
+                                                locale={dateLocale}
                                                 value={singleDraft.sessionDate}
                                                 onIonChange={(e: CustomEvent<{ value?: string | string[] | null }>) => {
                                                     const next = e.detail.value;
@@ -698,7 +700,7 @@ const CrearForm: React.FC = () => {
 
                                 {/* Campo Capacidad */}
                                 <div>
-                                    <label className="crear-field-label" htmlFor="single-capacity">Capacidad (1-10)</label>
+                                    <label className="crear-field-label" htmlFor="single-capacity">{t('create.capacity')}</label>
                                     <button
                                         id="single-capacity"
                                         type="button"
@@ -728,7 +730,7 @@ const CrearForm: React.FC = () => {
                             {/* Campo Hora Inicio */}
                             <div className="crear-field-grid">
                                 <div>
-                                    <label className="crear-field-label" htmlFor="single-start-time">Hora inicio</label>
+                                    <label className="crear-field-label" htmlFor="single-start-time">{t('create.startTime')}</label>
                                     <button
                                         id="single-start-time"
                                         type="button"
@@ -741,7 +743,7 @@ const CrearForm: React.FC = () => {
 
                                 {/* Campo Hora Fin */}
                                 <div>
-                                    <label className="crear-field-label" htmlFor="single-end-time">Hora fin</label>
+                                    <label className="crear-field-label" htmlFor="single-end-time">{t('create.endTime')}</label>
                                     <button
                                         id="single-end-time"
                                         type="button"
@@ -755,7 +757,7 @@ const CrearForm: React.FC = () => {
 
                             {showSingleTimePicker ? (
                                 <div className="crear-time-picker-panel" ref={singleTimePanelRef}>
-                                    <h4>{timePickerTarget === 'start' ? 'Hora de inicio' : 'Hora de fin'}</h4>
+                                    <h4>{timePickerTarget === 'start' ? t('create.startTimeTitle') : t('create.endTimeTitle')}</h4>
                                     <IonDatetime
                                         className="crear-time-picker"
                                         presentation="time"
@@ -771,17 +773,17 @@ const CrearForm: React.FC = () => {
                                     />
                                     <div className="crear-time-picker-actions">
                                         <button type="button" className="crear-btn-primary" onClick={applyPickedTime}>
-                                            Aplicar
+                                            {t('common.apply')}
                                         </button>
                                         <button type="button" className="app-btn-danger" onClick={closeAllSingleSubmodals}>
-                                            Cancelar
+                                            {t('common.cancel')}
                                         </button>
                                     </div>
                                 </div>
                             ) : null}
 
                             {/* Campo Notas */}
-                            <label className="crear-field-label" htmlFor="single-notes">Notas (opcional)</label>
+                            <label className="crear-field-label" htmlFor="single-notes">{t('create.notes')}</label>
                             <textarea
                                 id="single-notes"
                                 className="crear-textarea"
@@ -791,24 +793,24 @@ const CrearForm: React.FC = () => {
                             />
 
                             {!isSingleTimeRangeValid ? (
-                                <p className="crear-validation-error">La hora de inicio debe ser anterior a la de fin.</p>
+                                <p className="crear-validation-error">{t('create.invalidTimeRange')}</p>
                             ) : null}
 
                             {!isSingleCapacityValid ? (
-                                <p className="crear-validation-error">La capacidad debe estar entre 1 y 10.</p>
+                                <p className="crear-validation-error">{t('create.invalidCapacity')}</p>
                             ) : null}
 
                             {!isSingleTrainerValid ? (
-                                <p className="crear-validation-error">Debes seleccionar un entrenador válido.</p>
+                                <p className="crear-validation-error">{t('create.invalidTrainer')}</p>
                             ) : null}
 
                             <div className="crear-preview-card crear-single-preview">
-                                <p><strong>Vista previa</strong></p>
-                                <p>Clase: {singleDraft.className.trim() || 'Sin nombre'}</p>
-                                <p>Fecha: {singleDraft.sessionDate ? formatIsoDateForUi(singleDraft.sessionDate, '/') : '-'}</p>
-                                <p>Horario: {singleDraft.startTime} - {singleDraft.endTime}</p>
-                                <p>Capacidad: {singleDraft.capacity}</p>
-                                <p>Entrenador: {singleDraft.trainerName.trim() || 'Sin asignar'}</p>
+                                <p><strong>{t('create.preview')}</strong></p>
+                                <p>{t('create.previewClass')}: {singleDraft.className.trim() || t('create.unnamed')}</p>
+                                <p>{t('create.previewDate')}: {singleDraft.sessionDate ? formatIsoDateForUi(singleDraft.sessionDate, '/') : '-'}</p>
+                                <p>{t('create.previewSchedule')}: {singleDraft.startTime} - {singleDraft.endTime}</p>
+                                <p>{t('create.previewCapacity')}: {singleDraft.capacity}</p>
+                                <p>{t('create.previewTrainer')}: {singleDraft.trainerName.trim() || t('create.unassigned')}</p>
                             </div>
 
                             <div className="crear-actions-row">
@@ -825,10 +827,10 @@ const CrearForm: React.FC = () => {
                                         resetSingleDraft();
                                     }}
                                 >
-                                    Limpiar
+                                    {t('common.clear')}
                                 </button>
                                 <button type="submit" className="crear-btn-primary" disabled={!isSingleValid}>
-                                    Continuar
+                                    {t('common.continue')}
                                 </button>
                             </div>
                         </form>
@@ -847,7 +849,7 @@ const CrearForm: React.FC = () => {
                 >
                     <div className="crear-single-modal" onClick={closeRecurringSubmodalsOnEmptyClick} ref={recurringModalBodyRef}>
                         <div className="crear-single-modal-header">
-                            <h3>Crear clase recurrente semanal</h3>
+                            <h3>{t('create.recurringWeeklyModalTitle')}</h3>
                             <button
                                 type="button"
                                 className="crear-single-modal-close"
@@ -855,7 +857,7 @@ const CrearForm: React.FC = () => {
                                     setShowRecurringModal(false);
                                     setShowRecurringTrainerPicker(false);
                                 }}
-                                aria-label="Cerrar"
+                                aria-label={t('common.close')}
                             >
                                 ×
                             </button>
@@ -875,10 +877,10 @@ const CrearForm: React.FC = () => {
                                 backdropDismiss={true}
                             >
                                 <div className="crear-single-modal">
-                                    <h3 className="crear-copy-week-title">Copiar semana</h3>
+                                    <h3 className="crear-copy-week-title">{t('create.copyWeek')}</h3>
                                     <form className="crear-single-form" onSubmit={e => { e.preventDefault(); handleCopyWeek(); }}>
                                         <div className="crear-copy-week-row">
-                                            <label className="crear-field-label">Semana a copiar (origen)</label>
+                                            <label className="crear-field-label">{t('create.copyWeekSource')}</label>
                                             <button
                                                 type="button"
                                                 className="crear-input crear-date-btn"
@@ -892,7 +894,7 @@ const CrearForm: React.FC = () => {
                                                         className="crear-single-date-calendar"
                                                         presentation="date"
                                                         firstDayOfWeek={1}
-                                                        locale="es-ES"
+                                                        locale={dateLocale}
                                                         value={copyWeekSource}
                                                         min="2020-01-01"
                                                         max="2100-12-31"
@@ -915,7 +917,7 @@ const CrearForm: React.FC = () => {
                                             )}
                                         </div>
                                         <div className="crear-copy-week-row">
-                                            <label className="crear-field-label">Semana destino</label>
+                                            <label className="crear-field-label">{t('create.copyWeekTarget')}</label>
                                             <button
                                                 type="button"
                                                 className="crear-input crear-date-btn"
@@ -929,7 +931,7 @@ const CrearForm: React.FC = () => {
                                                         className="crear-single-date-calendar"
                                                         presentation="date"
                                                         firstDayOfWeek={1}
-                                                        locale="es-ES"
+                                                        locale={dateLocale}
                                                         value={copyWeekTarget}
                                                         min="2020-01-01"
                                                         max="2100-12-31"
@@ -957,7 +959,7 @@ const CrearForm: React.FC = () => {
                                                 className="crear-btn-primary"
                                                 disabled={!copyWeekSource || !copyWeekTarget}
                                             >
-                                                Copiar
+                                                {t('create.copy')}
                                             </button>
                                             <button
                                                 type="button"
@@ -970,14 +972,14 @@ const CrearForm: React.FC = () => {
                                                     setShowTargetPicker(false);
                                                 }}
                                             >
-                                                Cancelar
+                                                {t('common.cancel')}
                                             </button>
                                         </div>
                                     </form>
                                 </div>
                             </IonModal>
                             {/* Campo Entrenador */}
-                            <label className="crear-field-label" htmlFor="rec-trainer-role">Entrenador</label>
+                            <label className="crear-field-label" htmlFor="rec-trainer-role">{t('create.trainer')}</label>
                             <button
                                 id="rec-trainer-role"
                                 type="button"
@@ -985,7 +987,7 @@ const CrearForm: React.FC = () => {
                                 disabled={isLoadingTrainers || trainerOptions.length === 0}
                                 onClick={toggleRecurringTrainerPicker}
                             >
-                                {isLoadingTrainers ? 'Cargando entrenadores...' : (recurringDraft.trainerName || 'Selecciona entrenador')}
+                                {isLoadingTrainers ? t('create.loadingTrainers') : (recurringDraft.trainerName || t('create.selectTrainer'))}
                             </button>
 
                             {showRecurringTrainerPicker ? (
@@ -1006,14 +1008,14 @@ const CrearForm: React.FC = () => {
                             {trainersError ? <p className="crear-validation-error">{trainersError}</p> : null}
 
                             {/* Campo Nombre de la clase */}
-                            <label className="crear-field-label" htmlFor="rec-class-name">Nombre de la clase</label>
+                            <label className="crear-field-label" htmlFor="rec-class-name">{t('create.className')}</label>
                             <input
                                 id="rec-class-name"
                                 className="crear-input"
                                 type="text"
                                 value={recurringDraft.className}
                                 onChange={e => setRecurringDraft(d => ({ ...d, className: e.target.value }))}
-                                placeholder="Ej: Yoga, Pilates..."
+                                placeholder={t('create.recurringClassNamePlaceholder')}
                             />
 
                             {/* Selección de días de la semana */}
@@ -1050,7 +1052,7 @@ const CrearForm: React.FC = () => {
                             </div>
 
                             {/* Fechas inicio/fin */}
-                            <label className="crear-field-label" htmlFor="rec-start-date">Fecha inicio (lunes)</label>
+                            <label className="crear-field-label" htmlFor="rec-start-date">{t('create.startDate')}</label>
                             <button
                                 id="rec-start-date"
                                 type="button"
@@ -1065,7 +1067,7 @@ const CrearForm: React.FC = () => {
                                         className="crear-single-date-calendar"
                                         presentation="date"
                                         firstDayOfWeek={1}
-                                        locale="es-ES"
+                                        locale={dateLocale}
                                         value={recurringDraft.startDate}
                                         min="2020-01-01"
                                         max="2100-12-31"
@@ -1092,7 +1094,7 @@ const CrearForm: React.FC = () => {
                                     />
                                 </div>
                             )}
-                            <label className="crear-field-label" htmlFor="rec-end-date">Fecha fin (domingo)</label>
+                            <label className="crear-field-label" htmlFor="rec-end-date">{t('create.endDate')}</label>
                             <input
                                 id="rec-end-date"
                                 className="crear-input"
@@ -1104,7 +1106,7 @@ const CrearForm: React.FC = () => {
                             {/* Hora inicio/fin con picker visual */}
                             <div className="crear-field-grid">
                                 <div>
-                                    <label className="crear-field-label" htmlFor="rec-start-time">Hora inicio</label>
+                                    <label className="crear-field-label" htmlFor="rec-start-time">{t('create.startTime')}</label>
                                     <button
                                         id="rec-start-time"
                                         type="button"
@@ -1115,7 +1117,7 @@ const CrearForm: React.FC = () => {
                                     </button>
                                 </div>
                                 <div>
-                                    <label className="crear-field-label" htmlFor="rec-end-time">Hora fin</label>
+                                    <label className="crear-field-label" htmlFor="rec-end-time">{t('create.endTime')}</label>
                                     <button
                                         id="rec-end-time"
                                         type="button"
@@ -1129,7 +1131,7 @@ const CrearForm: React.FC = () => {
 
                             {showRecurringTimePicker ? (
                                 <div className="crear-time-picker-panel" ref={recurringTimePanelRef}>
-                                    <h4>{recurringTimePickerTarget === 'start' ? 'Hora de inicio' : 'Hora de fin'}</h4>
+                                    <h4>{recurringTimePickerTarget === 'start' ? t('create.startTimeTitle') : t('create.endTimeTitle')}</h4>
                                     <IonDatetime
                                         className="crear-time-picker"
                                         presentation="time"
@@ -1145,17 +1147,17 @@ const CrearForm: React.FC = () => {
                                     />
                                     <div className="crear-time-picker-actions">
                                         <button type="button" className="crear-btn-primary" onClick={applyRecurringPickedTime}>
-                                            Aplicar
+                                            {t('common.apply')}
                                         </button>
                                         <button type="button" className="app-btn-danger" onClick={() => { setShowRecurringTimePicker(false); setRecurringTimePickerTarget(null); }}>
-                                            Cancelar
+                                            {t('common.cancel')}
                                         </button>
                                     </div>
                                 </div>
                             ) : null}
 
                             {/* Capacidad (picker visual igual que puntual) */}
-                            <label className="crear-field-label" htmlFor="rec-capacity">Capacidad (1-10)</label>
+                            <label className="crear-field-label" htmlFor="rec-capacity">{t('create.capacity')}</label>
                             <button
                                 id="rec-capacity"
                                 type="button"

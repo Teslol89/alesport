@@ -33,6 +33,7 @@ import Config from './pages/Config';
 import VerifyCode from './pages/VerifyCode';
 import SplashPage from './pages/SplashPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import PrivateRoute from './components/PrivateRoute';
 import { getPendingUser, deletePendingUser } from './api/auth';
 import CustomToast from './components/CustomStyles';
@@ -80,6 +81,7 @@ function RootRedirect() {
 
 function MainRoutes() {
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
   const isAgendaActive = location.pathname.startsWith('/admin-calendar');
   const isSearchActive = location.pathname.startsWith('/search');
@@ -112,19 +114,19 @@ function MainRoutes() {
       <IonTabBar className="tabbar-glass" slot="bottom" >
         <IonTabButton tab="admin-calendar" href="/admin-calendar">
           <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isAgendaActive ? agendaActiveIcon : agendaIcon} />
-          <IonLabel>Agenda</IonLabel>
+          <IonLabel>{t('tabs.agenda')}</IonLabel>
         </IonTabButton>
         <IonTabButton tab="search" href="/search">
           <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isSearchActive ? buscarActiveIcon : buscarIcon} />
-          <IonLabel>Buscar</IonLabel>
+          <IonLabel>{t('tabs.search')}</IonLabel>
         </IonTabButton>
         <IonTabButton tab="crear" href="/crear">
           <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isCrearActive ? crearActiveIcon : crearIcon} />
-          <IonLabel>Crear</IonLabel>
+          <IonLabel>{t('tabs.create')}</IonLabel>
         </IonTabButton>
         <IonTabButton tab="config" href="/config">
           <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isConfigActive ? configActiveIcon : configIcon} />
-          <IonLabel>Opciones</IonLabel>
+          <IonLabel>{t('tabs.options')}</IonLabel>
         </IonTabButton>
       </IonTabBar>
     </IonTabs>
@@ -223,9 +225,11 @@ const App: React.FC = () => {
   return (
     <IonApp>
       <IonReactRouter>
-        <AuthProvider>
-          <MainRoutes />
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <MainRoutes />
+          </AuthProvider>
+        </LanguageProvider>
       </IonReactRouter>
       <CustomToast
         show={showToast.show}

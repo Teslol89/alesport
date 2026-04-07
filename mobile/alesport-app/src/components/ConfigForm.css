@@ -1,4 +1,81 @@
 /* Estilos para la página de configuración (ConfigForm) */
+/* Fondo general y padding del contenedor principal */
+.config-form-container {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.config-form-content {
+  padding: 0.85rem 0.9rem 1rem;
+}
+
+
+/* ------------------------------- */
+/* 2) Top bar de búsqueda */
+/* ------------------------------- */
+.config-top-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  min-height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #ffffff;
+  padding-top: max(env(safe-area-inset-top), 1.1rem);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  gap: 0.7rem;
+}
+
+.config-top-title-absolute {
+  position: absolute;
+  left: 50%;
+  /* Centrado visual compensando el padding-top del safe area */
+  top: calc(50% + (max(env(safe-area-inset-top), 1.1rem) / 2));
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: 80vw;
+  pointer-events: none;
+  text-align: center;
+}
+
+.config-top-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  background: #fff;
+  align-self: center;
+}
+
+
+.config-top-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #000000;
+  letter-spacing: 0.01em;
+  text-align: left;
+  min-width: 0;
+  max-width: 50vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.config-top-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+
 /* Avatar grande y centrado para la tarjeta de perfil */
 .config-profile-avatar {
   width: 80px;
@@ -28,52 +105,47 @@
   margin-bottom: 0.2rem;
 }
 
-/* Tarjetas blancas y modernas */
-.config-profile-card,
-.config-card,
-.config-stat-card {
-  background: #ffffff !important;
-  /* color hueso */
-  border-radius: 18px !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important;
-  margin-bottom: 1.2rem;
-  color: #222 !important;
-  border: none !important;
-}
-
-.config-card ion-list,
 .config-card ion-item {
   background: transparent !important;
   --background: transparent !important;
-  color: #222 !important;
+  color: #000000 !important;
+  --inner-border-width: 0 !important;
+  --border-width: 0 !important;
+  --border-color: transparent !important;
 }
 
 .config-profile-card {
   padding: 2.2rem 2rem 1.2rem 2rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  max-width: 410px;
-  margin: 1.5rem auto 1.2rem auto;
+  width: 100%;
+  background-color: #ffffff;
+  margin: 0 0 1.2rem 0;
+  border-radius: 12px !important;
 }
 
 .config-card {
-  max-width: 410px;
-  margin: 0 auto 1.2rem auto;
+  width: 100%;
+  background-color: #ffffff;
+  margin: 0 0 1.2rem 0;
+  border-radius: 12px !important;
 }
+
 
 .config-stat-card {
   min-width: 80px;
   padding: 0.7rem 1.2rem 0.6rem 1.2rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  width: 100%;
+  max-width: none;
+  margin: 1.2rem 0;
 }
 
 .config-stats-row {
   display: flex;
   gap: 1.1rem;
-  justify-content: center;
+  margin: 1.2rem auto;
   margin-bottom: 1.2rem;
 }
 
@@ -86,19 +158,6 @@
 .config-stat-label {
   font-size: 0.98rem;
   color: #7a7a7a;
-}
-
-.config-center-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 40vh;
-}
-
-.ion-list {
-  margin-top: 1.2rem;
-  margin-bottom: 1.2rem;
 }
 
 /* Botón logout moderno */
@@ -118,6 +177,9 @@
   font-weight: 700;
   font-size: 1.08rem;
   box-shadow: 0 1px 6px rgba(229, 57, 53, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  margin-left: 1.2rem !important;
+  margin-right: 1.2rem !important;
   padding: 1.1rem 0;
   margin: 0;
   --background-hover: #ffeaea;
@@ -127,18 +189,16 @@
   margin-left: 0.5rem;
 }
 
-
 @media (max-width: 600px) {
 
   .config-profile-card,
   .config-card,
   .config-stat-card {
-    max-width: 98vw;
-  }
-
-  .ion-list {
-    margin-top: 0.7rem;
-    margin-bottom: 0.7rem;
+    width: 100vws;
+    max-width: 100vw;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border-radius: 0;
   }
 }
 

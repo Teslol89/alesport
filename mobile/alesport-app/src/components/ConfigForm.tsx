@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { IonPage, IonContent, IonButton, IonIcon, IonCard, IonList, IonItem, IonLabel, IonInput, IonToggle, IonAvatar } from '@ionic/react';
+import { IonButton, IonIcon, IonCard, IonList, IonItem, IonLabel, IonInput, IonToggle } from '@ionic/react';
 import { logOutOutline, notificationsOutline, calendarOutline, settingsOutline, helpCircleOutline, personCircleOutline, pencilOutline, sunnyOutline, moonOutline } from 'ionicons/icons';
+import logoIcon from '../icons/icon.png';
 import { useAuth } from './AuthContext';
 import { getUserProfile } from '../api/user';
 import './ConfigForm.css';
@@ -35,8 +36,13 @@ const ConfigForm: React.FC = () => {
   };
 
   return (
-    <IonPage className="config-modern-bg">
-      <IonContent className="config-modern-content">
+    <div className="config-form-container">
+      <div className="config-top-bar">
+        <img src={logoIcon} alt="Logo gimnasio" className="config-top-logo" />
+        <div className="config-top-title config-top-title-absolute">Configuración</div>
+      </div>
+      <div className="config-form-content">
+
         {/* Tarjeta de perfil grande */}
         <IonCard className="config-profile-card">
           <div className="config-profile-avatar">
@@ -48,55 +54,49 @@ const ConfigForm: React.FC = () => {
 
         {/* Sección de edición de perfil */}
         <IonCard className="config-card">
-          <IonList>
-            <IonItem>
-              <IonLabel position="stacked">Nombre</IonLabel>
-              <IonInput value={name} onIonChange={e => setName(e.detail.value ?? '')} />
-            </IonItem>
-          </IonList>
+          <IonItem>
+            <IonLabel position="stacked">Nombre</IonLabel>
+            <IonInput value={name} onIonChange={e => setName(e.detail.value ?? '')} />
+          </IonItem>
         </IonCard>
 
         {/* Preferencias */}
         <IonCard className="config-card">
-          <IonList>
-            <IonItem>
-              <IonLabel>Modo oscuro</IonLabel>
-              <IonToggle checked={darkMode} onIonChange={e => setDarkMode(e.detail.checked)}>
-                <IonIcon slot="start" icon={sunnyOutline} />
-                <IonIcon slot="end" icon={moonOutline} />
-              </IonToggle>
-            </IonItem>
-            <IonItem>
-              <IonLabel>Notificaciones</IonLabel>
-              <IonToggle checked={notifications} onIonChange={e => setNotifications(e.detail.checked)} />
-            </IonItem>
-          </IonList>
+          <IonItem>
+            <IonLabel>Modo oscuro</IonLabel>
+            <IonToggle checked={darkMode} onIonChange={e => setDarkMode(e.detail.checked)}>
+              <IonIcon slot="start" icon={sunnyOutline} />
+              <IonIcon slot="end" icon={moonOutline} />
+            </IonToggle>
+          </IonItem>
+          <IonItem>
+            <IonLabel>Notificaciones</IonLabel>
+            <IonToggle checked={notifications} onIonChange={e => setNotifications(e.detail.checked)} />
+          </IonItem>
         </IonCard>
 
         {/* Lista de opciones extra estilo moderno */}
         <IonCard className="config-card">
-          <IonList>
-            <IonItem button detail={false} lines="none">
-              <IonIcon icon={pencilOutline} slot="start" />
-              <IonLabel>Editar perfil</IonLabel>
-            </IonItem>
-            <IonItem button detail={false} lines="none">
-              <IonIcon icon={notificationsOutline} slot="start" />
-              <IonLabel>Notificaciones</IonLabel>
-            </IonItem>
-            <IonItem button detail={false} lines="none">
-              <IonIcon icon={calendarOutline} slot="start" />
-              <IonLabel>Ajustes de calendario</IonLabel>
-            </IonItem>
-            <IonItem button detail={false} lines="none">
-              <IonIcon icon={settingsOutline} slot="start" />
-              <IonLabel>Configuración</IonLabel>
-            </IonItem>
-            <IonItem button detail={false} lines="none">
-              <IonIcon icon={helpCircleOutline} slot="start" />
-              <IonLabel>Ayuda y soporte</IonLabel>
-            </IonItem>
-          </IonList>
+          <IonItem button detail={false} lines="none">
+            <IonIcon icon={pencilOutline} slot="start" />
+            <IonLabel>Editar perfil</IonLabel>
+          </IonItem>
+          <IonItem button detail={false} lines="none">
+            <IonIcon icon={notificationsOutline} slot="start" />
+            <IonLabel>Notificaciones</IonLabel>
+          </IonItem>
+          <IonItem button detail={false} lines="none">
+            <IonIcon icon={calendarOutline} slot="start" />
+            <IonLabel>Ajustes de calendario</IonLabel>
+          </IonItem>
+          <IonItem button detail={false} lines="none">
+            <IonIcon icon={settingsOutline} slot="start" />
+            <IonLabel>Configuración</IonLabel>
+          </IonItem>
+          <IonItem button detail={false} lines="none">
+            <IonIcon icon={helpCircleOutline} slot="start" />
+            <IonLabel>Ayuda y soporte</IonLabel>
+          </IonItem>
         </IonCard>
 
         {/* Botón logout */}
@@ -106,8 +106,8 @@ const ConfigForm: React.FC = () => {
             <span>Cerrar sesión</span>
           </IonButton>
         </div>
-      </IonContent>
-    </IonPage>
+      </div>
+    </div>
   );
 };
 

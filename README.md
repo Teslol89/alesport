@@ -1,23 +1,38 @@
-# Guía de desarrollo y autenticación (2026)
+######################################################################
+# Alesport - Guía de desarrollo, despliegue y buenas prácticas (2026) #
+######################################################################
 
-Esta guía describe paso a paso cómo funciona y cómo mantener el flujo de registro, login y persistencia de sesión en la app Alesport, tanto en web como en móvil (Ionic/Capacitor), con advertencias y buenas prácticas para el futuro.
+## Últimas novedades y mejoras (abril 2026)
 
-## 1. Estructura y dependencias clave
+- Unificación de estilos y comportamiento en todos los modales y selectores de fecha/hora (crear clase, editar, copiar semana, calendario).
+- Selección de fecha/hora más intuitiva: al elegir una fecha/hora, el modal se cierra automáticamente y se aplica el valor, sin botón "Aceptar".
+- Refuerzo visual en botones clave (ej. copiar semana) con colores destacados (verde para acciones positivas).
+- Validaciones en tiempo real y mensajes de error claros en todos los formularios.
+- Refactorización de componentes: CalendarForm y CrearForm ahora tienen CSS modular y lógica desacoplada.
+- Optimización de llamadas a backend y cacheo de reservas para mayor rendimiento.
+- Persistencia de sesión robusta en web y móvil (localStorage, JWT, roles).
+- Guía de despliegue profesional y troubleshooting ampliada.
 
-- **Backend:** FastAPI, PostgreSQL, JWT, roles.
-- **Frontend:** React, Ionic, React Router, localStorage para persistencia de sesión.
-- **Móvil:** Capacitor (sin Secure Storage, solo localStorage para máxima compatibilidad y menos problemas).
+---
 
-## 2. Registro de usuario (UX y validaciones)
+## 1. Estructura del proyecto
 
-1. El usuario rellena el formulario de registro (`RegisterForm.tsx`).
-2. Validaciones en tiempo real: nombre, email, contraseña y aceptación de términos.
-3. Errores de campo se muestran bajo el input, nunca en toast (excepto errores globales).
-4. Si todo es correcto, se envía al backend (`/auth/register`).
-5. Si el registro es exitoso, se muestra un toast de éxito y se redirige automáticamente a login.
-6. Si hay errores (email duplicado, etc.), se muestran de forma clara y priorizada.
+- **Backend:** FastAPI, PostgreSQL, JWT, control de roles.
+- **Frontend:** React, Ionic, React Router, localStorage para sesión.
+- **Móvil:** Capacitor (sin Secure Storage por compatibilidad; solo localStorage).
 
-## 3. Login y persistencia de sesión
+---
+
+## 2. Experiencia de usuario y validaciones
+
+- Todos los formularios (registro, login, crear/editar clase) validan en tiempo real los campos obligatorios, rangos de horas y capacidad.
+- Los errores de campo se muestran bajo el input correspondiente, nunca en toast salvo errores globales.
+- Los modales de fecha/hora se cierran automáticamente al seleccionar valor.
+- Botones importantes (ej. copiar semana) usan colores destacados para guiar la acción del usuario.
+
+---
+
+## 3. Autenticación y persistencia de sesión
 
 1. El usuario inicia sesión desde el formulario de login (`LoginForm.tsx`).
 2. Si las credenciales son correctas, el backend devuelve un JWT.
@@ -26,15 +41,34 @@ Esta guía describe paso a paso cómo funciona y cómo mantener el flujo de regi
 5. Al cerrar sesión, el token se elimina de ambos sitios.
 6. Si el token expira o es inválido, el backend responde 401 y la app fuerza logout.
 
-**Nota:** No se usa Secure Storage en móvil para evitar problemas de compatibilidad y build. Si en el futuro se quiere máxima seguridad en móvil, revisar la integración de plugins Cordova/Capacitor y asegurarse de que `cordova.js` esté presente y el plugin funcione en todos los dispositivos.
+**Nota:** No se usa Secure Storage en móvil para evitar problemas de compatibilidad y build. Si en el futuro se requiere máxima seguridad, revisar la integración de plugins Cordova/Capacitor y asegurar que `cordova.js` esté presente y funcional.
 
-## 4. Rutas protegidas y control de acceso
+---
+
+## 4. Control de acceso y rutas protegidas
 
 - El contexto `AuthContext` expone `isAuthenticated`, `token`, `setToken` y `logout`.
 - Las rutas privadas usan `PrivateRoute` y solo son accesibles si hay token válido.
 - El backend valida el token en cada petición y aplica control de roles.
 
-## 5. Desarrollo, build y despliegue
+---
+
+## 5. Componentes principales
+
+### CrearForm
+- Permite crear clases puntuales y recurrentes.
+- Todos los modales usan el mismo estilo y lógica de cierre.
+- Inputs y pickers validados y con UX consistente.
+
+### CalendarForm
+- Vista semanal de clases, con scroll horizontal de días.
+- Tarjetas de sesión con ocupación, detalles y acciones según rol.
+- Edición de sesiones y reservas desde modales rápidos.
+- Cacheo de reservas para evitar recargas innecesarias.
+
+---
+
+## 6. Desarrollo, build y despliegue
 
 ### Web y móvil (Ionic/React)
 
@@ -66,7 +100,9 @@ Esta guía describe paso a paso cómo funciona y cómo mantener el flujo de regi
 - Si necesitas almacenamiento seguro en móvil, revisa la integración de Secure Storage y asegúrate de que `<script src="cordova.js"></script>` esté en el index.html fuente (no solo en el build).
 - Si tienes problemas de sesión en móvil, primero prueba solo con localStorage (como está ahora) para máxima estabilidad.
 
-## 6. Troubleshooting y restauración
+---
+
+## 7. Troubleshooting y restauración
 
 - Si la sesión no persiste en móvil, revisa que localStorage esté disponible y que no haya restricciones del sistema.
 - Si el login o registro falla, revisa los logs del backend y los mensajes de error en frontend.
@@ -75,21 +111,13 @@ Esta guía describe paso a paso cómo funciona y cómo mantener el flujo de regi
 
 ---
 
-# Alesport
+## 8. Despliegue profesional en producción (backend FastAPI/Uvicorn)
 
-
-## Guía de despliegue y configuración completa (VPS, PostgreSQL, Backend, App Móvil y Producción)
----
-
-## Despliegue profesional en producción (backend FastAPI/Uvicorn)
-
-### 0. Objetivo
-
+### Objetivo
 El backend debe funcionar 24/7 en el VPS, sin depender de tu PC, iniciarse automáticamente al arrancar el servidor, reiniciarse si falla y estar protegido tras un proxy seguro (nginx). Este es el estándar profesional para aplicaciones web modernas.
 
-### 1. Crear un servicio systemd para el backend
-
-1.1. Crea el archivo `/etc/systemd/system/alesport-backend.service` con el siguiente contenido (ajusta rutas según tu entorno):
+### Crear un servicio systemd para el backend
+1. Crea el archivo `/etc/systemd/system/alesport-backend.service` con el siguiente contenido (ajusta rutas según tu entorno):
 
 ```ini
 [Unit]

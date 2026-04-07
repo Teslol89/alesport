@@ -511,7 +511,7 @@ const Calendar: React.FC = () => {
         ) : error ? (
           <p className="calendar-error-state">{error}</p>
         ) : sessionsForDate.length === 0 ? (
-          <p>No hay sesiones para este día.</p>
+          <p>No hay clases para hoy.</p>
         ) : (
           sessionsForDate.map(session => {
             const occupancy = sessionOccupancy[session.id] ?? 0;

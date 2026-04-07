@@ -108,7 +108,10 @@
 .config-card ion-item {
   background: transparent !important;
   --background: transparent !important;
-  color: #222 !important;
+  color: #000000 !important;
+  --inner-border-width: 0 !important;
+  --border-width: 0 !important;
+  --border-color: transparent !important;
 }
 
 .config-profile-card {
@@ -116,14 +119,14 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: none;
+  background-color: #ffffff;
   margin: 0 0 1.2rem 0;
   border-radius: 12px !important;
 }
 
 .config-card {
   width: 100%;
-  max-width: none;
+  background-color: #ffffff;
   margin: 0 0 1.2rem 0;
   border-radius: 12px !important;
 }

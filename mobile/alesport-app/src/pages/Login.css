@@ -1,10 +1,9 @@
-/* Fondo blanco  */
+/* Fondo de la página de login */
 .ion-page.login-page,
 .ion-page.login-page ion-content,
 .ion-page.login-page .ion-content {
-  --background: #eeeeee !important;
-  /* Blanco "TIZA" */
-  background: #eeeeee !important;
+  --background: var(--app-page-background, #eeeeee) !important;
+  background: var(--app-page-background, #eeeeee) !important;
 }
 
 /* Centrado vertical y horizontal del LoginForm en la pantalla de login */

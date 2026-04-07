@@ -4,7 +4,7 @@ import './Config.css';
 
 const Config: React.FC = () => {
   return (
-    <IonPage className="search-page">
+    <IonPage className="config-page">
       <IonHeader />
       <IonContent fullscreen scrollY={true} scrollEvents={true} forceOverscroll={true}>
         <div className="config-center-wrapper">

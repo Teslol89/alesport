@@ -1,10 +1,9 @@
-/* Fondo blanco igual que login/register */
+/* Fondo de la página de verificación */
 .ion-page.verify-code-page,
 .ion-page.verify-code-page ion-content,
 .ion-page.verify-code-page .ion-content {
-    --background: #eeeeee !important;
-    /* Blanco "TIZA" */
-    background: #eeeeee !important;
+    --background: var(--app-page-background, #eeeeee) !important;
+    background: var(--app-page-background, #eeeeee) !important;
 }
 
 .verify-code-center-wrapper {

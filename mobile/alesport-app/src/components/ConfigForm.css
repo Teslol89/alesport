@@ -1,5 +1,20 @@
-/* Estilos para la página de configuración (ConfigForm) */
-/* Fondo general y padding del contenedor principal */
+/* ---------------------------------------- */
+/* Estilos para el componente de configuración */
+/* ---------------------------------------- */
+
+/* Índice rápido
+ * 1) Contenedor principal
+ * 2) Top bar
+ * 3) Tarjeta de perfil
+ * 4) Tarjetas y contenido
+ * 5) Botón logout
+ * 6) Responsive
+ * 7) Modo oscuro
+ */
+
+/* ------------------------------- */
+/* 1) Contenedor principal */
+/* ------------------------------- */
 .config-form-container {
   width: 100%;
   min-height: 100%;
@@ -12,20 +27,18 @@
   padding: 0.85rem 0.9rem 1rem;
 }
 
-
 /* ------------------------------- */
-/* 2) Top bar de búsqueda */
+/* 2) Top bar */
 /* ------------------------------- */
 .config-top-bar {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  position: relative;
-  min-height: 60px;
   position: sticky;
   top: 0;
   z-index: 10;
+  min-height: 60px;
   background: #ffffff;
   padding-top: max(env(safe-area-inset-top), 1.1rem);
   padding-left: 1rem;
@@ -37,7 +50,6 @@
 .config-top-title-absolute {
   position: absolute;
   left: 50%;
-  /* Centrado visual compensando el padding-top del safe area */
   top: calc(50% + (max(env(safe-area-inset-top), 1.1rem) / 2));
   transform: translate(-50%, -50%);
   width: max-content;
@@ -54,7 +66,6 @@
   align-self: center;
 }
 
-
 .config-top-title {
   font-size: 1.3rem;
   font-weight: 600;
@@ -68,15 +79,19 @@
   text-overflow: ellipsis;
 }
 
-
-.config-top-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #000000;
+/* ------------------------------- */
+/* 3) Tarjeta de perfil */
+/* ------------------------------- */
+.config-profile-card {
+  width: 100%;
+  margin: 0 0 1.2rem 0;
+  padding: 2.2rem 2rem 1.2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-radius: 12px !important;
 }
 
-
-/* Avatar grande y centrado para la tarjeta de perfil */
 .config-profile-avatar {
   width: 80px;
   height: 80px;
@@ -105,6 +120,16 @@
   margin-bottom: 0.2rem;
 }
 
+/* ------------------------------- */
+/* 4) Tarjetas y contenido */
+/* ------------------------------- */
+.config-card {
+  width: 100%;
+  margin: 0 0 1.2rem 0;
+  background-color: #ffffff;
+  border-radius: 12px !important;
+}
+
 .config-card ion-item {
   background: transparent !important;
   --background: transparent !important;
@@ -114,39 +139,20 @@
   --border-color: transparent !important;
 }
 
-.config-profile-card {
-  padding: 2.2rem 2rem 1.2rem 2rem;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  background-color: #ffffff;
-  margin: 0 0 1.2rem 0;
-  border-radius: 12px !important;
-}
-
-.config-card {
-  width: 100%;
-  background-color: #ffffff;
-  margin: 0 0 1.2rem 0;
-  border-radius: 12px !important;
-}
-
-
 .config-stat-card {
   min-width: 80px;
-  padding: 0.7rem 1.2rem 0.6rem 1.2rem;
-  display: flex;
-  flex-direction: column;
   width: 100%;
   max-width: none;
   margin: 1.2rem 0;
+  padding: 0.7rem 1.2rem 0.6rem 1.2rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .config-stats-row {
   display: flex;
   gap: 1.1rem;
   margin: 1.2rem auto;
-  margin-bottom: 1.2rem;
 }
 
 .config-stat-value {
@@ -160,10 +166,11 @@
   color: #7a7a7a;
 }
 
-/* Botón logout moderno */
-.config-logout-row {
+/* ------------------------------- */
+/* 5) Botón logout */
+/* ------------------------------- */
+.config-logout {
   width: 100%;
-  max-width: 410px;
   margin: 1.2rem auto 0 auto;
   display: flex;
   justify-content: center;
@@ -171,31 +178,24 @@
 
 .config-logout-btn {
   width: 100%;
-  background: #fff0f0 !important;
-  color: #e53935 !important;
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 1.08rem;
-  box-shadow: 0 1px 6px rgba(229, 57, 53, 0.06);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-  margin-left: 1.2rem !important;
-  margin-right: 1.2rem !important;
-  padding: 1.1rem 0;
-  margin: 0;
-  --background-hover: #ffeaea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .config-logout-btn span {
   margin-left: 0.5rem;
 }
 
+/* ------------------------------- */
+/* 6) Responsive */
+/* ------------------------------- */
 @media (max-width: 600px) {
-
   .config-profile-card,
   .config-card,
   .config-stat-card {
-    width: 100vws;
-    max-width: 100vw;
+    width: 100%;
     margin-left: 0 !important;
     margin-right: 0 !important;
     border-radius: 0;
@@ -205,4 +205,45 @@
 /* Mejora visual para la barrita del toggle sobre fondo claro */
 ion-toggle {
   --track-background: #eeeeee;
+}
+
+/* ------------------------------- */
+/* 7) Modo oscuro */
+/* ------------------------------- */
+.ion-palette-dark .config-form-container {
+  background: var(--app-page-background, #0f131a);
+}
+
+.ion-palette-dark .config-top-bar {
+  background: #161b22;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+.ion-palette-dark .config-top-title,
+.ion-palette-dark .config-profile-name,
+.ion-palette-dark .config-card ion-item,
+.ion-palette-dark .config-card ion-label,
+.ion-palette-dark .config-card ion-input,
+.ion-palette-dark .config-card ion-icon,
+.ion-palette-dark .config-logout-btn {
+  color: var(--app-text-primary, #f5f7fa) !important;
+}
+
+.ion-palette-dark .config-profile-email {
+  color: var(--app-text-secondary, #aeb6c2) !important;
+}
+
+.ion-palette-dark .config-profile-card,
+.ion-palette-dark .config-card,
+.ion-palette-dark .config-stat-card {
+  background-color: var(--app-surface-background, #1b212c) !important;
+}
+
+.ion-palette-dark .config-profile-avatar {
+  background: #2a3342;
+  color: #d8deea;
+}
+
+.ion-palette-dark ion-toggle {
+  --track-background: #394150;
 }

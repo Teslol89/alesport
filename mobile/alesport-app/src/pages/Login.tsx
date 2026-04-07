@@ -6,11 +6,10 @@ import LoginForm from '../components/LoginForm';
 
 const Login: React.FC = () => {
     useEffect(() => {
-        // Forzar modo claro al entrar
-        document.body.classList.remove('dark');
-        return () => {
-            // (Opcional) restaurar modo anterior si lo deseas
-        };
+        const isDarkMode = localStorage.getItem('alesport-dark-mode') === 'true';
+        document.body.classList.toggle('ion-palette-dark', isDarkMode);
+        document.documentElement.classList.toggle('ion-palette-dark', isDarkMode);
+        document.body.classList.toggle('dark', isDarkMode);
     }, []);
 
     return (

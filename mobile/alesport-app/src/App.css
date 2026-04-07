@@ -73,3 +73,135 @@ ion-tab-button.tab-selected .tabbar-search-icon {
 .tabbar-icons-only ion-tab-button span {
     display: none;
 }
+
+html.ion-palette-dark,
+body.ion-palette-dark,
+ion-app.ion-palette-dark {
+    color-scheme: dark;
+}
+
+.ion-palette-dark ion-tab-bar.tabbar-glass {
+    background: rgba(15, 19, 26, 0.88) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.28) !important;
+}
+
+.ion-palette-dark ion-tab-button {
+    --color: #b9c3d1;
+    --color-selected: #76d1e1;
+    color: #b9c3d1;
+}
+
+.ion-palette-dark ion-tab-button.tab-selected ion-label {
+    color: #76d1e1 !important;
+}
+
+.ion-palette-dark .search-form-container,
+.ion-palette-dark .config-form-container,
+.ion-palette-dark .crear-form-container,
+.ion-palette-dark .calendar-container {
+    background: var(--app-page-background, #0f131a) !important;
+    color: var(--app-text-primary, #f5f7fa);
+}
+
+.ion-palette-dark .search-top-bar,
+.ion-palette-dark .config-top-bar,
+.ion-palette-dark .crear-top-bar,
+.ion-palette-dark .calendar-top-bar {
+    background: var(--app-toolbar-background, #161b22) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45) !important;
+}
+
+.ion-palette-dark .search-top-title,
+.ion-palette-dark .config-top-title,
+.ion-palette-dark .crear-top-title,
+.ion-palette-dark .calendar-selected-date,
+.ion-palette-dark .calendar-selected-day,
+.ion-palette-dark .calendar-selected-fulldate,
+.ion-palette-dark .search-form-summary-total,
+.ion-palette-dark .session-class-name,
+.ion-palette-dark .session-title-trainer,
+.ion-palette-dark .calendar-booking-name,
+.ion-palette-dark .crear-form-title,
+.ion-palette-dark .crear-form-section-title {
+    color: var(--app-text-primary, #f5f7fa) !important;
+}
+
+.ion-palette-dark .search-form-item,
+.ion-palette-dark .search-form-summary,
+.ion-palette-dark .crear-form-hero,
+.ion-palette-dark .crear-form-section,
+.ion-palette-dark .crear-preview-card,
+.ion-palette-dark .crear-mode-card,
+.ion-palette-dark .calendar-header-section,
+.ion-palette-dark .session-card,
+.ion-palette-dark .calendar-day-btn,
+.ion-palette-dark .calendar-month-modal,
+.ion-palette-dark .calendar-hour-modal,
+.ion-palette-dark .calendar-bookings-modal,
+.ion-palette-dark .calendar-time-picker-modal,
+.ion-palette-dark .login-container,
+.ion-palette-dark .register-container,
+.ion-palette-dark .verify-code-container,
+.ion-palette-dark .fprequest-container,
+.ion-palette-dark .fpverify-container,
+.ion-palette-dark .fpreset-container {
+    background: var(--app-surface-background, #1b212c) !important;
+    color: var(--app-text-primary, #f5f7fa) !important;
+    border-color: var(--app-border-color, #313846) !important;
+}
+
+.ion-palette-dark .search-form-item-email,
+.ion-palette-dark .search-form-item-meta,
+.ion-palette-dark .search-form-empty,
+.ion-palette-dark .config-profile-email,
+.ion-palette-dark .calendar-error-state,
+.ion-palette-dark .calendar-booking-email,
+.ion-palette-dark .calendar-bookings-empty,
+.ion-palette-dark .crear-form-subtitle,
+.ion-palette-dark .config-stat-label,
+.ion-palette-dark .search-form-summary,
+.ion-palette-dark .session-class-notes,
+.ion-palette-dark .calendar-bookings-modal-notes {
+    color: var(--app-text-secondary, #aeb6c2) !important;
+}
+
+.ion-palette-dark .session-class-notes,
+.ion-palette-dark .calendar-bookings-modal-notes {
+    background: #243041 !important;
+}
+
+.ion-palette-dark .search-form-search-input,
+.ion-palette-dark .search-form-period-select,
+.ion-palette-dark .search-form-period-date-btn,
+.ion-palette-dark .crear-form-container input,
+.ion-palette-dark .crear-form-container textarea,
+.ion-palette-dark .crear-form-container select,
+.ion-palette-dark .calendar-hour-picker-field,
+.ion-palette-dark .calendar-edit-text-input,
+.ion-palette-dark .calendar-edit-textarea {
+    background: var(--app-input-background, #222a35) !important;
+    color: var(--app-text-primary, #f5f7fa) !important;
+    border-color: var(--app-border-color, #313846) !important;
+}
+
+.ion-palette-dark .config-card ion-item,
+.ion-palette-dark .config-card ion-label,
+.ion-palette-dark .config-card ion-input,
+.ion-palette-dark .config-card ion-icon,
+.ion-palette-dark .calendar-sessions-section p,
+.ion-palette-dark .calendar-day-label,
+.ion-palette-dark .calendar-day-num,
+.ion-palette-dark .crear-day-checkbox,
+.ion-palette-dark .crear-day-checkbox-day {
+    color: var(--app-text-primary, #f5f7fa) !important;
+}
+
+.ion-palette-dark .crear-day-checkbox {
+    background: var(--app-surface-background, #1b212c) !important;
+}
+
+.ion-palette-dark .crear-day-checkbox .custom-checkbox {
+    background: #0f131a;
+    border-color: var(--app-border-color, #313846);
+}

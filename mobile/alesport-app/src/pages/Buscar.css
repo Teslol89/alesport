@@ -1,8 +1,7 @@
-/* Fondo blanco  */
+/* Fondo de la página de búsqueda */
 .ion-page.search-page,
 .ion-page.search-page ion-content,
 .ion-page.search-page .ion-content {
-    --background: #eeeeee !important;
-    /* Blanco "TIZA" */
-    background: #eeeeee !important;
+    --background: var(--app-page-background, #eeeeee) !important;
+    background: var(--app-page-background, #eeeeee) !important;
 }

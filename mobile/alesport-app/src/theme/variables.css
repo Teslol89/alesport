@@ -1,2 +1,25 @@
 /* For information on how to create your own theme, please refer to:
 http://ionicframework.com/docs/theming/ */
+
+:root {
+  --app-page-background: #eeeeee;
+  --app-surface-background: #ffffff;
+  --app-toolbar-background: #ffffff;
+  --app-text-primary: #000000;
+  --app-text-secondary: #7a7a7a;
+  --app-border-color: #d8e5e9;
+  --app-input-background: #f5f7fa;
+}
+
+html.ion-palette-dark,
+body.ion-palette-dark,
+ion-app.ion-palette-dark {
+  --app-page-background: #0f131a;
+  --app-surface-background: #1b212c;
+  --app-toolbar-background: #161b22;
+  --app-text-primary: #f5f7fa;
+  --app-text-secondary: #aeb6c2;
+  --app-border-color: #313846;
+  --app-input-background: #222a35;
+}
+

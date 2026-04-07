@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
 import { cameraOutline, helpCircleOutline, logoWhatsapp, moonOutline, pencilOutline, personCircleOutline, settingsOutline, sunnyOutline, trashOutline } from 'ionicons/icons';
+import { Capacitor } from '@capacitor/core';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import logoIcon from '../icons/icon.png';
 import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
@@ -171,8 +173,33 @@ const ConfigForm: React.FC = () => {
     }
   };
 
-  const handleAvatarPicker = () => {
-    avatarInputRef.current?.click();
+  const handleAvatarPicker = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      avatarInputRef.current?.click();
+      return;
+    }
+
+    try {
+      const photo = await Camera.getPhoto({
+        quality: 85,
+        allowEditing: true,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Prompt,
+        width: 900,
+        height: 900,
+      });
+
+      if (photo.dataUrl) {
+        setAvatarPreview(photo.dataUrl);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      const wasCancelled = message.includes('cancel') || message.includes('canceled') || message.includes('user denied photos');
+
+      if (!wasCancelled) {
+        setToast({ show: true, message: t('config.photoAccessError'), type: 'danger' });
+      }
+    }
   };
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -234,17 +261,28 @@ const ConfigForm: React.FC = () => {
       <div className="config-form-content">
 
         <IonCard className="config-profile-card">
-          <div className="config-profile-avatar">
-            {profile.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={t('config.profilePhotoAlt')}
-                className="config-profile-avatar-image"
-              />
-            ) : (
-              <IonIcon icon={personCircleOutline} />
-            )}
-          </div>
+          <button
+            type="button"
+            className="config-profile-avatar-button"
+            onClick={openEditProfileModal}
+            aria-label={t('config.changePhoto')}
+          >
+            <div className="config-profile-avatar">
+              {profile.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={t('config.profilePhotoAlt')}
+                  className="config-profile-avatar-image"
+                />
+              ) : (
+                <IonIcon icon={personCircleOutline} />
+              )}
+            </div>
+            <span className="config-profile-avatar-badge" aria-hidden="true">
+              <IonIcon icon={cameraOutline} />
+            </span>
+          </button>
+          <div className="config-profile-avatar-cta">{t('config.tapToEditPhoto')}</div>
           <div className="config-profile-name">{profile.name || t('config.nameFallback')}</div>
           <div className="config-profile-email">{profile.email || t('config.emailFallback')}</div>
           {profile.phone ? <div className="config-profile-phone">{profile.phone}</div> : null}
@@ -315,17 +353,27 @@ const ConfigForm: React.FC = () => {
 
           <div className="config-edit-form">
             <div className="config-avatar-editor">
-              <div className="config-profile-avatar config-profile-avatar--editable">
-                {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt={t('config.profilePhotoAlt')}
-                    className="config-profile-avatar-image"
-                  />
-                ) : (
-                  <IonIcon icon={personCircleOutline} />
-                )}
-              </div>
+              <button
+                type="button"
+                className="config-profile-avatar-button config-profile-avatar-button--editable"
+                onClick={handleAvatarPicker}
+                aria-label={avatarPreview ? t('config.changePhoto') : t('config.addPhoto')}
+              >
+                <div className="config-profile-avatar config-profile-avatar--editable">
+                  {avatarPreview ? (
+                    <img
+                      src={avatarPreview}
+                      alt={t('config.profilePhotoAlt')}
+                      className="config-profile-avatar-image"
+                    />
+                  ) : (
+                    <IonIcon icon={personCircleOutline} />
+                  )}
+                </div>
+                <span className="config-profile-avatar-badge" aria-hidden="true">
+                  <IonIcon icon={cameraOutline} />
+                </span>
+              </button>
 
               <input
                 ref={avatarInputRef}

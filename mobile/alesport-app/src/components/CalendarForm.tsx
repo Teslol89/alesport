@@ -583,7 +583,7 @@ const Calendar: React.FC = () => {
             const isAtCapacity = canManageSessionBookings ? occupancy >= session.capacity : session.status === 'completed';
             const isPast = isPastSession(session);
             const colorClass = isAtCapacity ? 'danger' : 'success';
-            const cardClass = `session-card ion-color-${colorClass}`;
+            const cardClass = `session-card ${isClient ? 'session-card-client' : ''} ion-color-${colorClass}`;
             const hasClassName = Boolean(session.class_name && session.class_name.trim().length > 0);
             const hasNotes = Boolean(session.notes && session.notes.trim().length > 0);
             return (
@@ -598,10 +598,15 @@ const Calendar: React.FC = () => {
                         <img src={horaIcon} alt="Hora" className="session-title-icon" />
                         {formatHour(session.start_time, session.session_date)} - {formatHour(session.end_time, session.session_date)}
                       </span>
-                      {session.trainer_name ? (
+                      {canManageSessionBookings && session.trainer_name ? (
                         <span className="session-title-trainer">{session.trainer_name}</span>
                       ) : null}
                     </div>
+                    {isClient && session.trainer_name ? (
+                      <div className="session-title-trainer-client">
+                        {t('calendar.trainer')}: {session.trainer_name}
+                      </div>
+                    ) : null}
                   </IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>

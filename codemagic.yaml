@@ -31,8 +31,11 @@ workflows:
 
           if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
             echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
+            plutil -lint ios/App/App/GoogleService-Info.plist
+            grep -q "<key>GOOGLE_APP_ID</key>" ios/App/App/GoogleService-Info.plist || { echo "ERROR: Invalid GoogleService-Info.plist"; exit 1; }
           else
-            echo "WARNING: GOOGLE_SERVICE_INFO_PLIST_BASE64 is not configured. Firebase Messaging / Google Sign-In may fail on iOS."
+            echo "ERROR: GOOGLE_SERVICE_INFO_PLIST_BASE64 is not configured. Firebase iOS cannot start without it."
+            exit 1
           fi
 
       # Sincronizar Capacitor

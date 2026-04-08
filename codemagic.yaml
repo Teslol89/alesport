@@ -6,7 +6,7 @@ workflows:
     environment:
       node: latest
 
-    working_directory: mobile/alesport-app   # 👈 CLAVE
+    working_directory: mobile/alesport-app
 
     scripts:
       - name: Install dependencies
@@ -15,12 +15,19 @@ workflows:
       - name: Build web app
         script: npm run build
 
+      - name: Clean iOS
+        script: rm -rf ios
+
+      - name: Add iOS platform
+        script: npx cap add ios
+
       - name: Sync Capacitor
         script: npx cap sync ios
 
       - name: Build iOS
         script: |
-          xcodebuild -workspace ios/App/App.xcworkspace \
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
           -scheme App \
           -configuration Release \
           -sdk iphoneos \

@@ -17,18 +17,25 @@ workflows:
 
       - name: Clean iOS
         script: rm -rf ios
-
+      
       - name: Add iOS platform
-        script: npx cap add ios
-
+        script: |
+          npm install -g @capacitor/cli
+          npx cap add ios
+      
       - name: Sync Capacitor
         script: npx cap sync ios
-
+      
+      - name: Check ios folder
+        script: |
+          ls ios
+          ls ios/App || true
+      
       - name: Install CocoaPods
         script: |
           cd ios
           pod install
-      
+
       - name: Build iOS
         script: |
           cd ios

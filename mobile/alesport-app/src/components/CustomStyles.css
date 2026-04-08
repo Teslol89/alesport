@@ -167,6 +167,16 @@
   --app-btn-danger-bg-hover: #a61d2e;
   --app-btn-danger-bg-active: #6e101c;
   --app-btn-danger-text: #ffffff;
+
+  --app-surface-bg: #ffffff;
+  --app-surface-radius: 12px;
+  --app-surface-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.14),
+    0 1px 1px 0 rgba(0, 0, 0, 0.12),
+    0 2px 1px -1px rgba(0, 0, 0, 0.2);
+
+  --app-modal-radius: 20px;
+  --app-modal-bg: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
 }
 
 /* Gris de campos un poco más oscuro en TODOS los modales de la app */
@@ -180,6 +190,41 @@ ion-modal ion-datetime {
   --background: #f5f7fa;
   --background-rgb: 245, 247, 250;
   --wheel-fade-background-rgb: 245, 247, 250;
+}
+
+/* -------------------------------------------------- */
+/* Superficies y layouts reutilizables de la app      */
+/* -------------------------------------------------- */
+.app-surface-card,
+.config-profile-card,
+.config-card,
+.crear-form-hero,
+.crear-form-section,
+.crear-preview-card {
+  background: var(--app-surface-bg);
+  border-radius: var(--app-surface-radius);
+  box-shadow: var(--app-surface-shadow);
+}
+
+.app-modal-panel,
+.config-avatar-source-modal,
+.config-edit-modal,
+.crear-single-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: var(--app-modal-radius);
+  background: var(--app-modal-bg);
+}
+
+.app-stack-actions,
+.config-avatar-source-modal-actions,
+.crear-single-date-modal-actions,
+.crear-time-picker-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
 /* Clase utilitaria + mapeo de clases existentes de la app */

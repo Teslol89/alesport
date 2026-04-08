@@ -25,6 +25,7 @@
   box-shadow: 0 2px 8px rgba(27, 191, 58, 0.08);
   transition: background 0.2s;
 }
+
 .crear-copy-week-btn-row .crear-btn-primary:hover,
 .crear-copy-week-btn-row button:hover {
   background: #77b154 !important;
@@ -201,14 +202,6 @@
 }
 
 .crear-form-hero,
-.crear-form-section,
-.crear-preview-card {
-  background: #ffffff;
-  border: 1px solid #d8e5e9;
-  border-radius: 18px;
-}
-
-.crear-form-hero,
 .crear-form-section {
   padding: 1rem;
 }
@@ -228,7 +221,7 @@
 .crear-form-section-title {
   margin: 0 0 0.85rem 0;
   font-size: 1rem;
-  color: #0f3037;
+  color: #000000;
 }
 
 .crear-mode-grid {
@@ -238,23 +231,23 @@
 }
 
 .crear-mode-card {
-  border: 1px solid #d8e5e9;
-  background: linear-gradient(180deg, #ffffff 0%, #f7fbfc 100%);
-  border-radius: 16px;
-  padding: 1rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.35rem;
+  border: 1px solid #d8e5e9;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbfc 100%);
+  border-radius: 12px;
+  padding: 1rem;
   text-align: left;
-  color: #0f3037;
+  color: #000000;
   cursor: pointer;
 }
 
 .crear-mode-card.selected {
-  border-color: #0089a6;
-  box-shadow: 0 0 0 3px rgba(0, 137, 166, 0.12);
+  border: 2px solid #0089a6;
   background: linear-gradient(180deg, #ffffff 0%, #eef9fb 100%);
+  
 }
 
 .crear-mode-card-kicker {
@@ -456,8 +449,6 @@
 }
 
 .crear-single-modal {
-  padding: 1rem;
-  background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
   border: 1px solid rgba(15, 48, 55, 0.08);
   max-height: min(86vh, 780px);
   overflow-y: auto;
@@ -556,9 +547,6 @@
 
 .crear-single-date-modal-actions {
   margin-top: 0.6rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
   justify-content: center;
 }
 
@@ -608,9 +596,6 @@
 
 .crear-time-picker-actions {
   margin-top: 0.9rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
 }
 
 .crear-capacity-picker-panel {

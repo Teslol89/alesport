@@ -15,6 +15,8 @@ import googleLogo from '../icons/googleLogo.svg';
 import alesportLogoHori from '../assets/img/alesportLogoHori.png';
 import "./LoginForm.css";
 
+const GOOGLE_WEB_CLIENT_ID = '516623761240-o7mo7hvef1lej6474cjsutrqdpo688om.apps.googleusercontent.com';
+
 const LoginForm: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -29,7 +31,7 @@ const LoginForm: React.FC = () => {
     // Inicializar GoogleAuth (solo una vez)
     React.useEffect(() => {
         GoogleAuth.initialize({
-            clientId: '516623761240-o7mo7hvef1lej6474cjsutrqdpo688om.apps.googleusercontent.com', // <-- Web Client ID
+            clientId: GOOGLE_WEB_CLIENT_ID,
             scopes: ['profile', 'email'],
             grantOfflineAccess: true,
         });
@@ -45,11 +47,15 @@ const LoginForm: React.FC = () => {
             const data = await loginWithGoogle(idToken);
             setToken(data.access_token);
         } catch (err: any) {
-            if (err?.message?.toLowerCase().includes("cancel") || err?.error === "popup_closed_by_user") {
+            const rawMessage = String(err?.message ?? err?.error ?? '').toLowerCase();
+
+            if (rawMessage.includes("cancel") || err?.error === "popup_closed_by_user") {
                 await GoogleAuth.signOut();
                 setError("Cancelado.");
+            } else if (rawMessage.includes('unimplemented') || rawMessage.includes('not implemented')) {
+                setError("Google no está configurado todavía en este iPhone.");
             } else {
-                setError("Error al iniciar sesión");
+                setError(err?.message || "Error al iniciar sesión con Google");
             }
         }
     };

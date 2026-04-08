@@ -4,6 +4,9 @@ workflows:
 
     environment:
       node: 22.14.0
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.alesport.app
 
       groups:
         - ios   # 👈 variables (TEAM_ID, API KEY, etc.)
@@ -33,6 +36,17 @@ workflows:
             echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
             plutil -lint ios/App/App/GoogleService-Info.plist
             grep -q "<key>GOOGLE_APP_ID</key>" ios/App/App/GoogleService-Info.plist || { echo "ERROR: Invalid GoogleService-Info.plist"; exit 1; }
+
+            REVERSED_CLIENT_ID=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" ios/App/App/GoogleService-Info.plist)
+            CLIENT_ID=$(/usr/libexec/PlistBuddy -c "Print :CLIENT_ID" ios/App/App/GoogleService-Info.plist)
+
+            /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" ios/App/App/Info.plist || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" ios/App/App/Info.plist
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" ios/App/App/Info.plist
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor" ios/App/App/Info.plist
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" ios/App/App/Info.plist
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $REVERSED_CLIENT_ID" ios/App/App/Info.plist
+            /usr/libexec/PlistBuddy -c "Set :GIDClientID $CLIENT_ID" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Add :GIDClientID string $CLIENT_ID" ios/App/App/Info.plist
           else
             echo "ERROR: GOOGLE_SERVICE_INFO_PLIST_BASE64 is not configured. Firebase iOS cannot start without it."
             exit 1
@@ -44,6 +58,10 @@ workflows:
           npx cap sync ios
           cd ios/App
           xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
+
+      # Aplicar perfiles/certificados de firmado en el proyecto Xcode
+      - name: Set up code signing
+        script: xcode-project use-profiles --project ios/App/App.xcodeproj
 
       # Build (archive)
       - name: Build iOS

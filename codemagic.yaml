@@ -5,11 +5,10 @@ workflows:
     environment:
       node: latest
 
-    working_directory: mobile/alesport-app
+      integrations:
+        app_store_connect: codemagic   # 👈 CLAVE
 
-    ios_signing:
-      distribution_type: app_store
-      bundle_identifier: com.alesport.app   # 👈 CAMBIA ESTO
+    working_directory: mobile/alesport-app
 
     scripts:
       - name: Install dependencies
@@ -37,3 +36,6 @@ workflows:
           -configuration Release \
           -sdk iphoneos \
           -archivePath $CM_BUILD_DIR/App.xcarchive archive
+
+    artifacts:
+      - mobile/alesport-app/ios/App/build/**/*.ipa

@@ -598,7 +598,25 @@ const Calendar: React.FC = () => {
                         <img src={horaIcon} alt="Hora" className="session-title-icon" />
                         {formatHour(session.start_time, session.session_date)} - {formatHour(session.end_time, session.session_date)}
                       </span>
-                      {canManageSessionBookings && session.trainer_name ? (
+                      {isClient ? (
+                        <div className="calendar-client-actions calendar-client-actions--header">
+                          {isBookedByClient ? (
+                            <span className="calendar-client-status calendar-client-status--booked">{t('calendar.bookedByYou')}</span>
+                          ) : isPast ? (
+                            <span className="calendar-client-status calendar-client-status--muted">{t('calendar.pastClassReadOnly')}</span>
+                          ) : isAtCapacity ? (
+                            <span className="calendar-client-status calendar-client-status--full">{t('calendar.full')}</span>
+                          ) : (
+                            <button
+                              className="calendar-hour-modal-save calendar-client-action-primary"
+                              onClick={() => { void handleReserveSession(session); }}
+                              disabled={bookingActionSessionId === session.id}
+                            >
+                              {bookingActionSessionId === session.id ? t('common.loading') : t('calendar.reserve')}
+                            </button>
+                          )}
+                        </div>
+                      ) : canManageSessionBookings && session.trainer_name ? (
                         <span className="session-title-trainer">{session.trainer_name}</span>
                       ) : null}
                     </div>
@@ -623,25 +641,6 @@ const Calendar: React.FC = () => {
                   ) : null}
                   {hasNotes ? (
                     <p className="session-class-notes">{session.notes}</p>
-                  ) : null}
-                  {isClient ? (
-                    <div className="calendar-client-actions">
-                      {isBookedByClient ? (
-                        <span className="calendar-client-status calendar-client-status--booked">{t('calendar.bookedByYou')}</span>
-                      ) : isPast ? (
-                        <span className="calendar-client-status calendar-client-status--muted">{t('calendar.pastClassReadOnly')}</span>
-                      ) : isAtCapacity ? (
-                        <span className="calendar-client-status calendar-client-status--full">{t('calendar.full')}</span>
-                      ) : (
-                        <button
-                          className="calendar-hour-modal-save calendar-client-action-primary"
-                          onClick={() => { void handleReserveSession(session); }}
-                          disabled={bookingActionSessionId === session.id}
-                        >
-                          {bookingActionSessionId === session.id ? t('common.loading') : t('calendar.reserve')}
-                        </button>
-                      )}
-                    </div>
                   ) : null}
                 </IonCardContent>
               </IonCard>

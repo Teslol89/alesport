@@ -176,7 +176,7 @@ const translations: Record<Language, Record<string, unknown>> = {
             cancelBooking: 'Cancelar',
             reserve: 'Reservar',
             full: 'Completa',
-            bookedByYou: 'Reservada por ti',
+            bookedByYou: 'Reserva completada',
             cancelMyBooking: 'Cancelar mi reserva',
             confirmCancelMyBooking: '¿Seguro que quieres cancelar tu reserva?',
             bookingCreated: 'Reserva realizada correctamente',

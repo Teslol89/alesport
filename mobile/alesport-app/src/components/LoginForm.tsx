@@ -44,7 +44,6 @@ const LoginForm: React.FC = () => {
             if (!idToken) throw new Error('No se recibió idToken de Google');
             const data = await loginWithGoogle(idToken);
             setToken(data.access_token);
-            history.replace("/admin-calendar");
         } catch (err: any) {
             if (err?.message?.toLowerCase().includes("cancel") || err?.error === "popup_closed_by_user") {
                 await GoogleAuth.signOut();
@@ -62,7 +61,6 @@ const LoginForm: React.FC = () => {
         try {
             const data = await loginUser(email, password);
             setToken(data.access_token);
-            history.replace("/admin-calendar");
         } catch (err) {
             setError("Error al iniciar sesión");
         }

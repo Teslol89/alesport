@@ -7,6 +7,7 @@ import {
   IonIcon,
   IonLabel,
   IonRouterOutlet,
+  IonSpinner,
   IonTabBar,
   IonTabButton,
   IonTabs,
@@ -73,13 +74,21 @@ import './App.css';
 
 setupIonicReact();
 
+function AppRouteLoadingScreen() {
+  return (
+    <div className="app-route-loading" role="status" aria-live="polite" aria-label="Cargando">
+      <IonSpinner className="app-route-loading__spinner" name="crescent" color="primary" />
+    </div>
+  );
+}
+
 // App principal con SplashPage integrado
 // Componente dedicado para la redirección de la ruta raíz
 function RootRedirect() {
   const { isAuthenticated, isLoadingProfile } = useAuth();
 
   if (isLoadingProfile) {
-    return null;
+    return <AppRouteLoadingScreen />;
   }
 
   return <Redirect to={isAuthenticated ? "/admin-calendar" : "/login"} />;
@@ -97,8 +106,16 @@ function MainRoutes() {
   const isAdmin = role === 'admin';
   const isClient = role === 'client';
   const canManageSessions = role === 'admin' || role === 'trainer';
+  const isAuthRoute = [
+    '/login',
+    '/register',
+    '/verify-code',
+    '/forgot-password-request',
+    '/forgot-password-verify',
+    '/forgot-password-reset',
+  ].includes(location.pathname);
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || (isLoadingProfile && isAuthRoute)) {
     return (
       <IonRouterOutlet>
         <Route exact path="/login" component={Login} />
@@ -112,8 +129,12 @@ function MainRoutes() {
     );
   }
 
+  if (isAuthenticated && !isLoadingProfile && isAuthRoute) {
+    return <Redirect to="/admin-calendar" />;
+  }
+
   if (isLoadingProfile) {
-    return null;
+    return <AppRouteLoadingScreen />;
   }
 
   return (

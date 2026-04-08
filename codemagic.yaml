@@ -8,7 +8,7 @@ workflows:
     working_directory: mobile/alesport-app
 
     ios_signing:
-      distribution_type: development
+      distribution_type: app_store
       bundle_identifier: com.alesport.app   # 👈 CAMBIA ESTO
 
     scripts:

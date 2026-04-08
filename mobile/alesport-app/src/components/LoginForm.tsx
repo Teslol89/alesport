@@ -48,7 +48,7 @@ const LoginForm: React.FC = () => {
 
     const showInDevelopmentMessage = () => {
         setToastType("info");
-        setToastPlacement("center");
+        setToastPlacement("top");
         setError(IN_DEVELOPMENT_MESSAGE);
     };
 
@@ -79,7 +79,7 @@ const LoginForm: React.FC = () => {
             if (rawMessage.includes("cancel") || err?.error === "popup_closed_by_user") {
                 await GoogleAuth.signOut();
                 setToastType("info");
-                setToastPlacement("center");
+                setToastPlacement("top");
                 setError("Cancelado.");
             } else if (rawMessage.includes('unimplemented') || rawMessage.includes('not implemented')) {
                 showInDevelopmentMessage();

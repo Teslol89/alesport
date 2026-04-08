@@ -859,19 +859,20 @@ body,
 }
 
 .calendar-hour-modal-save {
-  background: linear-gradient(135deg, #0089a6 0%, #00718b 100%);
-  color: #fff;
+  background: var(--app-btn-bg);
+  color: var(--app-btn-text);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--app-btn-radius);
   padding: 0.6em 1.15em;
   font-size: 1em;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .calendar-hour-modal-save:hover {
   transform: translateY(-1px);
+  background: #0a7891;
   box-shadow: 0 8px 16px rgba(0, 113, 139, 0.28);
 }
 
@@ -1086,10 +1087,28 @@ body,
 .calendar-booking-action-cancel,
 .calendar-booking-action-reactivate {
   border: none;
-  border-radius: 10px;
-  padding: 0.5rem 0.75rem;
+  border-radius: var(--app-btn-radius);
+  padding: 0.5rem 0.85rem;
   cursor: pointer;
   font-weight: 600;
+}
+
+.calendar-booking-action-cancel {
+  background: var(--app-btn-danger-bg);
+  color: var(--app-btn-danger-text);
+}
+
+.calendar-booking-action-cancel:hover {
+  background: var(--app-btn-danger-bg-hover);
+}
+
+.calendar-booking-action-reactivate {
+  background: var(--app-btn-secondary-bg);
+  color: var(--app-btn-secondary-text);
+}
+
+.calendar-booking-action-reactivate:hover {
+  background: var(--app-btn-secondary-bg-hover);
 }
 
 .calendar-client-actions {
@@ -1104,15 +1123,15 @@ body,
 .calendar-client-status {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 0.3rem 0.65rem;
   font-size: 0.8rem;
   font-weight: 700;
 }
 
 .calendar-client-status--booked {
-  background: rgba(45, 211, 111, 0.16);
-  color: #157a43;
+  background: rgba(0, 137, 166, 0.4);
+  color: #0d5b69;
 }
 
 .calendar-client-status--full {
@@ -1127,16 +1146,6 @@ body,
 
 .calendar-client-action-primary {
   min-width: 140px;
-}
-
-.calendar-booking-action-cancel {
-  background: #fceaea;
-  color: #9d2f2f;
-}
-
-.calendar-booking-action-reactivate {
-  background: #e8f7ec;
-  color: #1c7d44;
 }
 
 /* ------------------- */

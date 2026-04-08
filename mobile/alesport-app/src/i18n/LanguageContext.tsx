@@ -184,7 +184,7 @@ const translations: Record<Language, Record<string, unknown>> = {
             bookingCancelError: 'No se pudo cancelar la reserva',
         },
         myBookings: {
-            title: 'Mis reservas',
+            title: 'Reservas',
             empty: 'Aún no tienes reservas activas.',
             sessionLabel: 'Clase',
             bookedOn: 'Reservada el',
@@ -363,7 +363,7 @@ const translations: Record<Language, Record<string, unknown>> = {
             bookingCancelError: 'Could not cancel the booking',
         },
         myBookings: {
-            title: 'My bookings',
+            title: 'Bookings',
             empty: 'You do not have any active bookings yet.',
             sessionLabel: 'Class',
             bookedOn: 'Booked on',

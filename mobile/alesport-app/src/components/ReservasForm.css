@@ -60,10 +60,10 @@
 .bookings-form-wrapper {
   width: min(100%, 820px);
   margin: 0 auto;
-  padding: 16px 16px 96px;
+  padding: 20px 16px 104px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.1rem;
 }
 
 .bookings-loading,
@@ -80,27 +80,28 @@
 .bookings-list {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 1rem;
 }
 
 .bookings-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 1.1rem;
+  padding: 1.15rem 1rem;
   flex-wrap: wrap;
 }
 
 .bookings-item-main {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.5rem;
 }
 
 .bookings-item-main h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
+  line-height: 1.35;
   color: #18323a;
 }
 
@@ -108,6 +109,7 @@
 .bookings-meta {
   margin: 0;
   color: #4c6970;
+  line-height: 1.45;
 }
 
 .bookings-badge {
@@ -141,11 +143,13 @@
 
 @media (max-width: 640px) {
   .bookings-form-wrapper {
-    padding-inline: 12px;
+    padding: 16px 12px 96px;
   }
 
   .bookings-item {
     align-items: stretch;
+    gap: 0.9rem;
+    padding: 1rem 0.95rem;
   }
 
   .bookings-item-actions {

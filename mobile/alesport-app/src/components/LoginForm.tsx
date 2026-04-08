@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { loginUser } from "../api/auth";
 import { loginWithGoogle } from "../api/auth";
@@ -16,30 +17,56 @@ import alesportLogoHori from '../assets/img/alesportLogoHori.png';
 import "./LoginForm.css";
 
 const GOOGLE_WEB_CLIENT_ID = '516623761240-o7mo7hvef1lej6474cjsutrqdpo688om.apps.googleusercontent.com';
+const IN_DEVELOPMENT_MESSAGE = 'En desarrollo.';
 
 const LoginForm: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [toastType, setToastType] = useState<"success" | "danger" | "info">("danger");
+    const [toastPlacement, setToastPlacement] = useState<"top" | "center">("top");
     const [showPassword, setShowPassword] = useState(false);
     const passwordInputRef = useRef<HTMLInputElement>(null);
     // toastKey eliminado, ya no es necesario
     const { setToken } = useAuth();
     const history = useHistory();
+    const isNativeIos = Capacitor.getPlatform() === 'ios';
 
 
     // Inicializar GoogleAuth (solo una vez)
     React.useEffect(() => {
+        if (isNativeIos) {
+            return;
+        }
+
         GoogleAuth.initialize({
             clientId: GOOGLE_WEB_CLIENT_ID,
             scopes: ['profile', 'email'],
             grantOfflineAccess: true,
         });
-    }, []);
+    }, [isNativeIos]);
+
+    const showInDevelopmentMessage = () => {
+        setToastType("info");
+        setToastPlacement("center");
+        setError(IN_DEVELOPMENT_MESSAGE);
+    };
+
+    const handleAppleLogin = () => {
+        showInDevelopmentMessage();
+    };
 
     // Login con Google
     const handleGoogleLogin = async () => {
         setError(null);
+        setToastType("danger");
+        setToastPlacement("top");
+
+        if (isNativeIos) {
+            showInDevelopmentMessage();
+            return;
+        }
+
         try {
             const googleUser = await GoogleAuth.signIn();
             const idToken = (googleUser as any).idToken;
@@ -51,10 +78,14 @@ const LoginForm: React.FC = () => {
 
             if (rawMessage.includes("cancel") || err?.error === "popup_closed_by_user") {
                 await GoogleAuth.signOut();
+                setToastType("info");
+                setToastPlacement("center");
                 setError("Cancelado.");
             } else if (rawMessage.includes('unimplemented') || rawMessage.includes('not implemented')) {
-                setError("Google no está configurado todavía en este iPhone.");
+                showInDevelopmentMessage();
             } else {
+                setToastType("danger");
+                setToastPlacement("top");
                 setError(err?.message || "Error al iniciar sesión con Google");
             }
         }
@@ -68,6 +99,8 @@ const LoginForm: React.FC = () => {
             const data = await loginUser(email, password);
             setToken(data.access_token);
         } catch (err) {
+            setToastType("danger");
+            setToastPlacement("top");
             setError("Error al iniciar sesión");
         }
     };
@@ -76,7 +109,7 @@ const LoginForm: React.FC = () => {
         <div className="login-container">
             <img src={alesportLogoHori} alt="Logo" className="login-logo" />            
             <div className="login-socials">
-                <button className="social-btn">
+                <button className="social-btn" type="button" onClick={handleAppleLogin}>
                     <img src={appleLogo} alt="Apple" className="social-icon" /> Apple
                 </button>
                 <button className="social-btn" type="button" onClick={handleGoogleLogin}>
@@ -146,8 +179,9 @@ const LoginForm: React.FC = () => {
                 show={!!error}
                 message={error || ''}
                 onClose={() => setError(null)}
-                type="danger"
-                duration={3000}
+                type={toastType}
+                placement={toastPlacement}
+                duration={2200}
             />
         </div>
     );

@@ -75,18 +75,25 @@ setupIonicReact();
 // App principal con SplashPage integrado
 // Componente dedicado para la redirección de la ruta raíz
 function RootRedirect() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoadingProfile } = useAuth();
+
+  if (isLoadingProfile) {
+    return null;
+  }
+
   return <Redirect to={isAuthenticated ? "/admin-calendar" : "/login"} />;
 }
 
 function MainRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoadingProfile, role } = useAuth();
   const { t } = useLanguage();
   const location = useLocation();
   const isAgendaActive = location.pathname.startsWith('/admin-calendar');
   const isSearchActive = location.pathname.startsWith('/search');
   const isCrearActive = location.pathname.startsWith('/crear');
   const isConfigActive = location.pathname.startsWith('/config');
+  const isAdmin = role === 'admin';
+  const canManageSessions = role === 'admin' || role === 'trainer';
 
   if (!isAuthenticated) {
     return (
@@ -102,12 +109,16 @@ function MainRoutes() {
     );
   }
 
+  if (isLoadingProfile) {
+    return null;
+  }
+
   return (
     <IonTabs>
       <IonRouterOutlet>
         <PrivateRoute exact path="/admin-calendar" component={AdminCalendarPage} />
-        <PrivateRoute exact path="/search" component={TabSearch} />
-        <PrivateRoute exact path="/crear" component={Crear} />
+        <PrivateRoute exact path="/search" component={TabSearch} allowedRoles={["admin"]} />
+        <PrivateRoute exact path="/crear" component={Crear} allowedRoles={["admin", "trainer"]} />
         <PrivateRoute path="/config" component={Config} />
         <Route exact path="/" component={RootRedirect} />
       </IonRouterOutlet>
@@ -116,14 +127,18 @@ function MainRoutes() {
           <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isAgendaActive ? agendaActiveIcon : agendaIcon} />
           <IonLabel>{t('tabs.agenda')}</IonLabel>
         </IonTabButton>
-        <IonTabButton tab="search" href="/search">
-          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isSearchActive ? buscarActiveIcon : buscarIcon} />
-          <IonLabel>{t('tabs.search')}</IonLabel>
-        </IonTabButton>
-        <IonTabButton tab="crear" href="/crear">
-          <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isCrearActive ? crearActiveIcon : crearIcon} />
-          <IonLabel>{t('tabs.create')}</IonLabel>
-        </IonTabButton>
+        {isAdmin ? (
+          <IonTabButton tab="search" href="/search">
+            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isSearchActive ? buscarActiveIcon : buscarIcon} />
+            <IonLabel>{t('tabs.search')}</IonLabel>
+          </IonTabButton>
+        ) : null}
+        {canManageSessions ? (
+          <IonTabButton tab="crear" href="/crear">
+            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isCrearActive ? crearActiveIcon : crearIcon} />
+            <IonLabel>{t('tabs.create')}</IonLabel>
+          </IonTabButton>
+        ) : null}
         <IonTabButton tab="config" href="/config">
           <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isConfigActive ? configActiveIcon : configIcon} />
           <IonLabel>{t('tabs.options')}</IonLabel>

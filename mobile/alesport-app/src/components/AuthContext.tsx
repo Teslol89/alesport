@@ -1,11 +1,16 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { useHistory } from "react-router-dom";
+import { getUserProfile, type UserProfile } from "../api/user";
 import { registerFcmToken } from "../services/fcm";
 
 interface AuthContextType {
   token: string | null;
+  user: UserProfile | null;
+  role: string | null;
   setToken: (token: string | null) => void;
   isAuthenticated: boolean;
+  isLoadingProfile: boolean;
+  refreshProfile: () => Promise<void>;
   logout: () => void;
 }
 
@@ -15,48 +20,109 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [token, setTokenState] = useState<string | null>(null);
-  const history = useHistory();
+const readStoredUser = (): UserProfile | null => {
+  const raw = localStorage.getItem('userProfile');
+  if (!raw) {
+    return null;
+  }
 
-  useEffect(() => {
-    setTokenState(localStorage.getItem('token'));
+  try {
+    return JSON.parse(raw) as UserProfile;
+  } catch {
+    localStorage.removeItem('userProfile');
+    return null;
+  }
+};
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const history = useHistory();
+  const [token, setTokenState] = useState<string | null>(() => localStorage.getItem('token'));
+  const [user, setUser] = useState<UserProfile | null>(() => readStoredUser());
+  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(() => !!localStorage.getItem('token'));
+
+  const clearAuthState = useCallback(() => {
+    setTokenState(null);
+    setUser(null);
+    setIsLoadingProfile(false);
+    localStorage.removeItem('token');
+    localStorage.removeItem('userProfile');
   }, []);
 
-  useEffect(() => {
-    const handleUnauthorized = () => {
-      setTokenState(null);
-      history.replace('/login');
-    };
+  const handleUnauthorized = useCallback(() => {
+    clearAuthState();
+    history.replace('/login');
+  }, [clearAuthState, history]);
 
+  const refreshProfile = useCallback(async () => {
+    if (!token) {
+      setUser(null);
+      setIsLoadingProfile(false);
+      return;
+    }
+
+    setIsLoadingProfile(true);
+    try {
+      const profile = await getUserProfile(handleUnauthorized);
+      setUser(profile);
+      localStorage.setItem('userProfile', JSON.stringify(profile));
+    } catch (error) {
+      if (!(error instanceof Error && error.message === 'UNAUTHORIZED')) {
+        console.error('[AuthContext] No se pudo cargar el perfil:', error);
+      }
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  }, [handleUnauthorized, token]);
+
+  useEffect(() => {
     window.addEventListener('auth:unauthorized', handleUnauthorized as EventListener);
     return () => {
       window.removeEventListener('auth:unauthorized', handleUnauthorized as EventListener);
     };
-  }, [history]);
+  }, [handleUnauthorized]);
 
   useEffect(() => {
-    if (token) {
-      localStorage.setItem('token', token);
-      // Registrar token FCM cuando el usuario inicia sesión
-      registerFcmToken();
-    } else {
+    if (!token) {
       localStorage.removeItem('token');
+      localStorage.removeItem('userProfile');
+      setUser(null);
+      setIsLoadingProfile(false);
+      return;
     }
-  }, [token]);
 
-  const setToken = (t: string | null) => {
-    setTokenState(t);
+    localStorage.setItem('token', token);
+    registerFcmToken();
+    void refreshProfile();
+  }, [refreshProfile, token]);
+
+  const setToken = (nextToken: string | null) => {
+    if (!nextToken) {
+      clearAuthState();
+      return;
+    }
+
+    setTokenState(nextToken);
+    setIsLoadingProfile(true);
   };
 
   const logout = () => {
-    setTokenState(null);
-    localStorage.removeItem('token');
-    history.replace("/login");
+    clearAuthState();
+    history.replace('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ token, setToken, isAuthenticated: !!token, logout }}>
+    <AuthContext.Provider
+      value={{
+        token,
+        user,
+        role: user?.role || null,
+        setToken,
+        isAuthenticated: !!token,
+        isLoadingProfile,
+        refreshProfile,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

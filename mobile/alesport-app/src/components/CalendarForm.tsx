@@ -636,7 +636,7 @@ const Calendar: React.FC = () => {
                 <IonCardContent>
                   <div className='session-small-title-custom session-aforo-row'>
                     <img src={aforoIcon} alt="Aforo" className="session-aforo-icon" />
-                    {canManageSessionBookings ? `${occupancy}/${session.capacity}` : `${t('calendar.capacity')}: ${session.capacity}`}
+                    {canManageSessionBookings ? `${occupancy}/${session.capacity}` : `${session.capacity}`}
                     <div className='calendar-details-btn-container'>
                       <button className="calendar-details-btn" title={t('common.details')} onClick={() => openDetailsModal(session)}>
                         <img src={infoIcon} alt={t('common.details')} className="calendar-details-btn-icon" />

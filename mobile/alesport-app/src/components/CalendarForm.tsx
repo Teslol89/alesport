@@ -15,13 +15,13 @@ import {
   toPickerTimeIso,
 } from '../utils/funcionesGeneral';
 import { getSessionsByDateRange, updateSession, cancelSession } from '../api/sessions';
-import { BookingItem, cancelBooking, getBookingsBySession, reactivateBooking } from '../api/bookings';
+import { BookingItem, cancelBooking, createBooking, getBookingsBySession, getBookingsByUser, reactivateBooking } from '../api/bookings';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuth } from './AuthContext';
 
 const Calendar: React.FC = () => {
   const { t, dateLocale, language } = useLanguage();
-  const { role: userRole } = useAuth();
+  const { role: userRole, user } = useAuth();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
 
   type SessionItem = {
@@ -68,6 +68,8 @@ const Calendar: React.FC = () => {
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [sessionOccupancy, setSessionOccupancy] = useState<Record<number, number>>({});
+  const [myBookings, setMyBookings] = useState<BookingItem[]>([]);
+  const [bookingActionSessionId, setBookingActionSessionId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' | 'info' }>({
     show: false,
     message: '',
@@ -78,6 +80,8 @@ const Calendar: React.FC = () => {
   const dayButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const bookingsCacheRef = useRef<Record<number, BookingItem[]>>({});
   const bookingsInFlightRef = useRef<Record<number, Promise<BookingItem[]>>>({});
+  const isClient = userRole === 'client';
+  const canManageSessionBookings = userRole === 'admin' || userRole === 'trainer';
 
   const getSessionBookingsCached = useCallback(async (sessionId: number) => {
     const cached = bookingsCacheRef.current[sessionId];
@@ -102,6 +106,20 @@ const Calendar: React.FC = () => {
     bookingsInFlightRef.current[sessionId] = request;
     return request;
   }, []);
+
+  const refreshMyBookings = useCallback(async () => {
+    if (!isClient || !user?.id) {
+      setMyBookings([]);
+      return;
+    }
+
+    try {
+      const data = await getBookingsByUser(user.id);
+      setMyBookings(data);
+    } catch {
+      setMyBookings([]);
+    }
+  }, [isClient, user?.id]);
 
   // Sincronizar selectedDate cuando se abre el modal de mes
   useEffect(() => {
@@ -141,10 +159,15 @@ const Calendar: React.FC = () => {
     fetchSessions();
   }, [fetchSessions]);
 
+  useEffect(() => {
+    void refreshMyBookings();
+  }, [refreshMyBookings]);
+
   // También refrescar al entrar en la vista Agenda (cambio de tab/ruta)
   useIonViewWillEnter(() => {
     fetchSessions({ silent: true });
-  }, [startDate, endDate]);
+    void refreshMyBookings();
+  }, [fetchSessions, refreshMyBookings]);
 
   // Filtra y ordena sesiones por fecha seleccionada y hora de inicio
   const sessionsForDate = useMemo(
@@ -187,11 +210,18 @@ const Calendar: React.FC = () => {
   }
 
   async function openDetailsModal(session: SessionItem) {
+    setDetailsSession(session);
+    setShowDetailsModal(true);
+
+    if (!canManageSessionBookings) {
+      setBookings([]);
+      setBookingsLoading(false);
+      return;
+    }
+
     const cachedBookings = bookingsCacheRef.current[session.id];
     setBookings(cachedBookings || []);
     setBookingsLoading(!cachedBookings);
-    setDetailsSession(session);
-    setShowDetailsModal(true);
 
     if (cachedBookings) {
       return;
@@ -255,6 +285,64 @@ const Calendar: React.FC = () => {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo reactivar la reserva';
       setToast({ show: true, message, type: 'danger' });
+    }
+  }
+
+  async function handleReserveSession(session: SessionItem) {
+    if (!isClient) {
+      return;
+    }
+
+    if (isPastSession(session)) {
+      setToast({ show: true, message: t('calendar.pastClassReadOnly'), type: 'danger' });
+      return;
+    }
+
+    if (session.status === 'completed') {
+      setToast({ show: true, message: t('calendar.full'), type: 'info' });
+      return;
+    }
+
+    setBookingActionSessionId(session.id);
+    try {
+      await createBooking(session.id);
+      await refreshMyBookings();
+      fetchSessions({ silent: true });
+      setToast({ show: true, message: t('calendar.bookingCreated'), type: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('calendar.bookingCreateError');
+      setToast({ show: true, message, type: 'danger' });
+    } finally {
+      setBookingActionSessionId(null);
+    }
+  }
+
+  async function handleCancelOwnBooking(session: SessionItem) {
+    const booking = myBookings.find((item) => item.session_id === session.id && item.status === 'active');
+    if (!booking) {
+      return;
+    }
+
+    if (isPastSession(session)) {
+      setToast({ show: true, message: t('calendar.pastClassReadOnly'), type: 'danger' });
+      return;
+    }
+
+    if (!window.confirm(t('calendar.confirmCancelMyBooking'))) {
+      return;
+    }
+
+    setBookingActionSessionId(session.id);
+    try {
+      await cancelBooking(booking.id);
+      await refreshMyBookings();
+      fetchSessions({ silent: true });
+      setToast({ show: true, message: t('calendar.bookingCancelled'), type: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('calendar.bookingCancelError');
+      setToast({ show: true, message, type: 'danger' });
+    } finally {
+      setBookingActionSessionId(null);
     }
   }
 
@@ -409,7 +497,7 @@ const Calendar: React.FC = () => {
   }, [selectedDate, weekDays]);
 
   useEffect(() => {
-    if (userRole !== 'admin' && userRole !== 'trainer') {
+    if (!canManageSessionBookings) {
       return;
     }
 
@@ -450,7 +538,7 @@ const Calendar: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [sessionsForDate, userRole, getSessionBookingsCached]);
+  }, [canManageSessionBookings, sessionsForDate, getSessionBookingsCached]);
 
   useEffect(() => {
     if (!detailsSession) {
@@ -460,6 +548,15 @@ const Calendar: React.FC = () => {
     const activeCount = bookings.filter(b => b.status === 'active').length;
     setSessionOccupancy(prev => ({ ...prev, [detailsSession.id]: activeCount }));
   }, [bookings, detailsSession]);
+
+  const myActiveBookingsBySession = useMemo(() => {
+    return myBookings.reduce<Record<number, BookingItem>>((acc, booking) => {
+      if (booking.status === 'active') {
+        acc[booking.session_id] = booking;
+      }
+      return acc;
+    }, {});
+  }, [myBookings]);
 
   const activeBookingsCount = bookings.filter(b => b.status === 'active').length;
   const isPastSession = (session: SessionItem) => session.session_date < getTodayIsoDate();
@@ -511,7 +608,8 @@ const Calendar: React.FC = () => {
         ) : (
           sessionsForDate.map(session => {
             const occupancy = sessionOccupancy[session.id] ?? 0;
-            const isAtCapacity = occupancy >= session.capacity;
+            const isBookedByClient = Boolean(myActiveBookingsBySession[session.id]);
+            const isAtCapacity = canManageSessionBookings ? occupancy >= session.capacity : session.status === 'completed';
             const isPast = isPastSession(session);
             const colorClass = isAtCapacity ? 'danger' : 'success';
             const cardClass = `session-card ion-color-${colorClass}`;
@@ -538,7 +636,7 @@ const Calendar: React.FC = () => {
                 <IonCardContent>
                   <div className='session-small-title-custom session-aforo-row'>
                     <img src={aforoIcon} alt="Aforo" className="session-aforo-icon" />
-                    {`${occupancy}/${session.capacity}`}
+                    {canManageSessionBookings ? `${occupancy}/${session.capacity}` : `${t('calendar.capacity')}: ${session.capacity}`}
                     <div className='calendar-details-btn-container'>
                       <button className="calendar-details-btn" title={t('common.details')} onClick={() => openDetailsModal(session)}>
                         <img src={infoIcon} alt={t('common.details')} className="calendar-details-btn-icon" />
@@ -547,6 +645,34 @@ const Calendar: React.FC = () => {
                   </div>
                   {hasNotes ? (
                     <p className="session-class-notes">{session.notes}</p>
+                  ) : null}
+                  {isClient ? (
+                    <div className="calendar-client-actions">
+                      {isBookedByClient ? (
+                        <>
+                          <span className="calendar-client-status calendar-client-status--booked">{t('calendar.bookedByYou')}</span>
+                          <button
+                            className="calendar-booking-action-cancel"
+                            onClick={() => { void handleCancelOwnBooking(session); }}
+                            disabled={bookingActionSessionId === session.id}
+                          >
+                            {bookingActionSessionId === session.id ? t('common.loading') : t('calendar.cancelMyBooking')}
+                          </button>
+                        </>
+                      ) : isPast ? (
+                        <span className="calendar-client-status calendar-client-status--muted">{t('calendar.pastClassReadOnly')}</span>
+                      ) : isAtCapacity ? (
+                        <span className="calendar-client-status calendar-client-status--full">{t('calendar.full')}</span>
+                      ) : (
+                        <button
+                          className="calendar-hour-modal-save calendar-client-action-primary"
+                          onClick={() => { void handleReserveSession(session); }}
+                          disabled={bookingActionSessionId === session.id}
+                        >
+                          {bookingActionSessionId === session.id ? t('common.loading') : t('calendar.reserve')}
+                        </button>
+                      )}
+                    </div>
                   ) : null}
                 </IonCardContent>
               </IonCard>
@@ -734,61 +860,84 @@ const Calendar: React.FC = () => {
                 <p className="calendar-bookings-modal-capacity">{t('calendar.pastClassReadOnly')}</p>
               ) : null}
               <p className="calendar-bookings-modal-capacity">
-                {t('calendar.occupancy')}: {activeBookingsCount}/{detailsSession.capacity}
+                {canManageSessionBookings
+                  ? `${t('calendar.occupancy')}: ${activeBookingsCount}/${detailsSession.capacity}`
+                  : `${t('calendar.capacity')}: ${detailsSession.capacity}`}
               </p>
               {detailsSession.notes ? (
                 <p className="calendar-bookings-modal-notes">{detailsSession.notes}</p>
               ) : null}
 
-              <div className="calendar-bookings-body">
-                {bookingsLoading ? (
-                  <div className="calendar-bookings-loading" aria-live="polite" aria-busy="true">
-                    <IonSpinner name="crescent" color="primary" />
-                    <div className="calendar-bookings-skeleton-list" aria-hidden="true">
-                      {loadingSkeletonRows.map((row) => (
-                        <div key={row} className="calendar-bookings-skeleton-item">
-                          <div className="calendar-bookings-skeleton-line calendar-bookings-skeleton-line--name" />
-                          <div className="calendar-bookings-skeleton-line calendar-bookings-skeleton-line--email" />
+              {canManageSessionBookings ? (
+                <div className="calendar-bookings-body">
+                  {bookingsLoading ? (
+                    <div className="calendar-bookings-loading" aria-live="polite" aria-busy="true">
+                      <IonSpinner name="crescent" color="primary" />
+                      <div className="calendar-bookings-skeleton-list" aria-hidden="true">
+                        {loadingSkeletonRows.map((row) => (
+                          <div key={row} className="calendar-bookings-skeleton-item">
+                            <div className="calendar-bookings-skeleton-line calendar-bookings-skeleton-line--name" />
+                            <div className="calendar-bookings-skeleton-line calendar-bookings-skeleton-line--email" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : bookings.length === 0 ? (
+                    <p className="calendar-bookings-empty">{t('calendar.noStudents')}</p>
+                  ) : (
+                    <div className="calendar-bookings-list">
+                      {bookings.map(booking => (
+                        <div key={booking.id} className="calendar-booking-item">
+                          <div>
+                            <div className="calendar-booking-name">{booking.user_name || `${t('search.student')} #${booking.user_id}`}</div>
+                            <div className="calendar-booking-email">{booking.user_email || t('calendar.noEmailAvailable')}</div>
+                            <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : 'cancelled'}`}>
+                              {booking.status === 'active' ? t('calendar.active') : t('calendar.inactive')}
+                            </div>
+                          </div>
+                          {!isDetailsSessionPast ? (
+                            booking.status === 'active' ? (
+                              <button className="calendar-booking-action-cancel" onClick={() => handleCancelBooking(booking.id)}>
+                                {t('calendar.cancelBooking')}
+                              </button>
+                            ) : (
+                              <button className="calendar-booking-action-reactivate" onClick={() => handleReactivateBooking(booking.id)}>
+                                {t('calendar.reactivate')}
+                              </button>
+                            )
+                          ) : null}
                         </div>
                       ))}
                     </div>
-                  </div>
-                ) : bookings.length === 0 ? (
-                  <p className="calendar-bookings-empty">{t('calendar.noStudents')}</p>
-                ) : (
-                  <div className="calendar-bookings-list">
-                    {bookings.map(booking => (
-                      <div key={booking.id} className="calendar-booking-item">
-                        <div>
-                          <div className="calendar-booking-name">{booking.user_name || `${t('search.student')} #${booking.user_id}`}</div>
-                          <div className="calendar-booking-email">{booking.user_email || t('calendar.noEmailAvailable')}</div>
-                          <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : 'cancelled'}`}>
-                            {booking.status === 'active' ? t('calendar.active') : t('calendar.inactive')}
-                          </div>
-                        </div>
-                        {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast ? (
-                          booking.status === 'active' ? (
-                            <button className="calendar-booking-action-cancel" onClick={() => handleCancelBooking(booking.id)}>
-                              {t('calendar.cancelBooking')}
-                            </button>
-                          ) : (
-                            <button className="calendar-booking-action-reactivate" onClick={() => handleReactivateBooking(booking.id)}>
-                              {t('calendar.reactivate')}
-                            </button>
-                          )
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              ) : null}
             </>
           ) : null}
           <div className="calendar-hour-modal-actions">
-            {(userRole === 'admin' || userRole === 'trainer') && !isDetailsSessionPast && detailsSession ? (
+            {canManageSessionBookings && !isDetailsSessionPast && detailsSession ? (
               <button className="calendar-hour-modal-save" onClick={() => openEditSessionModal(detailsSession)}>
                 {t('common.edit')}
               </button>
+            ) : null}
+            {isClient && detailsSession && !isDetailsSessionPast ? (
+              myActiveBookingsBySession[detailsSession.id] ? (
+                <button
+                  className="calendar-hour-modal-cancel"
+                  onClick={() => { void handleCancelOwnBooking(detailsSession); }}
+                  disabled={bookingActionSessionId === detailsSession.id}
+                >
+                  {bookingActionSessionId === detailsSession.id ? t('common.loading') : t('calendar.cancelMyBooking')}
+                </button>
+              ) : detailsSession.status !== 'completed' ? (
+                <button
+                  className="calendar-hour-modal-save"
+                  onClick={() => { void handleReserveSession(detailsSession); }}
+                  disabled={bookingActionSessionId === detailsSession.id}
+                >
+                  {bookingActionSessionId === detailsSession.id ? t('common.loading') : t('calendar.reserve')}
+                </button>
+              ) : null
             ) : null}
             <button className="calendar-hour-modal-cancel" onClick={() => setShowDetailsModal(false)}>{t('common.close')}</button>
           </div>

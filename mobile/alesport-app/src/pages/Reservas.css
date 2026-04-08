@@ -1,0 +1,7 @@
+/* Fondo de la página de Reservas */
+.ion-page.bookings-page,
+.ion-page.bookings-page ion-content,
+.ion-page.bookings-page .ion-content {
+    --background: var(--app-page-background, #eeeeee) !important;
+    background: var(--app-page-background, #eeeeee) !important;
+}

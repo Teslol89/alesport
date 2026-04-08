@@ -30,6 +30,7 @@ import ForgotPasswordReset from './pages/ForgotPasswordReset';
 import Crear from './pages/Crear';
 import TabSearch from './pages/Buscar';
 import Config from './pages/Config';
+import Reservas from './pages/Reservas';
 import VerifyCode from './pages/VerifyCode';
 import SplashPage from './pages/SplashPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
@@ -91,8 +92,10 @@ function MainRoutes() {
   const isAgendaActive = location.pathname.startsWith('/admin-calendar');
   const isSearchActive = location.pathname.startsWith('/search');
   const isCrearActive = location.pathname.startsWith('/crear');
+  const isBookingsActive = location.pathname.startsWith('/bookings');
   const isConfigActive = location.pathname.startsWith('/config');
   const isAdmin = role === 'admin';
+  const isClient = role === 'client';
   const canManageSessions = role === 'admin' || role === 'trainer';
 
   if (!isAuthenticated) {
@@ -119,6 +122,7 @@ function MainRoutes() {
         <PrivateRoute exact path="/admin-calendar" component={AdminCalendarPage} />
         <PrivateRoute exact path="/search" component={TabSearch} allowedRoles={["admin"]} />
         <PrivateRoute exact path="/crear" component={Crear} allowedRoles={["admin", "trainer"]} />
+        <PrivateRoute exact path="/bookings" component={Reservas} allowedRoles={["client"]} />
         <PrivateRoute path="/config" component={Config} />
         <Route exact path="/" component={RootRedirect} />
       </IonRouterOutlet>
@@ -137,6 +141,12 @@ function MainRoutes() {
           <IonTabButton tab="crear" href="/crear">
             <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isCrearActive ? crearActiveIcon : crearIcon} />
             <IonLabel>{t('tabs.create')}</IonLabel>
+          </IonTabButton>
+        ) : null}
+        {isClient ? (
+          <IonTabButton tab="bookings" href="/bookings">
+            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isBookingsActive ? buscarActiveIcon : buscarIcon} />
+            <IonLabel>{t('tabs.bookings')}</IonLabel>
           </IonTabButton>
         ) : null}
         <IonTabButton tab="config" href="/config">

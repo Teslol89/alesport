@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { loginUser } from "../api/auth";
 import { loginWithGoogle } from "../api/auth";
@@ -26,20 +27,35 @@ const LoginForm: React.FC = () => {
     // toastKey eliminado, ya no es necesario
     const { setToken } = useAuth();
     const history = useHistory();
+    const isNativeIos = Capacitor.getPlatform() === 'ios';
 
 
     // Inicializar GoogleAuth (solo una vez)
     React.useEffect(() => {
+        if (isNativeIos) {
+            return;
+        }
+
         GoogleAuth.initialize({
             clientId: GOOGLE_WEB_CLIENT_ID,
             scopes: ['profile', 'email'],
             grantOfflineAccess: true,
         });
-    }, []);
+    }, [isNativeIos]);
+
+    const handleAppleLogin = () => {
+        setError("En desarrollo.");
+    };
 
     // Login con Google
     const handleGoogleLogin = async () => {
         setError(null);
+
+        if (isNativeIos) {
+            setError("En desarrollo.");
+            return;
+        }
+
         try {
             const googleUser = await GoogleAuth.signIn();
             const idToken = (googleUser as any).idToken;
@@ -76,7 +92,7 @@ const LoginForm: React.FC = () => {
         <div className="login-container">
             <img src={alesportLogoHori} alt="Logo" className="login-logo" />            
             <div className="login-socials">
-                <button className="social-btn">
+                <button className="social-btn" type="button" onClick={handleAppleLogin}>
                     <img src={appleLogo} alt="Apple" className="social-icon" /> Apple
                 </button>
                 <button className="social-btn" type="button" onClick={handleGoogleLogin}>

@@ -15,12 +15,13 @@ import {
   toPickerTimeIso,
 } from '../utils/funcionesGeneral';
 import { getSessionsByDateRange, updateSession, cancelSession } from '../api/sessions';
-import { getUserProfile } from '../api/user';
 import { BookingItem, cancelBooking, getBookingsBySession, reactivateBooking } from '../api/bookings';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useAuth } from './AuthContext';
 
 const Calendar: React.FC = () => {
   const { t, dateLocale, language } = useLanguage();
+  const { role: userRole } = useAuth();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
 
   type SessionItem = {
@@ -374,13 +375,6 @@ const Calendar: React.FC = () => {
     setShowTimePickerModal(false);
   }
 
-  // Obtener perfil del usuario
-  const [userRole, setUserRole] = useState<string | null>(null);
-  useEffect(() => {
-    getUserProfile(() => { }).then(profile => {
-      setUserRole(profile.role || null);
-    }).catch(() => setUserRole(null));
-  }, []);
 
   useEffect(() => {
     const scrollContainer = dayScrollRef.current;

@@ -3,15 +3,16 @@ import { useEffect, useMemo, useState } from 'react';
 import logoIcon from '../icons/icon.png';
 import { IonDatetime, IonModal, IonSpinner } from '@ionic/react';
 import { BookingItem, getAllBookings } from '../api/bookings';
-import { getUserProfile } from '../api/user';
 import { formatDateDdMmYy, formatHour, isSameDay, isSameWeek, toLocalISODate } from '../utils/funcionesGeneral';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useAuth } from './AuthContext';
 import './BuscarForm.css';
 
 type PeriodFilter = 'all' | 'today' | 'week' | 'month';
 
 const BuscarForm: React.FC = () => {
     const { t, dateLocale } = useLanguage();
+    const { role: userRole, isLoadingProfile } = useAuth();
     const todayIso = toLocalISODate(new Date());
     const [bookings, setBookings] = useState<BookingItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -20,17 +21,15 @@ const BuscarForm: React.FC = () => {
     const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
     const [periodDate, setPeriodDate] = useState<string>(() => toLocalISODate(new Date()));
     const [showPeriodCalendar, setShowPeriodCalendar] = useState(false);
-    const [userRole, setUserRole] = useState<string | null>(null);
     // Barra de búsqueda siempre visible, sin lupa
 
     useEffect(() => {
-        getUserProfile(() => { })
-            .then(profile => setUserRole(profile.role || null))
-            .catch(() => setUserRole(null));
-    }, []);
+        if (isLoadingProfile) {
+            return;
+        }
 
-    useEffect(() => {
         if (userRole !== 'admin') {
+            setBookings([]);
             setLoading(false);
             return;
         }
@@ -41,7 +40,7 @@ const BuscarForm: React.FC = () => {
             .then(data => setBookings(data))
             .catch(() => setError(t('search.loadError')))
             .finally(() => setLoading(false));
-    }, [userRole, t]);
+    }, [isLoadingProfile, userRole, t]);
 
     const filteredBookings = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -104,7 +103,11 @@ const BuscarForm: React.FC = () => {
             </div>
             {/* Contenido principal de la búsqueda */}
             <div className="search-form-content">
-                {userRole !== 'admin' ? (
+                {isLoadingProfile ? (
+                    <div className="search-form-loading">
+                        <IonSpinner name="crescent" color="primary" />
+                    </div>
+                ) : userRole !== 'admin' ? (
                     <p className="search-form-empty">{t('search.adminOnly')}</p>
                 ) : (
                     <div className="search-form-body">

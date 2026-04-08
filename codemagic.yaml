@@ -5,6 +5,9 @@ workflows:
     environment:
       node: latest
 
+      groups:
+        - ios   # 👈 IMPORTANTE
+
     working_directory: mobile/alesport-app
 
     scripts:
@@ -32,7 +35,10 @@ workflows:
           -scheme App \
           -configuration Release \
           -sdk iphoneos \
-          -archivePath $CM_BUILD_DIR/App.xcarchive archive
+          DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
+          CODE_SIGN_STYLE=Automatic \
+          -archivePath $CM_BUILD_DIR/App.xcarchive \
+          archive
 
     artifacts:
       - mobile/alesport-app/ios/App/build/**/*.ipa

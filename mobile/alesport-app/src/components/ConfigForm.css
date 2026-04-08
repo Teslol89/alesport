@@ -83,13 +83,13 @@
 /* 3) Tarjeta de perfil */
 /* ------------------------------- */
 .config-profile-card {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   margin: 0 0 1.2rem 0;
   padding: 2.2rem 2rem 1.2rem 2rem;
-  display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
   border-radius: 12px !important;
+  overflow: hidden;
 }
 
 .config-profile-avatar-button {
@@ -180,8 +180,8 @@
 .config-card {
   width: 100%;
   margin: 0 0 1.2rem 0;
-  background-color: #ffffff;
   border-radius: 12px !important;
+  overflow: hidden;
 }
 
 .config-card ion-item {
@@ -242,6 +242,62 @@
 /* ------------------------------- */
 /* 6) Modal editar perfil */
 /* ------------------------------- */
+.config-avatar-source-modal-wrapper {
+  --width: min(90vw, 340px);
+  --height: auto;
+  --border-radius: 12px;
+  --box-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
+  --backdrop-opacity: 1 !important;
+}
+
+.config-avatar-source-modal-wrapper.ion-modal-overlay {
+  --backdrop-opacity: 1 !important;
+}
+
+.config-avatar-source-modal-wrapper::part(backdrop),
+.config-avatar-source-modal-wrapper .ion-backdrop,
+.config-avatar-source-modal-wrapper .modal-backdrop,
+.config-avatar-source-modal-wrapper .ion-modal-backdrop {
+  background: rgba(0, 0, 0, 0.48) !important;
+  opacity: 1 !important;
+}
+
+.config-avatar-source-modal-wrapper::part(content) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.config-avatar-source-modal {
+  gap: 0.9rem;
+}
+
+.config-avatar-source-modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #0b2d34;
+}
+
+.config-avatar-source-modal-header p {
+  margin: 0.35rem 0 0;
+  color: #4c6970;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.config-avatar-source-modal-actions {
+  gap: 0.55rem;
+}
+
+.config-avatar-source-modal-btn {
+  width: 100%;
+  min-width: 100%;
+  flex: none;
+  min-height: auto !important;
+  padding: 0.6em 1.15em !important;
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
 .config-edit-modal-wrapper {
   --width: min(92vw, 460px);
   --height: auto;
@@ -256,16 +312,12 @@
 
 .config-edit-modal {
   padding: 1.2rem;
-  background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
 
 .config-edit-modal-header h3 {
   margin: 0;
   font-size: 1.2rem;
-  color: #0b2d34;
+  color: #000000;
 }
 
 .config-edit-modal-header p {
@@ -284,47 +336,13 @@
 .config-field-label {
   font-size: 0.86rem;
   font-weight: 600;
-  color: #1a4650;
+  color: #000000;
 }
 
 .config-edit-input {
   width: 100%;
 }
 
-.config-avatar-editor {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.35rem 0 0.25rem;
-}
-
-.config-avatar-input {
-  display: none;
-}
-
-.config-avatar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.55rem;
-}
-
-.config-avatar-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.9rem !important;
-  min-height: auto !important;
-}
-
-.config-avatar-hint {
-  margin: 0;
-  font-size: 0.82rem;
-  text-align: center;
-  color: #60777d;
-}
 
 .config-readonly-grid {
   display: grid;
@@ -345,7 +363,7 @@
   margin-bottom: 0.25rem;
   font-size: 0.78rem;
   font-weight: 700;
-  color: #60777d;
+  color: #000000;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -407,6 +425,7 @@
 .config-edit-action-btn {
   flex: 1;
   min-width: 140px;
+
 }
 
 /* ------------------------------- */
@@ -427,21 +446,18 @@
   gap: 0.5rem;
 }
 
-.config-logout-btn span {
-  margin-left: 0.5rem;
-}
-
 /* ------------------------------- */
 /* 8) Responsive */
 /* ------------------------------- */
 @media (max-width: 600px) {
+
   .config-profile-card,
   .config-card,
   .config-stat-card {
     width: 100%;
     margin-left: 0 !important;
     margin-right: 0 !important;
-    border-radius: 0;
+    border-radius: 12px !important;
   }
 }
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { IonAlert, IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
-import { cameraOutline, helpCircleOutline, logoWhatsapp, moonOutline, pencilOutline, personCircleOutline, settingsOutline, sunnyOutline, trashOutline } from 'ionicons/icons';
-import { Capacitor } from '@capacitor/core';
+import { IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
+import { cameraOutline, helpCircleOutline, logoWhatsapp, moonOutline, pencilOutline, personCircleOutline, settingsOutline, sunnyOutline } from 'ionicons/icons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import logoIcon from '../icons/icon.png';
 import { useAuth } from './AuthContext';
@@ -105,15 +104,19 @@ const ConfigForm: React.FC = () => {
   });
   const isEnglish = language === 'en';
 
+  const syncProfileState = (nextProfile: Partial<UserProfile>) => {
+    setProfile(nextProfile);
+    setEditName(nextProfile.name || '');
+    setPhone(nextProfile.phone || '');
+    setAvatarPreview(nextProfile.avatar_url || '');
+  };
+
   useEffect(() => {
     let mounted = true;
     getUserProfile(logout || (() => { }))
       .then((data) => {
         if (mounted) {
-          setProfile(data);
-          setEditName(data.name || '');
-          setPhone(data.phone || '');
-          setAvatarPreview(data.avatar_url || '');
+          syncProfileState(data);
         }
       })
       .catch(() => { });
@@ -160,16 +163,41 @@ const ConfigForm: React.FC = () => {
         avatar_url: avatarPreview || null,
       });
 
-      setProfile(updatedProfile);
-      setEditName(updatedProfile.name || '');
-      setPhone(updatedProfile.phone || normalizedPhone || '');
-      setAvatarPreview(updatedProfile.avatar_url || '');
+      syncProfileState(updatedProfile);
       setShowEditProfileModal(false);
       setToast({ show: true, message: t('config.profileUpdated'), type: 'success' });
     } catch (error) {
       const message = error instanceof Error ? error.message : t('config.profileUpdateError');
       setToast({ show: true, message, type: 'danger' });
     } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleAvatarAutoSave = async (nextAvatar: string | null) => {
+    const previousAvatar = profile.avatar_url || '';
+
+    setAvatarPreview(nextAvatar || '');
+    setProfile((prev) => ({ ...prev, avatar_url: nextAvatar || null }));
+    setIsSavingProfile(true);
+
+    try {
+      const updatedProfile = await updateUserProfile({ avatar_url: nextAvatar });
+      syncProfileState(updatedProfile);
+      setToast({
+        show: true,
+        message: nextAvatar ? t('config.photoUpdated') : t('config.photoRemovedSuccess'),
+        type: 'success',
+      });
+    } catch (error) {
+      setAvatarPreview(previousAvatar);
+      setProfile((prev) => ({ ...prev, avatar_url: previousAvatar || null }));
+      const message = error instanceof Error ? error.message : t('config.profileUpdateError');
+      setToast({ show: true, message, type: 'danger' });
+    } finally {
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = '';
+      }
       setIsSavingProfile(false);
     }
   };
@@ -188,7 +216,7 @@ const ConfigForm: React.FC = () => {
       });
 
       if (photo.dataUrl) {
-        setAvatarPreview(photo.dataUrl);
+        await handleAvatarAutoSave(photo.dataUrl);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message.toLowerCase() : '';
@@ -201,11 +229,6 @@ const ConfigForm: React.FC = () => {
   };
 
   const handleAvatarPicker = () => {
-    if (!Capacitor.isNativePlatform()) {
-      avatarInputRef.current?.click();
-      return;
-    }
-
     setShowAvatarSourceAlert(true);
   };
 
@@ -230,7 +253,7 @@ const ConfigForm: React.FC = () => {
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        setAvatarPreview(reader.result);
+        void handleAvatarAutoSave(reader.result);
       }
     };
     reader.onerror = () => {
@@ -239,11 +262,9 @@ const ConfigForm: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleRemoveAvatar = () => {
-    setAvatarPreview('');
-    if (avatarInputRef.current) {
-      avatarInputRef.current.value = '';
-    }
+  const handleRemoveAvatar = async () => {
+    setShowAvatarSourceAlert(false);
+    await handleAvatarAutoSave(null);
   };
 
   const handleOpenSupportEmail = () => {
@@ -271,8 +292,8 @@ const ConfigForm: React.FC = () => {
           <button
             type="button"
             className="config-profile-avatar-button"
-            onClick={openEditProfileModal}
-            aria-label={t('config.changePhoto')}
+            onClick={handleAvatarPicker}
+            aria-label={profile.avatar_url ? t('config.changePhoto') : t('config.addPhoto')}
           >
             <div className="config-profile-avatar">
               {profile.avatar_url ? (
@@ -359,62 +380,6 @@ const ConfigForm: React.FC = () => {
           </div>
 
           <div className="config-edit-form">
-            <div className="config-avatar-editor">
-              <button
-                type="button"
-                className="config-profile-avatar-button config-profile-avatar-button--editable"
-                onClick={handleAvatarPicker}
-                aria-label={avatarPreview ? t('config.changePhoto') : t('config.addPhoto')}
-              >
-                <div className="config-profile-avatar config-profile-avatar--editable">
-                  {avatarPreview ? (
-                    <img
-                      src={avatarPreview}
-                      alt={t('config.profilePhotoAlt')}
-                      className="config-profile-avatar-image"
-                    />
-                  ) : (
-                    <IonIcon icon={personCircleOutline} />
-                  )}
-                </div>
-                <span className="config-profile-avatar-badge" aria-hidden="true">
-                  <IonIcon icon={cameraOutline} />
-                </span>
-              </button>
-
-              <input
-                ref={avatarInputRef}
-                className="config-avatar-input"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={handleAvatarChange}
-              />
-
-              <div className="config-avatar-actions">
-                <button
-                  type="button"
-                  className="app-btn-primary config-avatar-action-btn"
-                  onClick={handleAvatarPicker}
-                >
-                  <IonIcon icon={cameraOutline} />
-                  <span>{avatarPreview ? t('config.changePhoto') : t('config.addPhoto')}</span>
-                </button>
-
-                {avatarPreview ? (
-                  <button
-                    type="button"
-                    className="app-btn-danger config-avatar-action-btn"
-                    onClick={handleRemoveAvatar}
-                  >
-                    <IonIcon icon={trashOutline} />
-                    <span>{t('config.removePhoto')}</span>
-                  </button>
-                ) : null}
-              </div>
-
-              <p className="config-avatar-hint">{t('config.photoHint')}</p>
-            </div>
-
             <label className="config-field-label" htmlFor="config-edit-name">{t('config.fullName')}</label>
             <input
               id="config-edit-name"
@@ -473,30 +438,58 @@ const ConfigForm: React.FC = () => {
         </div>
       </IonModal>
 
-      <IonAlert
+      <IonModal
+        className="config-avatar-source-modal-wrapper"
         isOpen={showAvatarSourceAlert}
+        showBackdrop={true}
+        backdropDismiss={true}
         onDidDismiss={() => setShowAvatarSourceAlert(false)}
-        header={t('config.photoSourceTitle')}
-        message={t('config.photoSourceMessage')}
-        buttons={[
-          {
-            text: t('config.takePhoto'),
-            handler: () => {
-              void handleAvatarSelection(CameraSource.Camera);
-            },
-          },
-          {
-            text: t('config.chooseFromGallery'),
-            handler: () => {
-              void handleAvatarSelection(CameraSource.Photos);
-            },
-          },
-          {
-            text: t('common.cancel'),
-            role: 'cancel',
-          },
-        ]}
-      />
+      >
+        <div className="config-avatar-source-modal">
+          <div className="config-avatar-source-modal-header">
+            <h3>{t('config.photoSourceTitle')}</h3>
+            <p>{t('config.photoSourceMessage')}</p>
+          </div>
+
+          <div className="config-avatar-source-modal-actions">
+            <button
+              type="button"
+              className="app-btn-primary config-edit-action-btn config-avatar-source-modal-btn"
+              onClick={() => {
+                void handleAvatarSelection(CameraSource.Camera);
+              }}
+              disabled={isSavingProfile}
+            >
+              {t('config.takePhoto')}
+            </button>
+
+            <button
+              type="button"
+              className="app-btn-primary config-edit-action-btn config-avatar-source-modal-btn"
+              onClick={() => {
+                void handleAvatarSelection(CameraSource.Photos);
+              }}
+              disabled={isSavingProfile}
+            >
+              {t('config.chooseFromGallery')}
+            </button>
+
+            {avatarPreview ? (
+              <button
+                type="button"
+                className="app-btn-danger config-edit-action-btn config-avatar-source-modal-btn"
+                onClick={() => {
+                  void handleRemoveAvatar();
+                }}
+                disabled={isSavingProfile}
+              >
+                {t('config.removePhoto')}
+              </button>
+            ) : null}
+
+          </div>
+        </div>
+      </IonModal>
 
       <IonModal
         className="config-edit-modal-wrapper"

@@ -317,35 +317,6 @@ const Calendar: React.FC = () => {
     }
   }
 
-  async function handleCancelOwnBooking(session: SessionItem) {
-    const booking = myBookings.find((item) => item.session_id === session.id && item.status === 'active');
-    if (!booking) {
-      return;
-    }
-
-    if (isPastSession(session)) {
-      setToast({ show: true, message: t('calendar.pastClassReadOnly'), type: 'danger' });
-      return;
-    }
-
-    if (!window.confirm(t('calendar.confirmCancelMyBooking'))) {
-      return;
-    }
-
-    setBookingActionSessionId(session.id);
-    try {
-      await cancelBooking(booking.id);
-      await refreshMyBookings();
-      fetchSessions({ silent: true });
-      setToast({ show: true, message: t('calendar.bookingCancelled'), type: 'success' });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : t('calendar.bookingCancelError');
-      setToast({ show: true, message, type: 'danger' });
-    } finally {
-      setBookingActionSessionId(null);
-    }
-  }
-
   async function handleDeleteSession(sessionToDelete?: SessionItem | null) {
     const session = sessionToDelete ?? detailsSession;
     if (!session) return;
@@ -634,31 +605,24 @@ const Calendar: React.FC = () => {
                   </IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
-                  <div className='session-small-title-custom session-aforo-row'>
-                    <img src={aforoIcon} alt="Aforo" className="session-aforo-icon" />
-                    {canManageSessionBookings ? `${occupancy}/${session.capacity}` : `${session.capacity}`}
-                    <div className='calendar-details-btn-container'>
-                      <button className="calendar-details-btn" title={t('common.details')} onClick={() => openDetailsModal(session)}>
-                        <img src={infoIcon} alt={t('common.details')} className="calendar-details-btn-icon" />
-                      </button>
+                  {canManageSessionBookings ? (
+                    <div className='session-small-title-custom session-aforo-row'>
+                      <img src={aforoIcon} alt="Aforo" className="session-aforo-icon" />
+                      {`${occupancy}/${session.capacity}`}
+                      <div className='calendar-details-btn-container'>
+                        <button className="calendar-details-btn" title={t('common.details')} onClick={() => openDetailsModal(session)}>
+                          <img src={infoIcon} alt={t('common.details')} className="calendar-details-btn-icon" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                   {hasNotes ? (
                     <p className="session-class-notes">{session.notes}</p>
                   ) : null}
                   {isClient ? (
                     <div className="calendar-client-actions">
                       {isBookedByClient ? (
-                        <>
-                          <span className="calendar-client-status calendar-client-status--booked">{t('calendar.bookedByYou')}</span>
-                          <button
-                            className="calendar-booking-action-cancel"
-                            onClick={() => { void handleCancelOwnBooking(session); }}
-                            disabled={bookingActionSessionId === session.id}
-                          >
-                            {bookingActionSessionId === session.id ? t('common.loading') : t('calendar.cancelMyBooking')}
-                          </button>
-                        </>
+                        <span className="calendar-client-status calendar-client-status--booked">{t('calendar.bookedByYou')}</span>
                       ) : isPast ? (
                         <span className="calendar-client-status calendar-client-status--muted">{t('calendar.pastClassReadOnly')}</span>
                       ) : isAtCapacity ? (
@@ -920,24 +884,14 @@ const Calendar: React.FC = () => {
                 {t('common.edit')}
               </button>
             ) : null}
-            {isClient && detailsSession && !isDetailsSessionPast ? (
-              myActiveBookingsBySession[detailsSession.id] ? (
-                <button
-                  className="calendar-hour-modal-cancel"
-                  onClick={() => { void handleCancelOwnBooking(detailsSession); }}
-                  disabled={bookingActionSessionId === detailsSession.id}
-                >
-                  {bookingActionSessionId === detailsSession.id ? t('common.loading') : t('calendar.cancelMyBooking')}
-                </button>
-              ) : detailsSession.status !== 'completed' ? (
-                <button
-                  className="calendar-hour-modal-save"
-                  onClick={() => { void handleReserveSession(detailsSession); }}
-                  disabled={bookingActionSessionId === detailsSession.id}
-                >
-                  {bookingActionSessionId === detailsSession.id ? t('common.loading') : t('calendar.reserve')}
-                </button>
-              ) : null
+            {isClient && detailsSession && !isDetailsSessionPast && !myActiveBookingsBySession[detailsSession.id] && detailsSession.status !== 'completed' ? (
+              <button
+                className="calendar-hour-modal-save"
+                onClick={() => { void handleReserveSession(detailsSession); }}
+                disabled={bookingActionSessionId === detailsSession.id}
+              >
+                {bookingActionSessionId === detailsSession.id ? t('common.loading') : t('calendar.reserve')}
+              </button>
             ) : null}
             <button className="calendar-hour-modal-cancel" onClick={() => setShowDetailsModal(false)}>{t('common.close')}</button>
           </div>

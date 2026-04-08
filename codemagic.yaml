@@ -4,6 +4,9 @@ workflows:
 
     environment:
       node: 22.14.0
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.alesport.app
 
       groups:
         - ios   # 👈 variables (TEAM_ID, API KEY, etc.)
@@ -44,6 +47,10 @@ workflows:
           npx cap sync ios
           cd ios/App
           xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
+
+      # Aplicar perfiles/certificados de firmado en el proyecto Xcode
+      - name: Set up code signing
+        script: xcode-project use-profiles --project ios/App/App.xcodeproj
 
       # Build (archive)
       - name: Build iOS

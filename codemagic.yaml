@@ -3,7 +3,7 @@ workflows:
     name: Ionic iOS Build
 
     environment:
-      node: 20.19.0
+      node: 22.14.0
 
       groups:
         - ios   # 👈 variables (TEAM_ID, API KEY, etc.)
@@ -22,7 +22,8 @@ workflows:
       # Preparar proyecto iOS nativo sin perder configuración manual
       - name: Prepare iOS project
         script: |
-          npm install -g @capacitor/cli
+          # Usar la CLI local del proyecto para evitar incompatibilidades en CI
+          npx cap --version
 
           if [ ! -d ios/App ]; then
             npx cap add ios
@@ -39,7 +40,7 @@ workflows:
         script: |
           npx cap sync ios
           cd ios/App
-          pod install
+          xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
 
       # Build (archive)
       - name: Build iOS

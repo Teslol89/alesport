@@ -5,9 +5,6 @@ workflows:
     environment:
       node: latest
 
-      integrations:
-        app_store_connect: codemagic   # 👈 CLAVE
-
     working_directory: mobile/alesport-app
 
     scripts:

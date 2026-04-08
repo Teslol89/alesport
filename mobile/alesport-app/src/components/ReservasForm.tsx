@@ -20,6 +20,10 @@ type SessionSummary = {
   status?: string;
 };
 
+type ReservasFormProps = {
+  refreshSignal?: number;
+};
+
 const LOOKBACK_DAYS = 14;
 const LOOKAHEAD_DAYS = 120;
 
@@ -33,7 +37,7 @@ function toIsoDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-const ReservasForm: React.FC = () => {
+const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   const { user } = useAuth();
   const { t, dateLocale } = useLanguage();
   const history = useHistory();
@@ -83,7 +87,7 @@ const ReservasForm: React.FC = () => {
 
   useEffect(() => {
     void loadBookings();
-  }, [loadBookings]);
+  }, [loadBookings, refreshSignal]);
 
   const activeBookings = useMemo(() => {
     return bookings

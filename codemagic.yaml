@@ -23,6 +23,12 @@ workflows:
 
       - name: Sync Capacitor
         script: npx cap sync ios
+        
+      # 🔥 ESTE ES EL PASO CLAVE
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
 
       - name: Build iOS
         script: |

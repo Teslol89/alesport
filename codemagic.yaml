@@ -6,6 +6,8 @@ workflows:
     environment:
       node: latest
 
+    working_directory: mobile/alesport-app   # 👈 CLAVE
+
     scripts:
       - name: Install dependencies
         script: npm install
@@ -26,4 +28,4 @@ workflows:
           -archivePath $CM_BUILD_DIR/App.xcarchive archive
 
     artifacts:
-      - ios/App/build/**/*.ipa
+      - mobile/alesport-app/ios/App/build/**/*.ipa

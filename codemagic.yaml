@@ -9,37 +9,39 @@ workflows:
     working_directory: mobile/alesport-app
 
     scripts:
+      # Instalar dependencias (con fix de conflictos)
       - name: Install dependencies
         script: npm install --legacy-peer-deps
 
+      # Build web (Vite → genera dist)
       - name: Build web app
         script: npm run build
 
+      # Limpiar iOS por si hay basura
       - name: Clean iOS
         script: rm -rf ios
-      
+
+      # Crear proyecto iOS
       - name: Add iOS platform
         script: |
           npm install -g @capacitor/cli
           npx cap add ios
-      
+
+      # Sincronizar Capacitor
       - name: Sync Capacitor
         script: npx cap sync ios
-      
-      - name: Check ios folder
+
+      # Debug (puedes borrarlo luego)
+      - name: Check iOS structure
         script: |
           ls ios
-          ls ios/App || true
-      
-      - name: Install CocoaPods
-        script: |
-          cd ios
-          pod install
+          ls ios/App
 
+      # Build iOS (SIN CocoaPods, usando xcodeproj)
       - name: Build iOS
         script: |
-          cd ios
-          xcodebuild -workspace App.xcworkspace \
+          cd ios/App
+          xcodebuild -project App.xcodeproj \
           -scheme App \
           -configuration Release \
           -sdk iphoneos \

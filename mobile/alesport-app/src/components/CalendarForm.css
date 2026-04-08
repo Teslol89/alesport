@@ -233,9 +233,20 @@ body,
   overflow: hidden;
 }
 
+.session-card-client {
+  border-radius: 18px;
+  border: 1px solid rgba(22, 99, 52, 0.08);
+  box-shadow: 0 8px 20px rgba(14, 44, 25, 0.2);
+}
+
 .session-card.ion-color-success {
   background: rgba(45, 211, 111, 0.2);
-  border-left: 6px solid var(--ion-color-success, #2dd36f);
+  border-left: 6px solid var(--ion-color-success, #77b154);
+}
+
+.session-card-client.ion-color-success {
+  background: rgba(0, 137, 166, 0.15);
+  border-left: 4px solid #0089a6;
 }
 
 .session-card.ion-color-medium {
@@ -246,6 +257,16 @@ body,
 .session-card.ion-color-danger {
   background: rgba(235, 68, 90, 0.20);
   border-left: 6px solid var(--ion-color-danger, #eb445a);
+}
+
+.session-card-client.ion-color-danger {
+  background: linear-gradient(180deg, #ffffff 0%, #fff7f8 100%);
+  border-left: 4px solid #d94b61;
+}
+
+.session-card-client.ion-color-medium {
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  border-left: 4px solid #a7afb5;
 }
 
 .session-card .ion-card-title {
@@ -261,9 +282,17 @@ body,
   padding: 0.55rem 0.65rem 0.3rem 1.1rem;
 }
 
+.session-card-client ion-card-header {
+  padding: 0.9rem 0.95rem 0.25rem 0.95rem;
+}
+
 .session-card .ion-card-content {
   font-size: 0.95rem;
   padding: 0.3rem 0.65rem 0.55rem 0.65rem;
+}
+
+.session-card-client .ion-card-content {
+  padding: 0.3rem 0.95rem 0.95rem 0.95rem;
 }
 
 .session-title-custom {
@@ -321,6 +350,22 @@ body,
   white-space: nowrap;
 }
 
+.session-card-client .session-title-trainer {
+  margin-right: 0;
+  padding: 0.16rem 0.5rem;
+  color: #000000;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.session-title-trainer-client {
+  margin-top: 0.4rem;
+  color: #000000;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .session-class-name {
   display: block;
   width: 100%;
@@ -330,16 +375,33 @@ body,
   color: #000000;
 }
 
+.session-card-client .session-class-name {
+  margin-left: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.12rem;
+  line-height: 1.32;
+  color: #000000;
+}
+
 .session-class-notes {
   margin: 0.35rem 0 0 0;
   padding: 0.55rem 0.65rem;
   border-radius: 10px;
   background: #eef7fa;
-  color: #33535b;
+  color: #000000;
   font-size: 0.95rem;
   line-height: 1.4;
   text-align: left;
   white-space: pre-wrap;
+
+}
+
+.session-card-client .session-class-notes {
+  margin-top: 0.4rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background-color: #ffffff;
+  line-height: 1.45;
 }
 
 /* ----------------------------------- */
@@ -859,7 +921,7 @@ body,
 }
 
 .calendar-hour-modal-save {
-  background: var(--app-btn-bg);
+  background: #77b154;
   color: var(--app-btn-text);
   border: none;
   border-radius: var(--app-btn-radius);
@@ -872,8 +934,8 @@ body,
 
 .calendar-hour-modal-save:hover {
   transform: translateY(-1px);
-  background: #0a7891;
-  box-shadow: 0 8px 16px rgba(0, 113, 139, 0.28);
+  background: #689b49;
+  box-shadow: 0 8px 16px rgba(119, 177, 84, 0.28);
 }
 
 .calendar-modal-danger-zone {
@@ -1120,6 +1182,11 @@ body,
   flex-wrap: wrap;
 }
 
+.session-card-client .calendar-client-actions {
+  margin-top: 0.8rem;
+  padding-top: 0.1rem;
+}
+
 .calendar-client-status {
   display: inline-flex;
   align-items: center;
@@ -1130,8 +1197,8 @@ body,
 }
 
 .calendar-client-status--booked {
-  background: rgba(0, 137, 166, 0.4);
-  color: #0d5b69;
+  background: rgb(119, 177, 84,0.4);
+  color: #000000;
 }
 
 .calendar-client-status--full {
@@ -1146,6 +1213,11 @@ body,
 
 .calendar-client-action-primary {
   min-width: 140px;
+}
+
+.session-card-client .calendar-client-action-primary {
+  min-width: 152px;
+  box-shadow: 0 8px 18px rgba(119, 177, 84, 0.16);
 }
 
 /* ------------------- */

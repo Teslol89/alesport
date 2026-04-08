@@ -3,7 +3,7 @@ workflows:
     name: Ionic iOS Build
 
     environment:
-      node: latest
+      node: 20.19.0
 
       groups:
         - ios   # 👈 variables (TEAM_ID, API KEY, etc.)
@@ -19,19 +19,27 @@ workflows:
       - name: Build web app
         script: npm run build
 
-      # Limpiar iOS
-      - name: Clean iOS
-        script: rm -rf ios
-
-      # Añadir plataforma iOS
-      - name: Add iOS platform
+      # Preparar proyecto iOS nativo sin perder configuración manual
+      - name: Prepare iOS project
         script: |
           npm install -g @capacitor/cli
-          npx cap add ios
+
+          if [ ! -d ios/App ]; then
+            npx cap add ios
+          fi
+
+          if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
+          else
+            echo "WARNING: GOOGLE_SERVICE_INFO_PLIST_BASE64 is not configured. Firebase Messaging / Google Sign-In may fail on iOS."
+          fi
 
       # Sincronizar Capacitor
       - name: Sync Capacitor
-        script: npx cap sync ios
+        script: |
+          npx cap sync ios
+          cd ios/App
+          pod install
 
       # Build (archive)
       - name: Build iOS

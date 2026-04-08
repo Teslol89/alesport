@@ -1,0 +1,159 @@
+/* ReservasForm.css */
+
+.bookings-form-container {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.bookings-top-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #ffffff;
+  padding-top: max(env(safe-area-inset-top), 1.1rem);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  gap: 0.7rem;
+}
+
+.bookings-top-title-absolute {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + (max(env(safe-area-inset-top), 1.1rem) / 2));
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: 80vw;
+  pointer-events: none;
+  text-align: center;
+}
+
+.bookings-top-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  background: #fff;
+  align-self: center;
+}
+
+.bookings-top-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #000000;
+  letter-spacing: 0.01em;
+  text-align: left;
+  min-width: 0;
+  max-width: 50vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bookings-form-wrapper {
+  width: min(100%, 820px);
+  margin: 0 auto;
+  padding: 16px 16px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bookings-loading,
+.bookings-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.bookings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.bookings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  flex-wrap: wrap;
+}
+
+.bookings-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bookings-item-main h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #18323a;
+}
+
+.bookings-date,
+.bookings-meta {
+  margin: 0;
+  color: #4c6970;
+}
+
+.bookings-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 0.28rem 0.65rem;
+  background: rgba(45, 211, 111, 0.16);
+  color: #157a43;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.bookings-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.bookings-primary-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  background: var(--app-btn-bg);
+  color: var(--app-btn-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .bookings-form-wrapper {
+    padding-inline: 12px;
+  }
+
+  .bookings-item {
+    align-items: stretch;
+  }
+
+  .bookings-item-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .bookings-item-actions button {
+    width: 100%;
+  }
+}

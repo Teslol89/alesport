@@ -1092,6 +1092,43 @@ body,
   font-weight: 600;
 }
 
+.calendar-client-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.calendar-client-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.calendar-client-status--booked {
+  background: rgba(45, 211, 111, 0.16);
+  color: #157a43;
+}
+
+.calendar-client-status--full {
+  background: rgba(235, 68, 90, 0.14);
+  color: #a63b4b;
+}
+
+.calendar-client-status--muted {
+  background: rgba(0, 0, 0, 0.06);
+  color: #4c6970;
+}
+
+.calendar-client-action-primary {
+  min-width: 140px;
+}
+
 .calendar-booking-action-cancel {
   background: #fceaea;
   color: #9d2f2f;

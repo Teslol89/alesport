@@ -33,6 +33,26 @@ export async function getAllBookings(): Promise<BookingItem[]> {
   return response.json();
 }
 
+export async function getBookingsByUser(userId: number): Promise<BookingItem[]> {
+  const response = await fetchWithAuth(`${baseApiUrl}/bookings/user/${userId}`);
+  if (!response.ok) {
+    throw new Error(await getResponseErrorDetail(response, 'No se pudieron cargar tus reservas'));
+  }
+  return response.json();
+}
+
+export async function createBooking(sessionId: number): Promise<BookingItem> {
+  const response = await fetchWithAuth(`${baseApiUrl}/bookings/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId }),
+  });
+  if (!response.ok) {
+    throw new Error(await getResponseErrorDetail(response, 'No se pudo crear la reserva'));
+  }
+  return response.json();
+}
+
 export async function cancelBooking(bookingId: number): Promise<BookingItem> {
   const response = await fetchWithAuth(`${baseApiUrl}/bookings/${bookingId}/cancel`, {
     method: 'PATCH',

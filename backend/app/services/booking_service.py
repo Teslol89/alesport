@@ -17,6 +17,8 @@ CANCELLED_BOOKING_STATUS = "cancelled"
 WAITLIST_BOOKING_STATUS = "waitlist"
 OFFERED_BOOKING_STATUS = "offered"
 WAITLIST_OFFER_TTL_MINUTES = 15
+CLIENT_CANCELLATION_MIN_HOURS = 2
+CLIENT_CANCELLATION_WINDOW_ERROR = "Solo puedes cancelar con al menos 2 horas de antelación"
 LIVE_BOOKING_STATUSES = (
     ACTIVE_BOOKING_STATUS,
     WAITLIST_BOOKING_STATUS,
@@ -36,6 +38,14 @@ def _as_utc(value: datetime | None) -> datetime | None:
     if value is None:
         return None
     return value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+
+
+def _has_minimum_client_cancellation_notice(session: SessionModel) -> bool:
+    """Indica si el cliente todavía está dentro del plazo permitido para cancelar."""
+    session_start = _as_utc(session.start_time)
+    if session_start is None:
+        return False
+    return (session_start - _utc_now()) >= timedelta(hours=CLIENT_CANCELLATION_MIN_HOURS)
 
 
 def _count_active_bookings(db: Session, session_id: int) -> int:
@@ -474,6 +484,11 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No tienes permiso para cancelar esta reserva",
+            )
+        if not _has_minimum_client_cancellation_notice(session):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=CLIENT_CANCELLATION_WINDOW_ERROR,
             )
     elif current_user.role == "trainer":
         if session.trainer_id != current_user.id:

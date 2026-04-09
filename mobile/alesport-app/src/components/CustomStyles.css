@@ -366,6 +366,38 @@ ion-modal ion-datetime {
   cursor: not-allowed;
 }
 
+/* Clase utilitaria + mapeo para botones de éxito reutilizables */
+.app-btn-success,
+.calendar-hour-modal-save {
+  background: #77b154;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.6em 1.15em;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+}
+
+.app-btn-success:hover,
+.calendar-hour-modal-save:hover {
+  background: #689b49;
+}
+
+.app-btn-success:active,
+.calendar-hour-modal-save:active {
+  background: #5f8f42;
+  transform: scale(0.97);
+}
+
+.app-btn-success:disabled,
+.calendar-hour-modal-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Clase utilitaria + mapeo para botones de cierre/cancelar en modales */
 .app-btn-danger,
 .calendar-close-modal-btn,

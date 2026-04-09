@@ -8,24 +8,21 @@
 # 4.    GET /auth/me requiere un token JWT válido y devuelve los datos básicos del usuario autenticado
 #       (id, email, name, role, is_active).
 
-from app.schemas.google_auth import GoogleLoginRequest
-import requests
 from datetime import datetime, timezone
+import random
+import string
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
-from app.auth.security import create_access_token, get_current_user, verify_password
+
+from app.auth.security import create_access_token, get_current_user, hash_password, verify_password
 from app.database.db import get_db
 from app.models.user import User
 from app.schemas.auth import LoginRequest, LoginResponse
-from app.schemas.password_reset import PasswordResetRequest, PasswordResetVerifyRequest, PasswordResetPerformRequest
+from app.schemas.password_reset import PasswordResetPerformRequest, PasswordResetRequest, PasswordResetVerifyRequest
 from app.schemas.user import UserCreate, UserResponse
 from app.services.user_service import create_user, send_password_reset_email
-from app.auth.security import hash_password
-from pydantic import EmailStr
-import random
-import string
-import random
-import string
 
 
 # ─ RUTAS DE AUTENTICACIÓN ─────────────────────────────────────────────────────
@@ -78,49 +75,6 @@ def get_me(current_user: User = Depends(get_current_user)):
     }
 
 
-# ── Login con Google ──────────────────────────────────────────────────────────
-@router.post("/google-login", response_model=LoginResponse)
-def google_login(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
-    """Autentica a un usuario usando Google ID Token y devuelve un JWT propio."""
-    # 1. Verificar el id_token con Google
-    google_token_info_url = (
-        f"https://oauth2.googleapis.com/tokeninfo?id_token={payload.id_token}"
-    )
-    resp = requests.get(google_token_info_url)
-    if resp.status_code != 200:
-        raise HTTPException(status_code=401, detail="Token de Google inválido")
-    token_info = resp.json()
-    email = token_info.get("email")
-    name = token_info.get("name", "")
-    if not email:
-        raise HTTPException(
-            status_code=400, detail="No se pudo obtener el email de Google"
-        )
-
-    # 2. Buscar usuario o crearlo si no existe
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        user = User(
-            email=email,
-            name=name,
-            password_hash="google",
-            role="client",
-            is_active=True,
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    elif not user.is_active:
-        raise HTTPException(status_code=403, detail="Cuenta desactivada")
-
-    # 3. Generar JWT propio
-    access_token = create_access_token(
-        {"sub": user.email, "user_id": user.id, "role": user.role}
-    )
-    user.last_login = datetime.now(timezone.utc)
-    db.commit()
-    return LoginResponse(access_token=access_token, token_type="bearer")
-
 
 # ── Registro de usuario ──────────────────────────────────────────────────────
 
@@ -137,9 +91,6 @@ async def register_user(payload: UserCreate, db: Session = Depends(get_db)):
 
 
 # Nuevo endpoint para verificación por código
-from pydantic import BaseModel, EmailStr
-
-
 class VerifyEmailCodeRequest(BaseModel):
     email: EmailStr
     code: str

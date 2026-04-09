@@ -8,7 +8,6 @@ const Reservas: React.FC = () => {
     const [refreshSignal, setRefreshSignal] = useState(0);
 
     useIonViewWillEnter(() => {
-        void contentRef.current?.scrollToTop(0);
         setRefreshSignal((current) => current + 1);
     });
 

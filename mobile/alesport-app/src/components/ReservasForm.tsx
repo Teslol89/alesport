@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IonModal, IonSpinner } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import logoIcon from '../icons/icon.png';
@@ -60,21 +60,28 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
   const [pendingCancelBooking, setPendingCancelBooking] = useState<BookingItem | null>(null);
   const [offerClockMs, setOfferClockMs] = useState(() => Date.now());
+  const hasLoadedBookingsRef = useRef(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' | 'info' }>({
     show: false,
     message: '',
     type: 'info',
   });
 
-  const loadBookings = useCallback(async () => {
+  const loadBookings = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     if (!user?.id) {
       setBookings([]);
       setSessionsById({});
       setLoading(false);
+      hasLoadedBookingsRef.current = true;
       return;
     }
 
-    setLoading(true);
+    if (!silent) {
+      setLoading(true);
+    }
+
+    hasLoadedBookingsRef.current = true;
+
     try {
       const today = new Date();
       const [bookingData, sessionData] = await Promise.all([
@@ -92,16 +99,19 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
 
       setBookings(bookingData);
       setSessionsById(sessionMap);
+      hasLoadedBookingsRef.current = true;
     } catch (error) {
       const message = error instanceof Error ? error.message : t('myBookings.empty');
       setToast({ show: true, message, type: 'danger' });
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [t, user?.id]);
 
   useEffect(() => {
-    void loadBookings();
+    void loadBookings({ silent: hasLoadedBookingsRef.current });
   }, [loadBookings, refreshSignal]);
 
   useEffect(() => {

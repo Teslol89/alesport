@@ -9,6 +9,84 @@
 import { Capacitor } from '@capacitor/core';
 import { saveFcmToken } from '../api/user';
 
+export const PUSH_OPEN_SESSION_EVENT = 'alesport:push-open-session';
+const PENDING_PUSH_SESSION_KEY = 'alesport-pending-push-session';
+
+let listenersRegistered = false;
+
+type PushSessionPayload = {
+    type?: string;
+    session_id?: string;
+    booking_id?: string;
+    session_date?: string;
+};
+
+function normalizePushPayload(raw: unknown): PushSessionPayload | null {
+    if (!raw || typeof raw !== 'object') {
+        return null;
+    }
+
+    const payload = raw as Record<string, unknown>;
+    const sessionId = payload.session_id;
+    if (typeof sessionId !== 'string' && typeof sessionId !== 'number') {
+        return null;
+    }
+
+    return {
+        type: typeof payload.type === 'string' ? payload.type : undefined,
+        session_id: String(sessionId),
+        booking_id: payload.booking_id != null ? String(payload.booking_id) : undefined,
+        session_date: typeof payload.session_date === 'string' ? payload.session_date : undefined,
+    };
+}
+
+function persistPendingPushNavigation(payload: PushSessionPayload): void {
+    localStorage.setItem(PENDING_PUSH_SESSION_KEY, JSON.stringify(payload));
+
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(PUSH_OPEN_SESSION_EVENT, { detail: payload }));
+    }
+}
+
+export function readPendingPushNavigation(): PushSessionPayload | null {
+    const raw = localStorage.getItem(PENDING_PUSH_SESSION_KEY);
+    if (!raw) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(raw) as PushSessionPayload;
+    } catch {
+        localStorage.removeItem(PENDING_PUSH_SESSION_KEY);
+        return null;
+    }
+}
+
+export function clearPendingPushNavigation(): void {
+    localStorage.removeItem(PENDING_PUSH_SESSION_KEY);
+}
+
+async function ensureNotificationListeners(): Promise<void> {
+    if (!Capacitor.isNativePlatform() || listenersRegistered) {
+        return;
+    }
+
+    try {
+        const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
+
+        await FirebaseMessaging.addListener('notificationActionPerformed', (event: any) => {
+            const payload = normalizePushPayload(event?.notification?.data ?? event?.notification);
+            if (payload?.session_id) {
+                persistPendingPushNavigation(payload);
+            }
+        });
+
+        listenersRegistered = true;
+    } catch (err) {
+        console.warn('[FCM] Error registrando listeners de navegación:', err);
+    }
+}
+
 export async function registerFcmToken(): Promise<void> {
     // Solo funciona en dispositivos nativos (Android/iOS)
     if (!Capacitor.isNativePlatform()) {
@@ -35,6 +113,8 @@ export async function registerFcmToken(): Promise<void> {
             console.warn('[FCM] Permiso de notificaciones denegado');
             return;
         }
+
+        await ensureNotificationListeners();
 
         // Obtener el token del dispositivo
         const { token } = await FirebaseMessaging.getToken();

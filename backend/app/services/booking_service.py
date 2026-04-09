@@ -116,6 +116,7 @@ def _send_waitlist_offer_notification(session: SessionModel, booking: Booking, u
     class_name = (session.class_name or "tu clase").strip() or "tu clase"
     local_start = to_local_datetime(session.start_time)
     session_date = local_start.strftime("%d/%m/%Y")
+    session_date_iso = local_start.strftime("%Y-%m-%d")
     session_time = local_start.strftime("%H:%M")
 
     send_push_notification(
@@ -126,6 +127,7 @@ def _send_waitlist_offer_notification(session: SessionModel, booking: Booking, u
             "type": "waitlist_available",
             "session_id": str(session.id),
             "booking_id": str(booking.id),
+            "session_date": session_date_iso,
             "offer_expires_in_minutes": str(WAITLIST_OFFER_TTL_MINUTES),
         },
     )

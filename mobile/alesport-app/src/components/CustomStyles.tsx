@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import "./CustomStyles.css";
 
@@ -12,12 +12,24 @@ interface CustomToastProps {
 }
 
 const CustomToast: React.FC<CustomToastProps> = ({ message, show, onClose, type = "danger", duration = 3000, placement = "top" }) => {
+  const onCloseRef = useRef(onClose);
+
   useEffect(() => {
-    if (show) {
-      const timer = setTimeout(onClose, duration);
-      return () => clearTimeout(timer);
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!show) {
+      return;
     }
-  }, [show, onClose, duration]);
+
+    const timer = window.setTimeout(() => {
+      onCloseRef.current();
+    }, duration);
+
+    return () => window.clearTimeout(timer);
+  }, [show, message, duration]);
+
   if (!show) return null;
   return createPortal(
     <div className={`custom-toast custom-toast--${type} custom-toast--${placement}`}>

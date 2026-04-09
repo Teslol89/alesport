@@ -2,6 +2,9 @@ workflows:
   ionic-ios:
     name: Ionic iOS Build
 
+    integrations:
+      app_store_connect: codemagic
+
     environment:
       node: 22.14.0
       ios_signing:

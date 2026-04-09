@@ -9,19 +9,23 @@ workflows:
         bundle_identifier: com.alesport.app
 
       groups:
-        - ios
+        - ios   # 👈 variables (TEAM_ID, API KEY, etc.)
 
     working_directory: mobile/alesport-app
 
     scripts:
+      # Instalar dependencias
       - name: Install dependencies
         script: npm install --legacy-peer-deps
 
+      # Build web (Vite → dist)
       - name: Build web app
         script: npm run build
 
+      # Preparar proyecto iOS nativo sin perder configuración manual
       - name: Prepare iOS project
         script: |
+          # Usar la CLI local del proyecto para evitar incompatibilidades en CI
           npx cap --version
 
           if [ ! -d ios/App ]; then
@@ -33,12 +37,14 @@ workflows:
             plutil -lint ios/App/App/GoogleService-Info.plist
           fi
 
+      # Sincronizar Capacitor
       - name: Sync Capacitor
         script: |
           npx cap sync ios
           cd ios/App
           xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
 
+      # Aplicar perfiles/certificados de Codemagic al proyecto Xcode
       - name: Use Codemagic signing profiles
         script: |
           cd ios/App
@@ -47,10 +53,16 @@ workflows:
             --archive-method app-store \
             --export-options-plist "$CM_BUILD_DIR/export_options.plist"
 
+          test -f "$CM_BUILD_DIR/export_options.plist"
+          plutil -lint "$CM_BUILD_DIR/export_options.plist"
+
+      # Build (archive)
       - name: Build iOS
         script: |
           cd ios/App
 
+          # Los perfiles ya se aplican con `xcode-project use-profiles`, así que no
+          # debemos forzar firma automática por línea de comandos aquí.
           xcodebuild -project App.xcodeproj \
           -scheme App \
           -configuration Release \
@@ -59,6 +71,7 @@ workflows:
           -archivePath $CM_BUILD_DIR/App.xcarchive \
           archive
 
+      # Exportar IPA para App Store / TestFlight
       - name: Export IPA
         script: |
           cd ios/App
@@ -74,4 +87,5 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
+        submit_to_testflight: false
+        submit_to_app_store: false

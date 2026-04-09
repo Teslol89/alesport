@@ -5,8 +5,9 @@ export type BookingItem = {
   id: number;
   user_id: number;
   session_id: number;
-  status: 'active' | 'cancelled' | string;
+  status: 'active' | 'cancelled' | 'waitlist' | 'offered' | string;
   created_at: string;
+  offer_expires_at?: string | null;
   session_start_time?: string | null;
   user_name?: string | null;
   user_email?: string | null;

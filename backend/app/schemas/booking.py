@@ -22,6 +22,7 @@ class BookingResponse(BaseModel):
     # Estado de la reserva: 'active' o 'cancelled'
     status: str
     created_at: datetime
+    offer_expires_at: datetime | None = None
     session_start_time: datetime | None = None
     user_name: str | None = None
     user_email: str | None = None

@@ -129,6 +129,11 @@
   color: #9a5a00;
 }
 
+.bookings-badge--offered {
+  background: rgba(11, 99, 182, 0.14);
+  color: #0b63b6;
+}
+
 .bookings-item-actions {
   display: flex;
   align-items: center;

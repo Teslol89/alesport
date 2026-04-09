@@ -54,7 +54,9 @@ const BuscarForm: React.FC = () => {
                     ? t('search.statusActive')
                     : b.status === 'waitlist'
                         ? t('search.statusWaitlist')
-                        : t('search.statusCancelled')
+                        : b.status === 'offered'
+                            ? t('search.statusOffered')
+                            : t('search.statusCancelled')
             ).toLowerCase();
             const byStatus = statusText.includes(q);
             return byName || byEmail || byStatus;
@@ -208,8 +210,16 @@ const BuscarForm: React.FC = () => {
                                         ? t('search.statusActive')
                                         : booking.status === 'waitlist'
                                             ? t('search.statusWaitlist')
-                                            : t('search.statusCancelled');
-                                    const statusClass = booking.status === 'active' ? 'active' : booking.status === 'waitlist' ? 'waiting' : 'inactive';
+                                            : booking.status === 'offered'
+                                                ? t('search.statusOffered')
+                                                : t('search.statusCancelled');
+                                    const statusClass = booking.status === 'active'
+                                        ? 'active'
+                                        : booking.status === 'waitlist'
+                                            ? 'waiting'
+                                            : booking.status === 'offered'
+                                                ? 'offered'
+                                                : 'inactive';
 
                                     return (
                                         <div key={booking.id} className="search-form-item">

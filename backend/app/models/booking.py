@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
@@ -27,8 +28,12 @@ class Booking(Base):
     session_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False
     )
-    # Estado de la reserva: 'active', 'cancelled' o 'waitlist'
+    # Estado de la reserva: 'active', 'cancelled', 'waitlist' u 'offered'
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    # Si la plaza se ofrece temporalmente al alumno, caduca en este instante
+    offer_expires_at: Mapped[Optional[datetime]] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=True
+    )
     # Fecha de creación, generada automáticamente por la base de datos
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), server_default=func.now(), nullable=False

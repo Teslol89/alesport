@@ -109,6 +109,7 @@ export function getMonthLabelES(date: Date): string {
 export function mapBookingStatus(status: string): string {
   if (status === 'active') return 'Activa';
   if (status === 'waitlist') return 'En cola';
+  if (status === 'offered') return 'Oferta enviada';
   return 'Cancelada';
 }
 

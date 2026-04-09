@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonModal, IonSpinner } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import logoIcon from '../icons/icon.png';
-import { BookingItem, cancelBooking, getBookingsByUser } from '../api/bookings';
+import { BookingItem, cancelBooking, getBookingsByUser, reactivateBooking } from '../api/bookings';
 import { getSessionsByDateRange } from '../api/sessions';
 import { useAuth } from './AuthContext';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -92,7 +92,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
 
   const visibleBookings = useMemo(() => {
     return bookings
-      .filter((booking) => booking.status === 'active' || booking.status === 'waitlist')
+      .filter((booking) => booking.status === 'active' || booking.status === 'waitlist' || booking.status === 'offered')
       .sort((a, b) => {
         const aSession = sessionsById[a.session_id];
         const bSession = sessionsById[b.session_id];
@@ -156,6 +156,31 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     }
   }
 
+  async function handleConfirmBooking(booking: BookingItem) {
+    const session = sessionsById[booking.session_id];
+    const isPast = session ? session.session_date < todayIso : false;
+
+    if (isPast) {
+      setToast({ show: true, message: t('calendar.pastClassReadOnly'), type: 'info' });
+      return;
+    }
+
+    setBusyBookingId(booking.id);
+    try {
+      await reactivateBooking(booking.id);
+      setBookings((current) => current.map((item) => (
+        item.id === booking.id ? { ...item, status: 'active', offer_expires_at: null } : item
+      )));
+      setToast({ show: true, message: t('calendar.spotConfirmed'), type: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('calendar.offerExpired');
+      setToast({ show: true, message, type: 'danger' });
+      await loadBookings();
+    } finally {
+      setBusyBookingId(null);
+    }
+  }
+
   return (
     <div className="bookings-form-container">
       <div className="bookings-top-bar">
@@ -181,12 +206,13 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
               const session = sessionsById[booking.session_id];
               const isPast = session ? session.session_date < todayIso : false;
               const isWaitlist = booking.status === 'waitlist';
+              const isOffered = booking.status === 'offered';
 
               return (
                 <article key={booking.id} className="bookings-item app-surface-card">
                   <div className="bookings-item-main">
-                    <span className={`bookings-badge${isWaitlist ? ' bookings-badge--waitlist' : ''}`}>
-                      {isWaitlist ? t('calendar.waitlist') : t('calendar.bookedByYou')}
+                    <span className={`bookings-badge${isWaitlist ? ' bookings-badge--waitlist' : isOffered ? ' bookings-badge--offered' : ''}`}>
+                      {isWaitlist ? t('calendar.waitlist') : isOffered ? t('calendar.offered') : t('calendar.bookedByYou')}
                     </span>
                     <h2>{session?.class_name || `${t('myBookings.sessionLabel')} #${booking.session_id}`}</h2>
                     <p className="bookings-date">{formatBookingDate(booking)}</p>
@@ -202,6 +228,14 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
                       <span className="calendar-client-status calendar-client-status--muted">
                         {t('calendar.pastClassReadOnly')}
                       </span>
+                    ) : isOffered ? (
+                      <button
+                        className="app-btn-primary"
+                        onClick={() => { void handleConfirmBooking(booking); }}
+                        disabled={busyBookingId === booking.id}
+                      >
+                        {busyBookingId === booking.id ? t('common.loading') : t('calendar.confirmSpot')}
+                      </button>
                     ) : (
                       <button
                         className="app-btn-danger calendar-booking-action-cancel"

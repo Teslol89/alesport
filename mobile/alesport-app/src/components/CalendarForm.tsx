@@ -370,6 +370,38 @@ const Calendar: React.FC = () => {
     }
   }
 
+  async function handleConfirmClientBooking(booking: BookingItem, session: SessionItem) {
+    if (!isClient) {
+      return;
+    }
+
+    if (isPastSession(session)) {
+      setToast({ show: true, message: t('calendar.pastClassReadOnly'), type: 'danger' });
+      return;
+    }
+
+    setBookingActionSessionId(session.id);
+    try {
+      await reactivateBooking(booking.id);
+      await refreshMyBookings();
+      fetchSessions({ silent: true });
+
+      if (detailsSession?.id === session.id && canManageSessionBookings) {
+        const data = await getSessionBookingsCached(session.id, { forceRefresh: true });
+        setBookings(data);
+      }
+
+      setToast({ show: true, message: t('calendar.spotConfirmed'), type: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('calendar.offerExpired');
+      await refreshMyBookings();
+      fetchSessions({ silent: true });
+      setToast({ show: true, message, type: 'danger' });
+    } finally {
+      setBookingActionSessionId(null);
+    }
+  }
+
   async function handleDeleteSession(sessionToDelete?: SessionItem | null) {
     const session = sessionToDelete ?? detailsSession;
     if (!session) return;
@@ -532,8 +564,10 @@ const Calendar: React.FC = () => {
         sessionsForDate.map(async (session) => {
           try {
             const sessionBookings = await getSessionBookingsCached(session.id, { forceRefresh: true });
-            const activeCount = sessionBookings.filter(b => b.status === 'active').length;
-            return [session.id, activeCount] as const;
+            const reservedCount = sessionBookings.filter(
+              b => b.status === 'active' || b.status === 'offered'
+            ).length;
+            return [session.id, reservedCount] as const;
           } catch {
             return [session.id, 0] as const;
           }
@@ -569,13 +603,14 @@ const Calendar: React.FC = () => {
       return;
     }
 
-    const activeCount = bookings.filter(b => b.status === 'active').length;
-    setSessionOccupancy(prev => ({ ...prev, [detailsSession.id]: activeCount }));
+    const reservedCount = bookings.filter(b => b.status === 'active' || b.status === 'offered').length;
+    setSessionOccupancy(prev => ({ ...prev, [detailsSession.id]: reservedCount }));
   }, [bookings, detailsSession]);
 
   const myClientBookingsBySession = useMemo(() => {
     const statusPriority: Record<string, number> = {
-      active: 2,
+      active: 3,
+      offered: 2,
       waitlist: 1,
     };
 
@@ -594,9 +629,10 @@ const Calendar: React.FC = () => {
     }, {});
   }, [myBookings]);
 
-  const activeBookingsCount = bookings.filter(b => b.status === 'active').length;
+  const activeBookingsCount = bookings.filter(b => b.status === 'active' || b.status === 'offered').length;
   const isPastSession = (session: SessionItem) => session.session_date < getTodayIsoDate();
   const isDetailsSessionPast = detailsSession ? isPastSession(detailsSession) : false;
+  const detailsClientBooking = detailsSession ? myClientBookingsBySession[detailsSession.id] : undefined;
   const loadingSkeletonRows = [1, 2, 3];
 
   return (
@@ -646,10 +682,13 @@ const Calendar: React.FC = () => {
             const occupancy = sessionOccupancy[session.id] ?? 0;
             const clientBooking = myClientBookingsBySession[session.id];
             const isBookedByClient = clientBooking?.status === 'active';
+            const isOfferedToClient = clientBooking?.status === 'offered';
             const isWaitlistedByClient = clientBooking?.status === 'waitlist';
             const isAtCapacity = canManageSessionBookings ? occupancy >= session.capacity : session.status === 'completed';
             const isPast = isPastSession(session);
-            const colorClass = isPast ? 'medium' : ((isWaitlistedByClient || (isAtCapacity && !isBookedByClient)) ? 'danger' : 'success');
+            const colorClass = isPast
+              ? 'medium'
+              : ((isWaitlistedByClient || (isAtCapacity && !isBookedByClient && !isOfferedToClient)) ? 'danger' : 'success');
             const cardClass = `session-card ${isClient ? 'session-card-client' : ''} ion-color-${colorClass}`;
             const hasClassName = Boolean(session.class_name && session.class_name.trim().length > 0);
             const hasNotes = Boolean(session.notes && session.notes.trim().length > 0);
@@ -669,6 +708,14 @@ const Calendar: React.FC = () => {
                         <div className="calendar-client-actions calendar-client-actions--header">
                           {isBookedByClient ? (
                             <span className="calendar-client-status calendar-client-status--booked calendar-client-action-primary">{t('calendar.bookedByYou')}</span>
+                          ) : isOfferedToClient && clientBooking ? (
+                            <button
+                              className="calendar-hour-modal-save calendar-client-action-primary"
+                              onClick={() => { void handleConfirmClientBooking(clientBooking, session); }}
+                              disabled={bookingActionSessionId === session.id}
+                            >
+                              {bookingActionSessionId === session.id ? t('common.loading') : t('calendar.confirmSpot')}
+                            </button>
                           ) : isWaitlistedByClient ? (
                             <span className="calendar-client-status calendar-client-status--waitlist calendar-client-action-primary">{t('calendar.waitlist')}</span>
                           ) : isPast ? null : (
@@ -918,12 +965,14 @@ const Calendar: React.FC = () => {
                           <div>
                             <div className="calendar-booking-name">{booking.user_name || `${t('search.student')} #${booking.user_id}`}</div>
                             <div className="calendar-booking-email">{booking.user_email || t('calendar.noEmailAvailable')}</div>
-                            <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : booking.status === 'waitlist' ? 'waitlist' : 'cancelled'}`}>
+                            <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : booking.status === 'waitlist' ? 'waitlist' : booking.status === 'offered' ? 'offered' : 'cancelled'}`}>
                               {booking.status === 'active'
                                 ? t('calendar.active')
                                 : booking.status === 'waitlist'
                                   ? t('calendar.waitlist')
-                                  : t('calendar.inactive')}
+                                  : booking.status === 'offered'
+                                    ? t('calendar.offered')
+                                    : t('calendar.inactive')}
                             </div>
                           </div>
                           {!isDetailsSessionPast ? (
@@ -933,7 +982,7 @@ const Calendar: React.FC = () => {
                               </button>
                             ) : (
                               <button className="calendar-booking-action-reactivate" onClick={() => handleReactivateBooking(booking.id)}>
-                                {booking.status === 'waitlist' ? t('calendar.activate') : t('calendar.reactivate')}
+                                {booking.status === 'waitlist' || booking.status === 'offered' ? t('calendar.activate') : t('calendar.reactivate')}
                               </button>
                             )
                           ) : null}
@@ -951,7 +1000,15 @@ const Calendar: React.FC = () => {
                 {t('common.edit')}
               </button>
             ) : null}
-            {isClient && detailsSession && !isDetailsSessionPast && !myClientBookingsBySession[detailsSession.id] ? (
+            {isClient && detailsSession && !isDetailsSessionPast && detailsClientBooking?.status === 'offered' ? (
+              <button
+                className="calendar-hour-modal-save"
+                onClick={() => { void handleConfirmClientBooking(detailsClientBooking, detailsSession); }}
+                disabled={bookingActionSessionId === detailsSession.id}
+              >
+                {bookingActionSessionId === detailsSession.id ? t('common.loading') : t('calendar.confirmSpot')}
+              </button>
+            ) : isClient && detailsSession && !isDetailsSessionPast && !detailsClientBooking ? (
               <button
                 className="calendar-hour-modal-save"
                 onClick={() => { void handleReserveSession(detailsSession); }}

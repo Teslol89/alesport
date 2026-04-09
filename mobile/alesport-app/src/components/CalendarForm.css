@@ -1129,6 +1129,10 @@ body,
   color: #9a5a00;
 }
 
+.calendar-booking-status.offered {
+  color: #0b63b6;
+}
+
 .calendar-booking-status.cancelled {
   color: #a14b4b;
 }

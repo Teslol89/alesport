@@ -141,6 +141,47 @@
   cursor: pointer;
 }
 
+.bookings-confirm-modal-wrapper {
+  --width: min(92vw, 420px);
+  --height: auto;
+  --border-radius: 20px;
+  --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
+}
+
+.bookings-confirm-modal-wrapper::part(content) {
+  width: min(92vw, 420px);
+  height: auto;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.bookings-confirm-modal {
+  text-align: center;
+  color: #000000;
+}
+
+.bookings-confirm-modal h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #0b2d34;
+}
+
+.bookings-confirm-modal p {
+  margin: 0;
+  color: #4c6970;
+  line-height: 1.45;
+}
+
+.bookings-confirm-actions {
+  margin-top: 0.25rem;
+}
+
+.bookings-item-actions .calendar-booking-action-cancel,
+.bookings-confirm-actions .app-btn-danger,
+.bookings-confirm-actions .app-btn-secondary {
+  min-height: var(--app-btn-min-height);
+}
+
 @media (max-width: 640px) {
   .bookings-form-wrapper {
     padding: 16px 12px 96px;

@@ -83,7 +83,22 @@ const Calendar: React.FC = () => {
   const isClient = userRole === 'client';
   const canManageSessionBookings = userRole === 'admin' || userRole === 'trainer';
 
-  const getSessionBookingsCached = useCallback(async (sessionId: number) => {
+  const invalidateSessionBookingsCache = useCallback((sessionId?: number) => {
+    if (typeof sessionId === 'number') {
+      delete bookingsCacheRef.current[sessionId];
+      delete bookingsInFlightRef.current[sessionId];
+      return;
+    }
+
+    bookingsCacheRef.current = {};
+    bookingsInFlightRef.current = {};
+  }, []);
+
+  const getSessionBookingsCached = useCallback(async (sessionId: number, options?: { forceRefresh?: boolean }) => {
+    if (options?.forceRefresh) {
+      invalidateSessionBookingsCache(sessionId);
+    }
+
     const cached = bookingsCacheRef.current[sessionId];
     if (cached) {
       return cached;
@@ -105,7 +120,7 @@ const Calendar: React.FC = () => {
 
     bookingsInFlightRef.current[sessionId] = request;
     return request;
-  }, []);
+  }, [invalidateSessionBookingsCache]);
 
   const refreshMyBookings = useCallback(async () => {
     if (!isClient || !user?.id) {
@@ -140,6 +155,10 @@ const Calendar: React.FC = () => {
       setError(null);
     }
 
+    if (canManageSessionBookings) {
+      invalidateSessionBookingsCache();
+    }
+
     getSessionsByDateRange(startDate, endDate)
       .then(data => setSessions(data as SessionItem[]))
       .catch(() => {
@@ -152,7 +171,7 @@ const Calendar: React.FC = () => {
           setLoading(false);
         }
       });
-  }, [startDate, endDate]);
+  }, [canManageSessionBookings, endDate, invalidateSessionBookingsCache, startDate]);
 
   // Cargar sesiones al montar y al cambiar semana
   useEffect(() => {
@@ -223,12 +242,8 @@ const Calendar: React.FC = () => {
     setBookings(cachedBookings || []);
     setBookingsLoading(!cachedBookings);
 
-    if (cachedBookings) {
-      return;
-    }
-
     try {
-      const data = await getSessionBookingsCached(session.id);
+      const data = await getSessionBookingsCached(session.id, { forceRefresh: true });
       setBookings(data);
     } catch {
       setBookings([]);
@@ -247,6 +262,7 @@ const Calendar: React.FC = () => {
     if (!window.confirm('¿Seguro que quieres cancelar esta reserva?')) {
       return;
     }
+
     try {
       await cancelBooking(bookingId);
       setBookings(prev => {
@@ -272,6 +288,7 @@ const Calendar: React.FC = () => {
     if (!window.confirm('¿Seguro que quieres reactivar esta reserva?')) {
       return;
     }
+
     try {
       await reactivateBooking(bookingId);
       setBookings(prev => {
@@ -478,7 +495,7 @@ const Calendar: React.FC = () => {
       const occupancyEntries = await Promise.all(
         sessionsForDate.map(async (session) => {
           try {
-            const sessionBookings = await getSessionBookingsCached(session.id);
+            const sessionBookings = await getSessionBookingsCached(session.id, { forceRefresh: true });
             const activeCount = sessionBookings.filter(b => b.status === 'active').length;
             return [session.id, activeCount] as const;
           } catch {
@@ -582,7 +599,7 @@ const Calendar: React.FC = () => {
             const isBookedByClient = Boolean(myActiveBookingsBySession[session.id]);
             const isAtCapacity = canManageSessionBookings ? occupancy >= session.capacity : session.status === 'completed';
             const isPast = isPastSession(session);
-            const colorClass = isAtCapacity ? 'danger' : 'success';
+            const colorClass = isAtCapacity && !isBookedByClient ? 'danger' : 'success';
             const cardClass = `session-card ${isClient ? 'session-card-client' : ''} ion-color-${colorClass}`;
             const hasClassName = Boolean(session.class_name && session.class_name.trim().length > 0);
             const hasNotes = Boolean(session.notes && session.notes.trim().length > 0);
@@ -601,11 +618,11 @@ const Calendar: React.FC = () => {
                       {isClient ? (
                         <div className="calendar-client-actions calendar-client-actions--header">
                           {isBookedByClient ? (
-                            <span className="calendar-client-status calendar-client-status--booked">{t('calendar.bookedByYou')}</span>
+                            <span className="calendar-client-status calendar-client-status--booked calendar-client-action-primary">{t('calendar.bookedByYou')}</span>
                           ) : isPast ? (
-                            <span className="calendar-client-status calendar-client-status--muted">{t('calendar.pastClassReadOnly')}</span>
+                            <span className="calendar-client-status calendar-client-status--muted calendar-client-action-primary">{t('calendar.pastClassReadOnly')}</span>
                           ) : isAtCapacity ? (
-                            <span className="calendar-client-status calendar-client-status--full">{t('calendar.full')}</span>
+                            <span className="calendar-client-status calendar-client-status--full calendar-client-action-primary">{t('calendar.full')}</span>
                           ) : (
                             <button
                               className="calendar-hour-modal-save calendar-client-action-primary"

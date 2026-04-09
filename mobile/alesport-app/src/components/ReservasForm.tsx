@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonSpinner } from '@ionic/react';
+import { IonModal, IonSpinner } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import logoIcon from '../icons/icon.png';
 import { BookingItem, cancelBooking, getBookingsByUser } from '../api/bookings';
@@ -45,6 +45,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   const [sessionsById, setSessionsById] = useState<Record<number, SessionSummary>>({});
   const [loading, setLoading] = useState(true);
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
+  const [pendingCancelBooking, setPendingCancelBooking] = useState<BookingItem | null>(null);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' | 'info' }>({
     show: false,
     message: '',
@@ -125,7 +126,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     }).format(parsed);
   }
 
-  async function handleCancelBooking(booking: BookingItem) {
+  async function handleCancelBooking(booking: BookingItem, confirmed = false) {
     const session = sessionsById[booking.session_id];
     const isPast = session ? session.session_date < todayIso : false;
 
@@ -134,10 +135,12 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
       return;
     }
 
-    if (!window.confirm(t('calendar.confirmCancelMyBooking'))) {
+    if (!confirmed) {
+      setPendingCancelBooking(booking);
       return;
     }
 
+    setPendingCancelBooking(null);
     setBusyBookingId(booking.id);
     try {
       await cancelBooking(booking.id);
@@ -198,7 +201,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
                       </span>
                     ) : (
                       <button
-                        className="calendar-booking-action-cancel"
+                        className="app-btn-danger calendar-booking-action-cancel"
                         onClick={() => { void handleCancelBooking(booking); }}
                         disabled={busyBookingId === booking.id}
                       >
@@ -212,6 +215,37 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
           </div>
         )}
       </div>
+
+      <IonModal
+        className="bookings-confirm-modal-wrapper"
+        isOpen={Boolean(pendingCancelBooking)}
+        onDidDismiss={() => setPendingCancelBooking(null)}
+      >
+        <div className="app-modal-panel bookings-confirm-modal">
+          <h3>{t('calendar.cancelMyBooking')}</h3>
+          <p>{t('calendar.confirmCancelMyBooking')}</p>
+          <div className="app-stack-actions bookings-confirm-actions">
+            <button
+              className="app-btn-danger"
+              onClick={() => {
+                if (pendingCancelBooking) {
+                  void handleCancelBooking(pendingCancelBooking, true);
+                }
+              }}
+              disabled={busyBookingId === pendingCancelBooking?.id}
+            >
+              {busyBookingId === pendingCancelBooking?.id ? t('common.loading') : t('calendar.cancelMyBooking')}
+            </button>
+            <button
+              className="app-btn-secondary"
+              onClick={() => setPendingCancelBooking(null)}
+              disabled={busyBookingId === pendingCancelBooking?.id}
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      </IonModal>
 
       <CustomToast
         show={toast.show}

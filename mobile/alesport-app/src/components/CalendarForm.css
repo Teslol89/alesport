@@ -1174,6 +1174,8 @@ body,
   align-items: center;
   margin-top: 0;
   margin-left: auto;
+  min-width: 170px;
+  min-height: 36px;
   flex-wrap: nowrap;
   flex-shrink: 0;
 }
@@ -1195,16 +1197,24 @@ body,
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  width: 100%;
   min-width: 170px;
-  border-radius: var(--app-btn-radius);
-  padding: 0.6em 1.15em;
-  font-size: 0.6em;
+  min-height: 36px;
+  border-radius: 10px;
+  padding: 0 1rem;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: 1rem;
   font-weight: 600;
+  line-height: 1;
+  text-align: center;
   white-space: nowrap;
 }
 
 .calendar-client-status--booked {
+  background: transparent !important;
   color: #6e101c;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 .calendar-client-status--full {
@@ -1220,12 +1230,22 @@ body,
 .calendar-client-action-primary {
   min-width: 170px;
   width: 170px;
+  height: 36px;
+  min-height: 36px;
   flex: 0 0 170px;
+  transition: background 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.calendar-client-action-primary:hover,
+.calendar-client-action-primary:active {
+  transform: none !important;
 }
 
 .session-card-client .calendar-client-action-primary {
   min-width: 170px;
   width: 170px;
+  height: 36px;
+  min-height: 36px;
   flex: 0 0 170px;
   box-shadow: 0 8px 18px rgba(119, 177, 84, 0.16);
 }

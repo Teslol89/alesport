@@ -23,7 +23,7 @@ const Calendar: React.FC = () => {
   const { t, dateLocale, language } = useLanguage();
   const { role: userRole, user } = useAuth();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
-  const ADMIN_AUTO_REFRESH_MS = 10000;
+  const AGENDA_AUTO_REFRESH_MS = 10000;
 
   type SessionItem = {
     id: number;
@@ -190,18 +190,22 @@ const Calendar: React.FC = () => {
   }, [fetchSessions, refreshMyBookings]);
 
   useEffect(() => {
-    if (!canManageSessionBookings) {
+    if (!isClient && !canManageSessionBookings) {
       return;
     }
 
-    const refreshAdminAgenda = () => {
+    const refreshAgendaState = () => {
       if (document.visibilityState !== 'visible') {
         return;
       }
 
       fetchSessions({ silent: true });
 
-      if (detailsSession) {
+      if (isClient) {
+        void refreshMyBookings();
+      }
+
+      if (canManageSessionBookings && detailsSession) {
         void getSessionBookingsCached(detailsSession.id, { forceRefresh: true })
           .then((data) => setBookings(data))
           .catch(() => {
@@ -210,16 +214,16 @@ const Calendar: React.FC = () => {
       }
     };
 
-    const intervalId = window.setInterval(refreshAdminAgenda, ADMIN_AUTO_REFRESH_MS);
-    window.addEventListener('focus', refreshAdminAgenda);
-    document.addEventListener('visibilitychange', refreshAdminAgenda);
+    const intervalId = window.setInterval(refreshAgendaState, AGENDA_AUTO_REFRESH_MS);
+    window.addEventListener('focus', refreshAgendaState);
+    document.addEventListener('visibilitychange', refreshAgendaState);
 
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener('focus', refreshAdminAgenda);
-      document.removeEventListener('visibilitychange', refreshAdminAgenda);
+      window.removeEventListener('focus', refreshAgendaState);
+      document.removeEventListener('visibilitychange', refreshAgendaState);
     };
-  }, [canManageSessionBookings, detailsSession, fetchSessions, getSessionBookingsCached]);
+  }, [canManageSessionBookings, detailsSession, fetchSessions, getSessionBookingsCached, isClient, refreshMyBookings]);
 
   // Filtra y ordena sesiones por fecha seleccionada y hora de inicio
   const sessionsForDate = useMemo(

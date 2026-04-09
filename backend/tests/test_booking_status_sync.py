@@ -457,6 +457,49 @@ def test_cannot_cancel_booking_for_past_session(client, seed_data, db_session):
     assert response.json()["detail"] == "No se pueden modificar reservas de días pasados"
 
 
+def test_client_cannot_cancel_booking_with_less_than_two_hours_notice(client, seed_data, db_session):
+    seed_session = seed_data["session"]
+    seed_data["client"].is_verified = True
+    seed_session.start_time = datetime.now(timezone.utc) + timedelta(minutes=90)
+    seed_session.end_time = seed_session.start_time + timedelta(hours=1)
+    booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="active",
+    )
+    db_session.add(booking)
+    db_session.commit()
+    db_session.refresh(booking)
+
+    headers = _login_headers(client, seed_data["client"].email, "client1234")
+    response = client.patch(f"/api/bookings/{booking.id}/cancel", headers=headers)
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Solo puedes cancelar con al menos 2 horas de antelación"
+
+
+def test_admin_can_cancel_booking_with_less_than_two_hours_notice(client, seed_data, db_session):
+    seed_session = seed_data["session"]
+    seed_data["admin"].is_verified = True
+    seed_session.start_time = datetime.now(timezone.utc) + timedelta(minutes=90)
+    seed_session.end_time = seed_session.start_time + timedelta(hours=1)
+    booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="active",
+    )
+    db_session.add(booking)
+    db_session.commit()
+    db_session.refresh(booking)
+
+    headers = _login_headers(client, seed_data["admin"].email, "admin1234")
+    response = client.patch(f"/api/bookings/{booking.id}/cancel", headers=headers)
+
+    assert response.status_code == 200
+    db_session.refresh(booking)
+    assert booking.status == "cancelled"
+
+
 def test_cannot_update_past_session_hour(client, seed_data, db_session):
     seed_session = seed_data["session"]
     seed_data["admin"].is_verified = True

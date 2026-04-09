@@ -37,6 +37,19 @@ function toIsoDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
+function hasMinimumCancellationNotice(session?: SessionSummary) {
+  if (!session) {
+    return true;
+  }
+
+  const sessionStart = new Date(`${session.session_date}T${session.start_time}`);
+  if (Number.isNaN(sessionStart.getTime())) {
+    return true;
+  }
+
+  return sessionStart.getTime() - Date.now() >= 2 * 60 * 60 * 1000;
+}
+
 const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   const { user } = useAuth();
   const { t, dateLocale } = useLanguage();
@@ -171,6 +184,11 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
 
     if (isPast) {
       setToast({ show: true, message: t('calendar.pastClassReadOnly'), type: 'info' });
+      return;
+    }
+
+    if (!hasMinimumCancellationNotice(session)) {
+      setToast({ show: true, message: t('calendar.cancelDeadlinePassed'), type: 'danger' });
       return;
     }
 

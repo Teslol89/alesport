@@ -292,10 +292,12 @@
   width: 100%;
   min-width: 100%;
   flex: none;
-  min-height: auto !important;
-  padding: 0.6em 1.15em !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 1rem !important;
   font-size: 1rem;
-  line-height: 1.1;
+  line-height: 1 !important;
+  box-sizing: border-box;
 }
 
 .config-edit-modal-wrapper {
@@ -409,8 +411,6 @@
 }
 
 .config-support-primary-btn {
-  padding: 0.55rem 1rem !important;
-  min-height: auto !important;
   line-height: 1.1;
 }
 
@@ -425,7 +425,7 @@
 .config-edit-action-btn {
   flex: 1;
   min-width: 140px;
-
+  min-height: 36px;
 }
 
 /* ------------------------------- */

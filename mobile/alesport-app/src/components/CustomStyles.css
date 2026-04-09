@@ -152,8 +152,9 @@
   --app-btn-bg-active: #77b154;
   --app-btn-text: #ffffff;
   --app-btn-radius: 12px;
-  --app-btn-padding: 14px;
-  --app-btn-font-size: 1.1rem;
+  --app-btn-padding: 0.5rem 1rem;
+  --app-btn-font-size: 1rem;
+  --app-btn-min-height: 36px;
 
   --app-btn-secondary-bg: #f5f7fa;
   --app-btn-secondary-bg-hover: #e6f7f7;
@@ -269,6 +270,10 @@ ion-modal ion-datetime {
 .fpverify-btn,
 .fpreset-btn,
 .verify-code-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--app-btn-min-height);
   background: var(--app-btn-bg);
   color: var(--app-btn-text);
   border: none;
@@ -277,6 +282,7 @@ ion-modal ion-datetime {
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   font-size: var(--app-btn-font-size);
   font-weight: 600;
+  line-height: 1.1;
   cursor: pointer;
   transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }
@@ -311,11 +317,19 @@ ion-modal ion-datetime {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-sizing: border-box;
+  height: var(--app-btn-min-height);
+  min-height: var(--app-btn-min-height);
   background: var(--app-btn-secondary-bg);
   color: var(--app-btn-secondary-text);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--app-btn-radius);
+  padding: 0 1rem;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: var(--app-btn-font-size);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }
@@ -369,14 +383,22 @@ ion-modal ion-datetime {
 /* Clase utilitaria + mapeo para botones de éxito reutilizables */
 .app-btn-success,
 .calendar-hour-modal-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: var(--app-btn-min-height);
+  min-height: var(--app-btn-min-height);
   background: #77b154;
   color: #ffffff;
   border: none;
-  border-radius: 10px;
-  padding: 0.6em 1.15em;
+  border-radius: var(--app-btn-radius);
+  padding: 0 1rem;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
-  font-size: 1rem;
+  font-size: var(--app-btn-font-size);
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }
@@ -402,14 +424,22 @@ ion-modal ion-datetime {
 .app-btn-danger,
 .calendar-close-modal-btn,
 .calendar-hour-modal-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: var(--app-btn-min-height);
+  min-height: var(--app-btn-min-height);
   background: var(--app-btn-danger-bg);
   color: var(--app-btn-danger-text);
   border: none;
-  border-radius: 10px;
-  padding: 0.6em 1.15em;
+  border-radius: var(--app-btn-radius);
+  padding: 0 1rem;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
-  font-size: 1rem;
+  font-size: var(--app-btn-font-size);
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }

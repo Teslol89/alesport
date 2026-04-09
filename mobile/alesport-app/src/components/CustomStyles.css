@@ -384,8 +384,7 @@ ion-modal ion-datetime {
 }
 
 /* Clase utilitaria + mapeo para botones de éxito reutilizables */
-.app-btn-success,
-.calendar-hour-modal-save {
+.app-btn-success {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -406,14 +405,42 @@ ion-modal ion-datetime {
   transition: background 0.2s ease, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }
 
-.app-btn-success:hover,
-.calendar-hour-modal-save:hover {
+.calendar-hour-modal-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: var(--app-btn-min-height);
+  min-height: var(--app-btn-min-height);
+  background: var(--app-btn-bg);
+  color: var(--app-btn-text);
+  border: none;
+  border-radius: var(--app-btn-radius);
+  padding: 0 1rem;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-size: var(--app-btn-font-size);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.12s cubic-bezier(.4, 0, .2, 1);
+}
+
+.app-btn-success:hover {
   background: #689b49;
 }
 
-.app-btn-success:active,
-.calendar-hour-modal-save:active {
+.calendar-hour-modal-save:hover {
+  background: #0a7891;
+}
+
+.app-btn-success:active {
   background: #5f8f42;
+  transform: scale(0.97);
+}
+
+.calendar-hour-modal-save:active {
+  background: #07697f;
   transform: scale(0.97);
 }
 

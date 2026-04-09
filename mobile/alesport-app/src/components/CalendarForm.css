@@ -246,8 +246,8 @@ body,
 }
 
 .session-card-client.ion-color-success {
-  background: rgba(0, 137, 166, 0.15);
-  border-left: 4px solid #0089a6;
+  background: rgba(45, 211, 111, 0.2);
+  border-left: 4px solid var(--ion-color-success, #77b154);
 }
 
 .session-card.ion-color-medium {
@@ -261,13 +261,13 @@ body,
 }
 
 .session-card-client.ion-color-danger {
-  background: linear-gradient(180deg, #ffffff 0%, #fff7f8 100%);
-  border-left: 4px solid #d94b61;
+  background: rgba(235, 68, 90, 0.20);
+  border-left: 4px solid var(--ion-color-danger, #eb445a);
 }
 
 .session-card-client.ion-color-medium {
-  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
-  border-left: 4px solid #a7afb5;
+  background: rgba(0, 137, 166, 0.15);
+  border-left: 4px solid #0089a6;
 }
 
 .session-card .ion-card-title {

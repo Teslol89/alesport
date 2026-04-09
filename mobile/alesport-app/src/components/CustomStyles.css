@@ -273,16 +273,19 @@ ion-modal ion-datetime {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  height: var(--app-btn-min-height);
   min-height: var(--app-btn-min-height);
   background: var(--app-btn-bg);
   color: var(--app-btn-text);
   border: none;
   border-radius: var(--app-btn-radius);
-  padding: var(--app-btn-padding);
+  padding: 0 1rem;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   font-size: var(--app-btn-font-size);
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }

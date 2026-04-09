@@ -49,7 +49,13 @@ const BuscarForm: React.FC = () => {
         return bookings.filter(b => {
             const byName = (b.user_name || '').toLowerCase().includes(q);
             const byEmail = (b.user_email || '').toLowerCase().includes(q);
-            const statusText = (b.status === 'active' ? t('search.statusActive') : t('search.statusCancelled')).toLowerCase();
+            const statusText = (
+                b.status === 'active'
+                    ? t('search.statusActive')
+                    : b.status === 'waitlist'
+                        ? t('search.statusWaitlist')
+                        : t('search.statusCancelled')
+            ).toLowerCase();
             const byStatus = statusText.includes(q);
             return byName || byEmail || byStatus;
         });
@@ -198,8 +204,12 @@ const BuscarForm: React.FC = () => {
                         ) : (
                             <div className="search-form-list">
                                 {periodFilteredBookings.map((booking) => {
-                                    const statusLabel = booking.status === 'active' ? t('search.statusActive') : t('search.statusCancelled');
-                                    const statusClass = booking.status === 'active' ? 'active' : 'inactive';
+                                    const statusLabel = booking.status === 'active'
+                                        ? t('search.statusActive')
+                                        : booking.status === 'waitlist'
+                                            ? t('search.statusWaitlist')
+                                            : t('search.statusCancelled');
+                                    const statusClass = booking.status === 'active' ? 'active' : booking.status === 'waitlist' ? 'waiting' : 'inactive';
 
                                     return (
                                         <div key={booking.id} className="search-form-item">

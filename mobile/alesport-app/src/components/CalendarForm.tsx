@@ -574,9 +574,21 @@ const Calendar: React.FC = () => {
     setSessionOccupancy(prev => ({ ...prev, [detailsSession.id]: activeCount }));
   }, [bookings, detailsSession]);
 
-  const myActiveBookingsBySession = useMemo(() => {
+  const myClientBookingsBySession = useMemo(() => {
+    const statusPriority: Record<string, number> = {
+      active: 2,
+      waitlist: 1,
+    };
+
     return myBookings.reduce<Record<number, BookingItem>>((acc, booking) => {
-      if (booking.status === 'active') {
+      const nextPriority = statusPriority[booking.status] ?? 0;
+      if (nextPriority === 0) {
+        return acc;
+      }
+
+      const current = acc[booking.session_id];
+      const currentPriority = current ? (statusPriority[current.status] ?? 0) : 0;
+      if (!current || nextPriority > currentPriority || (nextPriority === currentPriority && booking.id > current.id)) {
         acc[booking.session_id] = booking;
       }
       return acc;
@@ -633,10 +645,12 @@ const Calendar: React.FC = () => {
         ) : (
           sessionsForDate.map(session => {
             const occupancy = sessionOccupancy[session.id] ?? 0;
-            const isBookedByClient = Boolean(myActiveBookingsBySession[session.id]);
+            const clientBooking = myClientBookingsBySession[session.id];
+            const isBookedByClient = clientBooking?.status === 'active';
+            const isWaitlistedByClient = clientBooking?.status === 'waitlist';
             const isAtCapacity = canManageSessionBookings ? occupancy >= session.capacity : session.status === 'completed';
             const isPast = isPastSession(session);
-            const colorClass = isPast ? 'medium' : (isAtCapacity && !isBookedByClient ? 'danger' : 'success');
+            const colorClass = isPast ? 'medium' : ((isWaitlistedByClient || (isAtCapacity && !isBookedByClient)) ? 'danger' : 'success');
             const cardClass = `session-card ${isClient ? 'session-card-client' : ''} ion-color-${colorClass}`;
             const hasClassName = Boolean(session.class_name && session.class_name.trim().length > 0);
             const hasNotes = Boolean(session.notes && session.notes.trim().length > 0);
@@ -656,15 +670,17 @@ const Calendar: React.FC = () => {
                         <div className="calendar-client-actions calendar-client-actions--header">
                           {isBookedByClient ? (
                             <span className="calendar-client-status calendar-client-status--booked calendar-client-action-primary">{t('calendar.bookedByYou')}</span>
-                          ) : isAtCapacity ? (
-                            <span className="calendar-client-status calendar-client-status--full calendar-client-action-primary">{t('calendar.full')}</span>
+                          ) : isWaitlistedByClient ? (
+                            <span className="calendar-client-status calendar-client-status--waitlist calendar-client-action-primary">{t('calendar.waitlist')}</span>
                           ) : isPast ? null : (
                             <button
                               className="calendar-hour-modal-save calendar-client-action-primary"
                               onClick={() => { void handleReserveSession(session); }}
                               disabled={bookingActionSessionId === session.id}
                             >
-                              {bookingActionSessionId === session.id ? t('common.loading') : t('calendar.reserve')}
+                              {bookingActionSessionId === session.id
+                                ? t('common.loading')
+                                : (isAtCapacity ? t('calendar.joinWaitlist') : t('calendar.reserve'))}
                             </button>
                           )}
                         </div>
@@ -903,8 +919,12 @@ const Calendar: React.FC = () => {
                           <div>
                             <div className="calendar-booking-name">{booking.user_name || `${t('search.student')} #${booking.user_id}`}</div>
                             <div className="calendar-booking-email">{booking.user_email || t('calendar.noEmailAvailable')}</div>
-                            <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : 'cancelled'}`}>
-                              {booking.status === 'active' ? t('calendar.active') : t('calendar.inactive')}
+                            <div className={`calendar-booking-status ${booking.status === 'active' ? 'active' : booking.status === 'waitlist' ? 'waitlist' : 'cancelled'}`}>
+                              {booking.status === 'active'
+                                ? t('calendar.active')
+                                : booking.status === 'waitlist'
+                                  ? t('calendar.waitlist')
+                                  : t('calendar.inactive')}
                             </div>
                           </div>
                           {!isDetailsSessionPast ? (
@@ -914,7 +934,7 @@ const Calendar: React.FC = () => {
                               </button>
                             ) : (
                               <button className="calendar-booking-action-reactivate" onClick={() => handleReactivateBooking(booking.id)}>
-                                {t('calendar.reactivate')}
+                                {booking.status === 'waitlist' ? t('calendar.activate') : t('calendar.reactivate')}
                               </button>
                             )
                           ) : null}
@@ -932,13 +952,15 @@ const Calendar: React.FC = () => {
                 {t('common.edit')}
               </button>
             ) : null}
-            {isClient && detailsSession && !isDetailsSessionPast && !myActiveBookingsBySession[detailsSession.id] && detailsSession.status !== 'completed' ? (
+            {isClient && detailsSession && !isDetailsSessionPast && !myClientBookingsBySession[detailsSession.id] ? (
               <button
                 className="calendar-hour-modal-save"
                 onClick={() => { void handleReserveSession(detailsSession); }}
                 disabled={bookingActionSessionId === detailsSession.id}
               >
-                {bookingActionSessionId === detailsSession.id ? t('common.loading') : t('calendar.reserve')}
+                {bookingActionSessionId === detailsSession.id
+                  ? t('common.loading')
+                  : (detailsSession.status === 'completed' ? t('calendar.joinWaitlist') : t('calendar.reserve'))}
               </button>
             ) : null}
             <button className="calendar-hour-modal-cancel" onClick={() => setShowDetailsModal(false)}>{t('common.close')}</button>

@@ -1125,6 +1125,10 @@ body,
   color: #157a43;
 }
 
+.calendar-booking-status.waitlist {
+  color: #9a5a00;
+}
+
 .calendar-booking-status.cancelled {
   color: #a14b4b;
 }
@@ -1220,6 +1224,11 @@ body,
 .calendar-client-status--full {
   background: rgba(235, 68, 90, 0.14);
   color: #a63b4b;
+}
+
+.calendar-client-status--waitlist {
+  background: rgba(255, 178, 36, 0.18);
+  color: #9a5a00;
 }
 
 .calendar-client-status--muted {

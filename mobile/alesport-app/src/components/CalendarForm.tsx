@@ -23,6 +23,7 @@ const Calendar: React.FC = () => {
   const { t, dateLocale, language } = useLanguage();
   const { role: userRole, user } = useAuth();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
+  const ADMIN_AUTO_REFRESH_MS = 10000;
 
   type SessionItem = {
     id: number;
@@ -187,6 +188,38 @@ const Calendar: React.FC = () => {
     fetchSessions({ silent: true });
     void refreshMyBookings();
   }, [fetchSessions, refreshMyBookings]);
+
+  useEffect(() => {
+    if (!canManageSessionBookings) {
+      return;
+    }
+
+    const refreshAdminAgenda = () => {
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+
+      fetchSessions({ silent: true });
+
+      if (detailsSession) {
+        void getSessionBookingsCached(detailsSession.id, { forceRefresh: true })
+          .then((data) => setBookings(data))
+          .catch(() => {
+            // Ignorar errores silenciosos del refresco automático.
+          });
+      }
+    };
+
+    const intervalId = window.setInterval(refreshAdminAgenda, ADMIN_AUTO_REFRESH_MS);
+    window.addEventListener('focus', refreshAdminAgenda);
+    document.addEventListener('visibilitychange', refreshAdminAgenda);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshAdminAgenda);
+      document.removeEventListener('visibilitychange', refreshAdminAgenda);
+    };
+  }, [canManageSessionBookings, detailsSession, fetchSessions, getSessionBookingsCached]);
 
   // Filtra y ordena sesiones por fecha seleccionada y hora de inicio
   const sessionsForDate = useMemo(

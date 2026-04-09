@@ -131,6 +131,8 @@ def test_cancelling_active_booking_notifies_first_waitlist_user(
     seed_data["admin"].is_verified = True
     seed_session.capacity = 1
     seed_session.status = "completed"
+    seed_session.start_time = datetime(2026, 4, 15, 7, 0, tzinfo=timezone.utc)
+    seed_session.end_time = datetime(2026, 4, 15, 8, 0, tzinfo=timezone.utc)
 
     queued_user = User(
         name="Queued Client Push",
@@ -186,6 +188,7 @@ def test_cancelling_active_booking_notifies_first_waitlist_user(
     assert len(sent_notifications) == 1
     assert sent_notifications[0]["tokens"] == ["test-fcm-token"]
     assert sent_notifications[0]["data"]["session_id"] == str(seed_session.id)
+    assert "09:00" in sent_notifications[0]["body"]
 
 
 def test_expired_offer_moves_to_next_waitlist_user(client, seed_data, db_session, monkeypatch):

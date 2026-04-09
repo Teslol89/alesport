@@ -564,10 +564,8 @@ const Calendar: React.FC = () => {
         sessionsForDate.map(async (session) => {
           try {
             const sessionBookings = await getSessionBookingsCached(session.id, { forceRefresh: true });
-            const reservedCount = sessionBookings.filter(
-              b => b.status === 'active' || b.status === 'offered'
-            ).length;
-            return [session.id, reservedCount] as const;
+            const activeCount = sessionBookings.filter(b => b.status === 'active').length;
+            return [session.id, activeCount] as const;
           } catch {
             return [session.id, 0] as const;
           }
@@ -603,8 +601,8 @@ const Calendar: React.FC = () => {
       return;
     }
 
-    const reservedCount = bookings.filter(b => b.status === 'active' || b.status === 'offered').length;
-    setSessionOccupancy(prev => ({ ...prev, [detailsSession.id]: reservedCount }));
+    const activeCount = bookings.filter(b => b.status === 'active').length;
+    setSessionOccupancy(prev => ({ ...prev, [detailsSession.id]: activeCount }));
   }, [bookings, detailsSession]);
 
   const myClientBookingsBySession = useMemo(() => {
@@ -629,7 +627,7 @@ const Calendar: React.FC = () => {
     }, {});
   }, [myBookings]);
 
-  const activeBookingsCount = bookings.filter(b => b.status === 'active' || b.status === 'offered').length;
+  const activeBookingsCount = bookings.filter(b => b.status === 'active').length;
   const isPastSession = (session: SessionItem) => session.session_date < getTodayIsoDate();
   const isDetailsSessionPast = detailsSession ? isPastSession(detailsSession) : false;
   const detailsClientBooking = detailsSession ? myClientBookingsBySession[detailsSession.id] : undefined;

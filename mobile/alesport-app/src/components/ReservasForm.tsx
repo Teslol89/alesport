@@ -46,6 +46,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   const [loading, setLoading] = useState(true);
   const [busyBookingId, setBusyBookingId] = useState<number | null>(null);
   const [pendingCancelBooking, setPendingCancelBooking] = useState<BookingItem | null>(null);
+  const [offerClockMs, setOfferClockMs] = useState(() => Date.now());
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' | 'info' }>({
     show: false,
     message: '',
@@ -90,6 +91,13 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     void loadBookings();
   }, [loadBookings, refreshSignal]);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setOfferClockMs(Date.now()), 1000);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   const visibleBookings = useMemo(() => {
     return bookings
       .filter((booking) => booking.status === 'active' || booking.status === 'waitlist' || booking.status === 'offered')
@@ -124,6 +132,22 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
       hour: '2-digit',
       minute: '2-digit',
     }).format(parsed);
+  }
+
+  function formatOfferCountdown(offerExpiresAt?: string | null) {
+    if (!offerExpiresAt) {
+      return '00:00';
+    }
+
+    const remainingMs = new Date(offerExpiresAt).getTime() - offerClockMs;
+    if (!Number.isFinite(remainingMs) || remainingMs <= 0) {
+      return '00:00';
+    }
+
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
   async function handleCancelBooking(booking: BookingItem, confirmed = false) {
@@ -219,6 +243,11 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
                     {session?.trainer_name ? (
                       <p className="bookings-meta">
                         <strong>{t('calendar.trainer')}:</strong> {session.trainer_name}
+                      </p>
+                    ) : null}
+                    {isOffered ? (
+                      <p className="bookings-offer-timer">
+                        {t('calendar.offerTimeLeft')}: {formatOfferCountdown(booking.offer_expires_at)}
                       </p>
                     ) : null}
                   </div>

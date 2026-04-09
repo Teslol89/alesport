@@ -39,6 +39,7 @@ import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import PrivateRoute from './components/PrivateRoute';
 import { getPendingUser, deletePendingUser } from './api/auth';
 import CustomToast from './components/CustomStyles';
+import { PUSH_OPEN_SESSION_EVENT, readPendingPushNavigation } from './services/fcm';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -225,6 +226,38 @@ const App: React.FC = () => {
       }
     };
     checkAndCleanPendingUser();
+  }, [history]);
+
+  useEffect(() => {
+    const openSessionFromPush = () => {
+      const pendingPayload = readPendingPushNavigation();
+      if (!pendingPayload?.session_id) {
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.set('source', 'push');
+      params.set('session', pendingPayload.session_id);
+      if (pendingPayload.booking_id) {
+        params.set('booking', pendingPayload.booking_id);
+      }
+      if (pendingPayload.session_date) {
+        params.set('date', pendingPayload.session_date);
+      }
+
+      history.replace(`/admin-calendar?${params.toString()}`);
+    };
+
+    const handlePushOpen = () => {
+      openSessionFromPush();
+    };
+
+    window.addEventListener(PUSH_OPEN_SESSION_EVENT, handlePushOpen as EventListener);
+    openSessionFromPush();
+
+    return () => {
+      window.removeEventListener(PUSH_OPEN_SESSION_EVENT, handlePushOpen as EventListener);
+    };
   }, [history]);
 
   useEffect(() => {

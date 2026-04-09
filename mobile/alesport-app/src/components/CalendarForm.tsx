@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner, IonDatetime, useIonViewWillEnter } from '@ionic/react';
+import { useLocation } from 'react-router-dom';
 import './CalendarForm.css';
 import CustomToast from './CustomStyles';
 import horaIcon from '../icons/horaColor.webp';
@@ -17,11 +18,13 @@ import {
 import { getSessionsByDateRange, updateSession, cancelSession } from '../api/sessions';
 import { BookingItem, cancelBooking, createBooking, getBookingsBySession, getBookingsByUser, reactivateBooking } from '../api/bookings';
 import { useLanguage } from '../i18n/LanguageContext';
+import { clearPendingPushNavigation } from '../services/fcm';
 import { useAuth } from './AuthContext';
 
 const Calendar: React.FC = () => {
   const { t, dateLocale, language } = useLanguage();
   const { role: userRole, user } = useAuth();
+  const location = useLocation();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
   const AGENDA_AUTO_REFRESH_MS = 10000;
 
@@ -71,6 +74,7 @@ const Calendar: React.FC = () => {
   const [sessionOccupancy, setSessionOccupancy] = useState<Record<number, number>>({});
   const [myBookings, setMyBookings] = useState<BookingItem[]>([]);
   const [bookingActionSessionId, setBookingActionSessionId] = useState<number | null>(null);
+  const [offerClockMs, setOfferClockMs] = useState(() => Date.now());
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' | 'info' }>({
     show: false,
     message: '',
@@ -80,6 +84,7 @@ const Calendar: React.FC = () => {
   const dayScrollRef = useRef<HTMLDivElement | null>(null);
   const dayButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const bookingsCacheRef = useRef<Record<number, BookingItem[]>>({});
+  const handledPushNavigationRef = useRef<string | null>(null);
   const bookingsInFlightRef = useRef<Record<number, Promise<BookingItem[]>>>({});
   const isClient = userRole === 'client';
   const canManageSessionBookings = userRole === 'admin' || userRole === 'trainer';
@@ -553,6 +558,49 @@ const Calendar: React.FC = () => {
   }, [selectedDate, weekDays]);
 
   useEffect(() => {
+    const intervalId = window.setInterval(() => setOfferClockMs(Date.now()), 1000);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const source = params.get('source');
+    const sessionId = Number(params.get('session'));
+    const targetDate = params.get('date');
+
+    if (source !== 'push' || !Number.isFinite(sessionId) || sessionId <= 0) {
+      return;
+    }
+
+    const navigationKey = `${sessionId}:${targetDate ?? ''}`;
+    if (handledPushNavigationRef.current === navigationKey) {
+      return;
+    }
+
+    if (targetDate) {
+      if (selectedDate !== targetDate) {
+        setSelectedDate(targetDate);
+      }
+      if (weekAnchorDate !== targetDate) {
+        setWeekAnchorDate(targetDate);
+      }
+    }
+
+    const targetSession = sessions.find((session) => session.id === sessionId);
+    if (!targetSession) {
+      return;
+    }
+
+    handledPushNavigationRef.current = navigationKey;
+    setSelectedDate(targetSession.session_date);
+    setWeekAnchorDate(targetSession.session_date);
+    void openDetailsModal(targetSession);
+    clearPendingPushNavigation();
+  }, [location.search, selectedDate, sessions, weekAnchorDate]);
+
+  useEffect(() => {
     if (!canManageSessionBookings) {
       return;
     }
@@ -633,6 +681,22 @@ const Calendar: React.FC = () => {
   const detailsClientBooking = detailsSession ? myClientBookingsBySession[detailsSession.id] : undefined;
   const loadingSkeletonRows = [1, 2, 3];
 
+  function getOfferCountdownLabel(offerExpiresAt?: string | null) {
+    if (!offerExpiresAt) {
+      return '00:00';
+    }
+
+    const remainingMs = new Date(offerExpiresAt).getTime() - offerClockMs;
+    if (!Number.isFinite(remainingMs) || remainingMs <= 0) {
+      return '00:00';
+    }
+
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
   return (
     <div className="calendar-container">
       {/* Top bar fija con fecha y botón */}
@@ -707,13 +771,18 @@ const Calendar: React.FC = () => {
                           {isBookedByClient ? (
                             <span className="calendar-client-status calendar-client-status--booked calendar-client-action-primary">{t('calendar.bookedByYou')}</span>
                           ) : isOfferedToClient && clientBooking ? (
-                            <button
-                              className="calendar-hour-modal-save calendar-client-action-primary"
-                              onClick={() => { void handleConfirmClientBooking(clientBooking, session); }}
-                              disabled={bookingActionSessionId === session.id}
-                            >
-                              {bookingActionSessionId === session.id ? t('common.loading') : t('calendar.confirmSpot')}
-                            </button>
+                            <div className="calendar-client-offer-box">
+                              <button
+                                className="calendar-hour-modal-save calendar-client-action-primary"
+                                onClick={() => { void handleConfirmClientBooking(clientBooking, session); }}
+                                disabled={bookingActionSessionId === session.id}
+                              >
+                                {bookingActionSessionId === session.id ? t('common.loading') : t('calendar.confirmSpot')}
+                              </button>
+                              <span className="calendar-client-offer-timer">
+                                {t('calendar.offerTimeLeft')}: {getOfferCountdownLabel(clientBooking.offer_expires_at)}
+                              </span>
+                            </div>
                           ) : isWaitlistedByClient ? (
                             <span className="calendar-client-status calendar-client-status--waitlist calendar-client-action-primary">{t('calendar.waitlist')}</span>
                           ) : isPast ? null : (
@@ -1004,7 +1073,9 @@ const Calendar: React.FC = () => {
                 onClick={() => { void handleConfirmClientBooking(detailsClientBooking, detailsSession); }}
                 disabled={bookingActionSessionId === detailsSession.id}
               >
-                {bookingActionSessionId === detailsSession.id ? t('common.loading') : t('calendar.confirmSpot')}
+                {bookingActionSessionId === detailsSession.id
+                  ? t('common.loading')
+                  : `${t('calendar.confirmSpot')} · ${getOfferCountdownLabel(detailsClientBooking?.offer_expires_at)}`}
               </button>
             ) : isClient && detailsSession && !isDetailsSessionPast && !detailsClientBooking ? (
               <button

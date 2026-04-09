@@ -365,7 +365,7 @@ const Calendar: React.FC = () => {
       setToast({
         show: true,
         message: createdBooking.status === 'waitlist' ? t('calendar.waitlistJoined') : t('calendar.bookingCreated'),
-        type: createdBooking.status === 'waitlist' ? 'info' : 'success',
+        type: 'success',
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : t('calendar.bookingCreateError');
@@ -1068,15 +1068,18 @@ const Calendar: React.FC = () => {
               </button>
             ) : null}
             {isClient && detailsSession && !isDetailsSessionPast && detailsClientBooking?.status === 'offered' ? (
-              <button
-                className="calendar-hour-modal-save"
-                onClick={() => { void handleConfirmClientBooking(detailsClientBooking, detailsSession); }}
-                disabled={bookingActionSessionId === detailsSession.id}
-              >
-                {bookingActionSessionId === detailsSession.id
-                  ? t('common.loading')
-                  : `${t('calendar.confirmSpot')} · ${getOfferCountdownLabel(detailsClientBooking?.offer_expires_at)}`}
-              </button>
+              <div className="calendar-client-offer-box calendar-client-offer-box--modal">
+                <button
+                  className="calendar-hour-modal-save calendar-client-action-primary"
+                  onClick={() => { void handleConfirmClientBooking(detailsClientBooking, detailsSession); }}
+                  disabled={bookingActionSessionId === detailsSession.id}
+                >
+                  {bookingActionSessionId === detailsSession.id ? t('common.loading') : t('calendar.confirmSpot')}
+                </button>
+                <span className="calendar-client-offer-timer">
+                  {t('calendar.offerTimeLeft')}: {getOfferCountdownLabel(detailsClientBooking?.offer_expires_at)}
+                </span>
+              </div>
             ) : isClient && detailsSession && !isDetailsSessionPast && !detailsClientBooking ? (
               <button
                 className="calendar-hour-modal-save"

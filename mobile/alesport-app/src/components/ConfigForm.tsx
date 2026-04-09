@@ -7,6 +7,7 @@ import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
 import { getUserProfile, type UserProfile, updateUserProfile } from '../api/user';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getNotificationsEnabled, setNotificationsEnabled as updateNotificationsEnabled } from '../services/fcm';
 import './ConfigForm.css';
 
 const DARK_MODE_STORAGE_KEY = 'alesport-dark-mode';
@@ -92,7 +93,8 @@ const ConfigForm: React.FC = () => {
   const [avatarPreview, setAvatarPreview] = useState('');
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
-  const [notifications, setNotifications] = useState(true);
+  const [notifications, setNotifications] = useState(false);
+  const [isUpdatingNotifications, setIsUpdatingNotifications] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showAvatarSourceAlert, setShowAvatarSourceAlert] = useState(false);
@@ -132,6 +134,20 @@ const ConfigForm: React.FC = () => {
     document.body.classList.toggle('dark', darkMode);
     localStorage.setItem(DARK_MODE_STORAGE_KEY, String(darkMode));
   }, [darkMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getNotificationsEnabled().then((enabled) => {
+      if (!cancelled) {
+        setNotifications(enabled);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const openEditProfileModal = () => {
     setEditName(profile.name || '');
@@ -267,6 +283,30 @@ const ConfigForm: React.FC = () => {
     await handleAvatarAutoSave(null);
   };
 
+  const handleNotificationsChange = async (enabled: boolean) => {
+    setIsUpdatingNotifications(true);
+
+    try {
+      const nextEnabled = await updateNotificationsEnabled(enabled);
+      setNotifications(nextEnabled);
+
+      if (!enabled) {
+        setToast({ show: true, message: t('config.notificationsDisabled'), type: 'success' });
+      } else if (nextEnabled) {
+        setToast({ show: true, message: t('config.notificationsEnabled'), type: 'success' });
+      } else {
+        setToast({ show: true, message: t('config.notificationsPermissionDenied'), type: 'danger' });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('config.notificationsUpdateError');
+      setToast({ show: true, message, type: 'danger' });
+      const enabledNow = await getNotificationsEnabled();
+      setNotifications(enabledNow);
+    } finally {
+      setIsUpdatingNotifications(false);
+    }
+  };
+
   const handleOpenSupportEmail = () => {
     window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Soporte Alesport')}`;
   };
@@ -326,7 +366,11 @@ const ConfigForm: React.FC = () => {
           </IonItem>
           <IonItem>
             <IonLabel>{t('config.notifications')}</IonLabel>
-            <IonToggle checked={notifications} onIonChange={e => setNotifications(e.detail.checked)} />
+            <IonToggle
+              checked={notifications}
+              disabled={isUpdatingNotifications}
+              onIonChange={e => { void handleNotificationsChange(e.detail.checked); }}
+            />
           </IonItem>
           <IonItem>
             <IonLabel>{t('config.language')}</IonLabel>

@@ -112,26 +112,41 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
 
   const todayIso = toIsoDate(new Date());
 
-  function formatBookingDate(booking: BookingItem) {
+  function getBookingDateParts(booking: BookingItem) {
     const session = sessionsById[booking.session_id];
     const rawDate = session ? `${session.session_date}T${session.start_time}` : booking.session_start_time;
 
     if (!rawDate) {
-      return `${t('myBookings.sessionLabel')} #${booking.session_id}`;
+      return {
+        dateText: `${t('myBookings.sessionLabel')} #${booking.session_id}`,
+        timeText: '',
+      };
     }
 
     const parsed = new Date(rawDate);
     if (Number.isNaN(parsed.getTime())) {
-      return `${t('myBookings.sessionLabel')} #${booking.session_id}`;
+      return {
+        dateText: `${t('myBookings.sessionLabel')} #${booking.session_id}`,
+        timeText: '',
+      };
     }
 
-    return new Intl.DateTimeFormat(dateLocale, {
+    const formattedDate = new Intl.DateTimeFormat(dateLocale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
+      year: 'numeric',
+    }).format(parsed);
+
+    const formattedTime = new Intl.DateTimeFormat(dateLocale, {
       hour: '2-digit',
       minute: '2-digit',
     }).format(parsed);
+
+    return {
+      dateText: formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1),
+      timeText: formattedTime,
+    };
   }
 
   function formatOfferCountdown(offerExpiresAt?: string | null) {
@@ -220,9 +235,6 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
         ) : visibleBookings.length === 0 ? (
           <div className="bookings-empty app-surface-card">
             <p>{t('myBookings.empty')}</p>
-            <button className="bookings-primary-btn" onClick={() => history.push('/admin-calendar')}>
-              {t('myBookings.goToAgenda')}
-            </button>
           </div>
         ) : (
           <div className="bookings-list">
@@ -231,15 +243,19 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
               const isPast = session ? session.session_date < todayIso : false;
               const isWaitlist = booking.status === 'waitlist';
               const isOffered = booking.status === 'offered';
+              const { dateText, timeText } = getBookingDateParts(booking);
 
               return (
                 <article key={booking.id} className="bookings-item app-surface-card">
                   <div className="bookings-item-main">
-                    <span className={`bookings-badge${isWaitlist ? ' bookings-badge--waitlist' : isOffered ? ' bookings-badge--offered' : ''}`}>
-                      {isWaitlist ? t('calendar.waitlist') : isOffered ? t('calendar.offered') : t('calendar.bookedByYou')}
-                    </span>
-                    <h2>{session?.class_name || `${t('myBookings.sessionLabel')} #${booking.session_id}`}</h2>
-                    <p className="bookings-date">{formatBookingDate(booking)}</p>
+                    <div className="bookings-item-header">
+                      <h2>{session?.class_name || `${t('myBookings.sessionLabel')} #${booking.session_id}`}</h2>
+                      <span className={`bookings-badge${isWaitlist ? ' bookings-badge--waitlist' : isOffered ? ' bookings-badge--offered' : ''}`}>
+                        {isWaitlist ? t('calendar.waitlist') : isOffered ? t('calendar.offered') : t('calendar.bookedByYou')}
+                      </span>
+                    </div>
+                    <p className="bookings-date">{dateText}</p>
+                    {timeText ? <p className="bookings-time">{timeText}</p> : null}
                     {session?.trainer_name ? (
                       <p className="bookings-meta">
                         <strong>{t('calendar.trainer')}:</strong> {session.trainer_name}

@@ -27,7 +27,7 @@ class Booking(Base):
     session_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False
     )
-    # Estado de la reserva: 'active' o 'cancelled'
+    # Estado de la reserva: 'active', 'cancelled' o 'waitlist'
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     # Fecha de creación, generada automáticamente por la base de datos
     created_at: Mapped[datetime] = mapped_column(

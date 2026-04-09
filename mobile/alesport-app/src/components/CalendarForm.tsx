@@ -352,17 +352,16 @@ const Calendar: React.FC = () => {
       return;
     }
 
-    if (session.status === 'completed') {
-      setToast({ show: true, message: t('calendar.full'), type: 'info' });
-      return;
-    }
-
     setBookingActionSessionId(session.id);
     try {
-      await createBooking(session.id);
+      const createdBooking = await createBooking(session.id);
       await refreshMyBookings();
       fetchSessions({ silent: true });
-      setToast({ show: true, message: t('calendar.bookingCreated'), type: 'success' });
+      setToast({
+        show: true,
+        message: createdBooking.status === 'waitlist' ? t('calendar.waitlistJoined') : t('calendar.bookingCreated'),
+        type: createdBooking.status === 'waitlist' ? 'info' : 'success',
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : t('calendar.bookingCreateError');
       setToast({ show: true, message, type: 'danger' });

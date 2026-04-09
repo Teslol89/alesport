@@ -179,19 +179,19 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
             detail="No se puede reservar una sesión cancelada",
         )
 
-    existing_live_booking = (
+    existing_booking = (
         db.query(Booking)
         .filter(
             Booking.user_id == current_user.id,
             Booking.session_id == booking_data.session_id,
-            Booking.status.in_(LIVE_BOOKING_STATUSES),
         )
+        .order_by(Booking.id.desc())
         .first()
     )
-    if existing_live_booking is not None:
+    if existing_booking is not None and existing_booking.status in LIVE_BOOKING_STATUSES:
         detail = (
             "El usuario ya tiene una reserva activa en esta sesión"
-            if existing_live_booking.status == ACTIVE_BOOKING_STATUS
+            if existing_booking.status == ACTIVE_BOOKING_STATUS
             else "El usuario ya está en cola para esta sesión"
         )
         raise HTTPException(
@@ -206,13 +206,17 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
         else ACTIVE_BOOKING_STATUS
     )
 
-    # Crear la reserva o la entrada en lista de espera.
-    booking = Booking(
-        user_id=current_user.id,
-        session_id=booking_data.session_id,
-        status=booking_status,
-    )
-    db.add(booking)
+    # Crear la reserva o reutilizar el último registro cancelado del alumno.
+    if existing_booking is not None:
+        booking = existing_booking
+        booking.status = booking_status
+    else:
+        booking = Booking(
+            user_id=current_user.id,
+            session_id=booking_data.session_id,
+            status=booking_status,
+        )
+        db.add(booking)
     _sync_session_status_with_capacity(
         session,
         active_bookings_count + (1 if booking_status == ACTIVE_BOOKING_STATUS else 0),
@@ -221,11 +225,17 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
+        error_text = str(exc.orig)
         # El índice único parcial de la BD evita reservas duplicadas activas
-        if "idx_unique_booking_active" in str(exc.orig):
+        if "idx_unique_booking_active" in error_text:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="El usuario ya tiene una reserva activa en esta sesión",
+            )
+        if "bookings_status_check" in error_text or "check constraint" in error_text.lower():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="La base de datos aún no tiene aplicada la migración de la cola",
             )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
 
@@ -8,9 +8,13 @@ LOCAL_TIMEZONE = ZoneInfo("Europe/Madrid")
 
 
 def to_local_datetime(value: datetime) -> datetime:
-    """Normaliza un datetime a la zona horaria local de la aplicación."""
+    """Normaliza un datetime a la zona horaria local de la aplicación.
+
+    Las fechas que llegan sin tzinfo desde la BD se interpretan como UTC,
+    porque las sesiones se almacenan normalizadas en ese huso.
+    """
     if value.tzinfo is None:
-        return value.replace(tzinfo=LOCAL_TIMEZONE)
+        return value.replace(tzinfo=timezone.utc).astimezone(LOCAL_TIMEZONE)
     return value.astimezone(LOCAL_TIMEZONE)
 
 

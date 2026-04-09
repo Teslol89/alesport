@@ -12,7 +12,7 @@ from app.models.user import User
 from app.models.booking import Booking
 import logging
 
-from app.utils.utils import LOCAL_TIMEZONE, get_logger, is_past_session_datetime
+from app.utils.utils import LOCAL_TIMEZONE, get_logger, is_past_session_datetime, to_local_datetime
 from app.services.notification_service import send_push_notification
 
 logger = get_logger(__name__)
@@ -255,9 +255,10 @@ def _notify_session_time_change(
     if not tokens:
         return
 
-    old_hour = old_start_time.strftime("%H:%M") if old_start_time else "?"
-    new_hour = session.start_time.strftime("%H:%M")
-    session_date = session.start_time.strftime("%d/%m/%Y")
+    old_hour = to_local_datetime(old_start_time).strftime("%H:%M") if old_start_time else "?"
+    local_start = to_local_datetime(session.start_time)
+    new_hour = local_start.strftime("%H:%M")
+    session_date = local_start.strftime("%d/%m/%Y")
 
     send_push_notification(
         tokens=tokens,

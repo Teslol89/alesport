@@ -8,7 +8,7 @@ from app.models.booking import Booking
 from app.models.session import SessionModel
 from app.models.user import User
 from app.services.notification_service import send_push_notification
-from app.utils.utils import is_past_session_datetime
+from app.utils.utils import is_past_session_datetime, to_local_datetime
 
 
 PAST_SESSION_MUTATION_ERROR = "No se pueden modificar reservas de días pasados"
@@ -114,8 +114,9 @@ def _send_waitlist_offer_notification(session: SessionModel, booking: Booking, u
         return
 
     class_name = (session.class_name or "tu clase").strip() or "tu clase"
-    session_date = session.start_time.strftime("%d/%m/%Y")
-    session_time = session.start_time.strftime("%H:%M")
+    local_start = to_local_datetime(session.start_time)
+    session_date = local_start.strftime("%d/%m/%Y")
+    session_time = local_start.strftime("%H:%M")
 
     send_push_notification(
         tokens=[user.fcm_token],

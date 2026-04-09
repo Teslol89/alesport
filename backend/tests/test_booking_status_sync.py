@@ -87,6 +87,37 @@ def test_reactivate_booking_corrects_stale_completed_session_when_there_is_space
     assert seed_session.status == "active"
 
 
+def test_session_details_show_each_student_only_once(client, seed_data, db_session):
+    seed_session = seed_data["session"]
+    seed_data["admin"].is_verified = True
+
+    cancelled_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="cancelled",
+    )
+    active_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="active",
+    )
+    db_session.add_all([cancelled_booking, active_booking])
+    db_session.commit()
+    db_session.refresh(active_booking)
+
+    headers = _login_headers(client, seed_data["admin"].email, "admin1234")
+    response = client.get(f"/api/bookings/session/{seed_session.id}", headers=headers)
+
+    assert response.status_code == 200
+
+    data = response.json()
+    student_rows = [item for item in data if item["user_id"] == seed_data["client"].id]
+
+    assert len(student_rows) == 1
+    assert student_rows[0]["id"] == active_booking.id
+    assert student_rows[0]["status"] == "active"
+
+
 def test_cannot_create_booking_for_past_session(client, seed_data, db_session):
     seed_session = seed_data["session"]
     seed_data["client"].is_verified = True

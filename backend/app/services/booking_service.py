@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.booking import Booking
 from app.models.session import SessionModel
 from app.models.user import User
+from app.services.notification_service import send_push_notification
 from app.utils.utils import is_past_session_datetime
 
 
@@ -66,6 +67,49 @@ def _collapse_session_bookings(bookings: list[Booking]) -> list[Booking]:
         latest_by_user.setdefault(booking.user_id, booking)
 
     return list(latest_by_user.values())
+
+
+def _notify_first_waitlist_user_available_slot(db: Session, session: SessionModel) -> None:
+    """Envía una push al primer alumno en cola cuando se libera una plaza."""
+    waitlist_bookings = (
+        db.query(Booking)
+        .filter(
+            Booking.session_id == session.id,
+            Booking.status == WAITLIST_BOOKING_STATUS,
+        )
+        .order_by(Booking.created_at.asc(), Booking.id.asc())
+        .all()
+    )
+    if not waitlist_bookings:
+        return
+
+    for waitlist_booking in waitlist_bookings:
+        user = (
+            db.query(User)
+            .filter(
+                User.id == waitlist_booking.user_id,
+                User.fcm_token.isnot(None),
+            )
+            .first()
+        )
+        if not user or not user.fcm_token:
+            continue
+
+        class_name = (session.class_name or "tu clase").strip() or "tu clase"
+        session_date = session.start_time.strftime("%d/%m/%Y")
+        session_time = session.start_time.strftime("%H:%M")
+
+        send_push_notification(
+            tokens=[user.fcm_token],
+            title="¡Se ha liberado una plaza!",
+            body=f"Ya hay hueco en {class_name} el {session_date} a las {session_time}. Entra en Alesport para confirmar tu sitio.",
+            data={
+                "type": "waitlist_available",
+                "session_id": str(session.id),
+                "booking_id": str(waitlist_booking.id),
+            },
+        )
+        return
 
 
 def _attach_user_data(db: Session, bookings: list[Booking]) -> list[dict]:
@@ -301,12 +345,17 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
             detail=f"La reserva ya está '{booking.status}', no se puede cancelar",
         )
 
+    was_active_booking = booking.status == ACTIVE_BOOKING_STATUS
     booking.status = CANCELLED_BOOKING_STATUS
     db.flush()
     active_bookings_count = _count_active_bookings(db, booking.session_id)
     _sync_session_status_with_capacity(session, active_bookings_count)
     db.commit()
     db.refresh(booking)
+
+    if was_active_booking and active_bookings_count < session.capacity:
+        _notify_first_waitlist_user_available_slot(db, session)
+
     user = db.query(User).filter(User.id == booking.user_id).first()
     setattr(booking, "user_name", user.name if user else None)
     setattr(booking, "user_email", user.email if user else None)

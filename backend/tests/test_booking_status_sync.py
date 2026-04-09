@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from app.auth.security import hash_password
 from app.models.booking import Booking
@@ -179,9 +180,97 @@ def test_cancelling_active_booking_notifies_first_waitlist_user(
     response = client.patch(f"/api/bookings/{active_booking.id}/cancel", headers=headers)
 
     assert response.status_code == 200
+    db_session.refresh(waitlist_booking)
+    assert waitlist_booking.status == "offered"
+    assert waitlist_booking.offer_expires_at is not None
     assert len(sent_notifications) == 1
     assert sent_notifications[0]["tokens"] == ["test-fcm-token"]
     assert sent_notifications[0]["data"]["session_id"] == str(seed_session.id)
+
+
+def test_expired_offer_moves_to_next_waitlist_user(client, seed_data, db_session, monkeypatch):
+    from app.services import booking_service
+
+    seed_session = seed_data["session"]
+    seed_data["admin"].is_verified = True
+    seed_session.capacity = 1
+    seed_session.status = "completed"
+
+    first_user = User(
+        name="First Waitlist",
+        email="firstwait@example.com",
+        password_hash=hash_password("first1234"),
+        role="client",
+        is_active=True,
+        membership_active=True,
+        is_verified=True,
+        fcm_token="first-token",
+    )
+    second_user = User(
+        name="Second Waitlist",
+        email="secondwait@example.com",
+        password_hash=hash_password("second1234"),
+        role="client",
+        is_active=True,
+        membership_active=True,
+        is_verified=True,
+        fcm_token="second-token",
+    )
+    db_session.add_all([first_user, second_user])
+    db_session.flush()
+
+    active_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="active",
+    )
+    first_waitlist = Booking(
+        user_id=first_user.id,
+        session_id=seed_session.id,
+        status="waitlist",
+    )
+    second_waitlist = Booking(
+        user_id=second_user.id,
+        session_id=seed_session.id,
+        status="waitlist",
+    )
+    db_session.add_all([active_booking, first_waitlist, second_waitlist])
+    db_session.commit()
+
+    sent_notifications: list[dict] = []
+
+    def fake_send_push_notification(tokens, title, body, data=None):
+        sent_notifications.append({
+            "tokens": tokens,
+            "title": title,
+            "body": body,
+            "data": data or {},
+        })
+
+    monkeypatch.setattr(
+        booking_service,
+        "send_push_notification",
+        fake_send_push_notification,
+        raising=False,
+    )
+
+    headers = _login_headers(client, seed_data["admin"].email, "admin1234")
+    cancel_response = client.patch(f"/api/bookings/{active_booking.id}/cancel", headers=headers)
+    assert cancel_response.status_code == 200
+
+    db_session.refresh(first_waitlist)
+    first_waitlist.offer_expires_at = datetime.now(ZoneInfo("UTC")) - timedelta(minutes=16)
+    db_session.commit()
+
+    refresh_response = client.get(f"/api/bookings/user/{second_user.id}", headers=headers)
+    assert refresh_response.status_code == 200
+
+    db_session.refresh(first_waitlist)
+    db_session.refresh(second_waitlist)
+    assert first_waitlist.status == "waitlist"
+    assert second_waitlist.status == "offered"
+    assert len(sent_notifications) == 2
+    assert sent_notifications[-1]["tokens"] == ["second-token"]
 
 
 def test_session_becomes_completed_when_booking_reaches_capacity(

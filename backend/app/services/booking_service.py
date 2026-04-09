@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -13,7 +15,27 @@ PAST_SESSION_MUTATION_ERROR = "No se pueden modificar reservas de días pasados"
 ACTIVE_BOOKING_STATUS = "active"
 CANCELLED_BOOKING_STATUS = "cancelled"
 WAITLIST_BOOKING_STATUS = "waitlist"
-LIVE_BOOKING_STATUSES = (ACTIVE_BOOKING_STATUS, WAITLIST_BOOKING_STATUS)
+OFFERED_BOOKING_STATUS = "offered"
+WAITLIST_OFFER_TTL_MINUTES = 15
+LIVE_BOOKING_STATUSES = (
+    ACTIVE_BOOKING_STATUS,
+    WAITLIST_BOOKING_STATUS,
+    OFFERED_BOOKING_STATUS,
+)
+RESERVED_BOOKING_STATUSES = (
+    ACTIVE_BOOKING_STATUS,
+    OFFERED_BOOKING_STATUS,
+)
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _as_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    return value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
 
 
 def _count_active_bookings(db: Session, session_id: int) -> int:
@@ -21,6 +43,18 @@ def _count_active_bookings(db: Session, session_id: int) -> int:
     return (
         db.query(Booking)
         .filter(Booking.session_id == session_id, Booking.status == ACTIVE_BOOKING_STATUS)
+        .count()
+    )
+
+
+def _count_reserved_slots(db: Session, session_id: int) -> int:
+    """Cuenta plazas ocupadas o temporalmente retenidas (active + offered)."""
+    return (
+        db.query(Booking)
+        .filter(
+            Booking.session_id == session_id,
+            Booking.status.in_(RESERVED_BOOKING_STATUSES),
+        )
         .count()
     )
 
@@ -53,6 +87,7 @@ def _collapse_session_bookings(bookings: list[Booking]) -> list[Booking]:
 
     latest_by_user: dict[int, Booking] = {}
     status_priority = {
+        OFFERED_BOOKING_STATUS: 3,
         ACTIVE_BOOKING_STATUS: 2,
         WAITLIST_BOOKING_STATUS: 1,
         CANCELLED_BOOKING_STATUS: 0,
@@ -69,47 +104,118 @@ def _collapse_session_bookings(bookings: list[Booking]) -> list[Booking]:
     return list(latest_by_user.values())
 
 
-def _notify_first_waitlist_user_available_slot(db: Session, session: SessionModel) -> None:
-    """Envía una push al primer alumno en cola cuando se libera una plaza."""
-    waitlist_bookings = (
+def _is_offer_expired(booking: Booking) -> bool:
+    expires_at = _as_utc(getattr(booking, "offer_expires_at", None))
+    return expires_at is not None and expires_at <= _utc_now()
+
+
+def _send_waitlist_offer_notification(session: SessionModel, booking: Booking, user: User) -> None:
+    if not user.fcm_token:
+        return
+
+    class_name = (session.class_name or "tu clase").strip() or "tu clase"
+    session_date = session.start_time.strftime("%d/%m/%Y")
+    session_time = session.start_time.strftime("%H:%M")
+
+    send_push_notification(
+        tokens=[user.fcm_token],
+        title="¡Se ha liberado una plaza!",
+        body=f"Ya hay hueco en {class_name} el {session_date} a las {session_time}. Tienes 15 minutos para confirmar tu sitio.",
+        data={
+            "type": "waitlist_available",
+            "session_id": str(session.id),
+            "booking_id": str(booking.id),
+            "offer_expires_in_minutes": str(WAITLIST_OFFER_TTL_MINUTES),
+        },
+    )
+
+
+def _process_waitlist_for_session(db: Session, session: SessionModel) -> None:
+    """Expira ofertas vencidas y, si hay hueco, ofrece la plaza al siguiente en cola."""
+    expired_offers = (
+        db.query(Booking)
+        .filter(
+            Booking.session_id == session.id,
+            Booking.status == OFFERED_BOOKING_STATUS,
+        )
+        .order_by(Booking.created_at.asc(), Booking.id.asc())
+        .all()
+    )
+
+    changed = False
+    expired_booking_ids: set[int] = set()
+    for offered_booking in expired_offers:
+        if not _is_offer_expired(offered_booking):
+            continue
+        offered_booking.status = WAITLIST_BOOKING_STATUS
+        offered_booking.offer_expires_at = None
+        expired_booking_ids.add(offered_booking.id)
+        changed = True
+
+    if changed:
+        db.flush()
+
+    active_offer = (
+        db.query(Booking)
+        .filter(
+            Booking.session_id == session.id,
+            Booking.status == OFFERED_BOOKING_STATUS,
+        )
+        .order_by(Booking.created_at.asc(), Booking.id.asc())
+        .first()
+    )
+
+    reserved_slots = _count_reserved_slots(db, session.id)
+    _sync_session_status_with_capacity(session, reserved_slots)
+
+    if active_offer is not None:
+        if changed:
+            db.commit()
+            db.refresh(session)
+        return
+
+    if reserved_slots >= session.capacity:
+        if changed:
+            db.commit()
+            db.refresh(session)
+        return
+
+    waitlist_query = (
         db.query(Booking)
         .filter(
             Booking.session_id == session.id,
             Booking.status == WAITLIST_BOOKING_STATUS,
         )
-        .order_by(Booking.created_at.asc(), Booking.id.asc())
-        .all()
     )
-    if not waitlist_bookings:
-        return
 
-    for waitlist_booking in waitlist_bookings:
-        user = (
-            db.query(User)
-            .filter(
-                User.id == waitlist_booking.user_id,
-                User.fcm_token.isnot(None),
-            )
+    next_waitlist = None
+    if expired_booking_ids:
+        next_waitlist = (
+            waitlist_query
+            .filter(Booking.id.notin_(expired_booking_ids))
+            .order_by(Booking.created_at.asc(), Booking.id.asc())
             .first()
         )
-        if not user or not user.fcm_token:
-            continue
 
-        class_name = (session.class_name or "tu clase").strip() or "tu clase"
-        session_date = session.start_time.strftime("%d/%m/%Y")
-        session_time = session.start_time.strftime("%H:%M")
+    if next_waitlist is None:
+        next_waitlist = waitlist_query.order_by(Booking.created_at.asc(), Booking.id.asc()).first()
 
-        send_push_notification(
-            tokens=[user.fcm_token],
-            title="¡Se ha liberado una plaza!",
-            body=f"Ya hay hueco en {class_name} el {session_date} a las {session_time}. Entra en Alesport para confirmar tu sitio.",
-            data={
-                "type": "waitlist_available",
-                "session_id": str(session.id),
-                "booking_id": str(waitlist_booking.id),
-            },
-        )
+    if next_waitlist is None:
+        if changed:
+            db.commit()
+            db.refresh(session)
         return
+
+    next_waitlist.status = OFFERED_BOOKING_STATUS
+    next_waitlist.offer_expires_at = _utc_now() + timedelta(minutes=WAITLIST_OFFER_TTL_MINUTES)
+    _sync_session_status_with_capacity(session, reserved_slots + 1)
+    db.commit()
+    db.refresh(session)
+    db.refresh(next_waitlist)
+
+    user = db.query(User).filter(User.id == next_waitlist.user_id).first()
+    if user is not None:
+        _send_waitlist_offer_notification(session, next_waitlist, user)
 
 
 def _attach_user_data(db: Session, bookings: list[Booking]) -> list[dict]:
@@ -136,6 +242,7 @@ def _attach_user_data(db: Session, bookings: list[Booking]) -> list[dict]:
             "session_id": booking.session_id,
             "status": booking.status,
             "created_at": booking.created_at,
+            "offer_expires_at": booking.offer_expires_at,
             "session_start_time": session.start_time if session else None,
             "user_name": user.name if user else None,
             "user_email": user.email if user else None,
@@ -157,6 +264,7 @@ def get_bookings_by_session(db: Session, session_id: int) -> list[dict]:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Sesión no encontrada",
         )
+    _process_waitlist_for_session(db, session)
     bookings = db.query(Booking).filter(Booking.session_id == session_id).all()
     visible_bookings = _collapse_session_bookings(bookings)
     return _attach_user_data(db, visible_bookings)
@@ -178,6 +286,12 @@ def get_bookings_by_user(db: Session, user_id: int) -> list[dict]:
             detail="Usuario no encontrado",
         )
     bookings = db.query(Booking).filter(Booking.user_id == user_id).all()
+    session_ids = {booking.session_id for booking in bookings}
+    if session_ids:
+        sessions = db.query(SessionModel).filter(SessionModel.id.in_(session_ids)).all()
+        for session in sessions:
+            _process_waitlist_for_session(db, session)
+        bookings = db.query(Booking).filter(Booking.user_id == user_id).all()
     return _attach_user_data(db, bookings)
 
 
@@ -223,6 +337,8 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
             detail="No se puede reservar una sesión cancelada",
         )
 
+    _process_waitlist_for_session(db, session)
+
     existing_booking = (
         db.query(Booking)
         .filter(
@@ -243,10 +359,10 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
             detail=detail,
         )
 
-    active_bookings_count = _count_active_bookings(db, booking_data.session_id)
+    reserved_slots = _count_reserved_slots(db, booking_data.session_id)
     booking_status = (
         WAITLIST_BOOKING_STATUS
-        if active_bookings_count >= session.capacity
+        if reserved_slots >= session.capacity
         else ACTIVE_BOOKING_STATUS
     )
 
@@ -254,6 +370,8 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
     if existing_booking is not None:
         booking = existing_booking
         booking.status = booking_status
+        booking.offer_expires_at = None
+        booking.created_at = _utc_now()
     else:
         booking = Booking(
             user_id=current_user.id,
@@ -263,7 +381,7 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
         db.add(booking)
     _sync_session_status_with_capacity(
         session,
-        active_bookings_count + (1 if booking_status == ACTIVE_BOOKING_STATUS else 0),
+        reserved_slots + (1 if booking_status == ACTIVE_BOOKING_STATUS else 0),
     )
     try:
         db.commit()
@@ -345,16 +463,17 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
             detail=f"La reserva ya está '{booking.status}', no se puede cancelar",
         )
 
-    was_active_booking = booking.status == ACTIVE_BOOKING_STATUS
+    was_reserved_booking = booking.status in RESERVED_BOOKING_STATUSES
     booking.status = CANCELLED_BOOKING_STATUS
+    booking.offer_expires_at = None
     db.flush()
-    active_bookings_count = _count_active_bookings(db, booking.session_id)
-    _sync_session_status_with_capacity(session, active_bookings_count)
+    reserved_slots = _count_reserved_slots(db, booking.session_id)
+    _sync_session_status_with_capacity(session, reserved_slots)
     db.commit()
     db.refresh(booking)
 
-    if was_active_booking and active_bookings_count < session.capacity:
-        _notify_first_waitlist_user_available_slot(db, session)
+    if was_reserved_booking:
+        _process_waitlist_for_session(db, session)
 
     user = db.query(User).filter(User.id == booking.user_id).first()
     setattr(booking, "user_name", user.name if user else None)
@@ -406,7 +525,14 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
             detail="Rol no autorizado para reactivar reservas",
         )
 
-    if booking.status not in (CANCELLED_BOOKING_STATUS, WAITLIST_BOOKING_STATUS):
+    _process_waitlist_for_session(db, session)
+    db.refresh(booking)
+
+    if booking.status not in (
+        CANCELLED_BOOKING_STATUS,
+        WAITLIST_BOOKING_STATUS,
+        OFFERED_BOOKING_STATUS,
+    ):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"La reserva está '{booking.status}', no se puede reactivar",
@@ -418,16 +544,33 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
             detail="No se puede reactivar una reserva en una sesión cancelada",
         )
 
-    active_bookings_count = _count_active_bookings(db, booking.session_id)
-    _sync_session_status_with_capacity(session, active_bookings_count)
-    if active_bookings_count >= session.capacity:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="La sesión está completa, no se puede reactivar la reserva",
-        )
+    if booking.status == OFFERED_BOOKING_STATUS:
+        if _is_offer_expired(booking):
+            booking.status = WAITLIST_BOOKING_STATUS
+            booking.offer_expires_at = None
+            db.commit()
+            _process_waitlist_for_session(db, session)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="La oferta ha expirado y la plaza ha pasado al siguiente en cola",
+            )
 
-    booking.status = ACTIVE_BOOKING_STATUS
-    _sync_session_status_with_capacity(session, active_bookings_count + 1)
+        booking.status = ACTIVE_BOOKING_STATUS
+        booking.offer_expires_at = None
+        reserved_slots = _count_reserved_slots(db, booking.session_id)
+        _sync_session_status_with_capacity(session, reserved_slots)
+    else:
+        reserved_slots = _count_reserved_slots(db, booking.session_id)
+        _sync_session_status_with_capacity(session, reserved_slots)
+        if reserved_slots >= session.capacity:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="La sesión está completa, no se puede reactivar la reserva",
+            )
+
+        booking.status = ACTIVE_BOOKING_STATUS
+        booking.offer_expires_at = None
+        _sync_session_status_with_capacity(session, reserved_slots + 1)
     try:
         db.commit()
     except IntegrityError as exc:

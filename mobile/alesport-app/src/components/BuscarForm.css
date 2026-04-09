@@ -337,6 +337,11 @@
 	color: #9a5a00;
 }
 
+.search-form-status-badge.offered {
+	background: rgba(11, 99, 182, 0.14);
+	color: #0b63b6;
+}
+
 .search-form-status-badge.inactive {
 	background: rgba(157, 47, 47, 0.14);
 	color: #9d2f2f;

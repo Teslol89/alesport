@@ -37,6 +37,28 @@ def _sync_session_status_with_capacity(
     )
 
 
+def _collapse_session_bookings(bookings: list[Booking]) -> list[Booking]:
+    """Reduce la lista de reservas a una sola entrada visible por alumno.
+
+    Si un alumno tiene histórico de cancelaciones/reactivaciones para la misma sesión,
+    se prioriza la reserva activa; si no hay ninguna activa, se muestra la más reciente.
+    """
+    if not bookings:
+        return []
+
+    latest_by_user: dict[int, Booking] = {}
+    ordered_bookings = sorted(
+        bookings,
+        key=lambda booking: (booking.status == "active", booking.id),
+        reverse=True,
+    )
+
+    for booking in ordered_bookings:
+        latest_by_user.setdefault(booking.user_id, booking)
+
+    return list(latest_by_user.values())
+
+
 def _attach_user_data(db: Session, bookings: list[Booking]) -> list[dict]:
     """Añade user_name, user_email y session_start_time a cada booking para respuestas enriquecidas."""
     if not bookings:
@@ -71,7 +93,11 @@ def _attach_user_data(db: Session, bookings: list[Booking]) -> list[dict]:
 
 
 def get_bookings_by_session(db: Session, session_id: int) -> list[dict]:
-    """Devuelve todas las reservas de una sesión concreta."""
+    """Devuelve una vista limpia de las reservas de una sesión concreta.
+
+    En detalles de clase solo debe verse una vez cada alumno, aunque exista
+    histórico de cancelaciones/reactivaciones para la misma sesión.
+    """
     session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
     if session is None:
         raise HTTPException(
@@ -79,7 +105,8 @@ def get_bookings_by_session(db: Session, session_id: int) -> list[dict]:
             detail="Sesión no encontrada",
         )
     bookings = db.query(Booking).filter(Booking.session_id == session_id).all()
-    return _attach_user_data(db, bookings)
+    visible_bookings = _collapse_session_bookings(bookings)
+    return _attach_user_data(db, visible_bookings)
 
 
 def get_all_bookings(db: Session) -> list[dict]:

@@ -53,31 +53,8 @@ workflows:
             --archive-method app-store \
             --export-options-plist "$CM_BUILD_DIR/export_options.plist"
 
-          if [ ! -f "$CM_BUILD_DIR/export_options.plist" ]; then
-            cat > "$CM_BUILD_DIR/export_options.plist" <<EOF
-            <?xml version="1.0" encoding="UTF-8"?>
-            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-            <plist version="1.0">
-            <dict>
-                <key>method</key>
-                <string>app-store</string>
-                <key>destination</key>
-                <string>export</string>
-                <key>signingStyle</key>
-                <string>manual</string>
-                <key>teamID</key>
-                <string>${APPLE_TEAM_ID}</string>
-                <key>provisioningProfiles</key>
-                <dict>
-                    <key>com.alesport.app</key>
-                    <string>alesport-appstore-profile</string>
-                </dict>
-                <key>compileBitcode</key>
-                <false/>
-            </dict>
-            </plist>
-            EOF
-          fi
+          test -f "$CM_BUILD_DIR/export_options.plist"
+          plutil -lint "$CM_BUILD_DIR/export_options.plist"
 
       # Build (archive)
       - name: Build iOS

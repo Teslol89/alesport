@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
-import { cameraOutline, helpCircleOutline, logoWhatsapp, moonOutline, pencilOutline, personCircleOutline, settingsOutline, sunnyOutline } from 'ionicons/icons';
+import { cameraOutline, moonOutline, personCircleOutline, sunnyOutline } from 'ionicons/icons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import logoIcon from '../icons/icon.png';
+import editMenuIcon from '../icons/edit.svg';
+import helpMenuIcon from '../icons/help.svg';
+import whatsappMenuIcon from '../icons/whatsapp.svg';
 import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
 import { getUserProfile, type UserProfile, updateUserProfile } from '../api/user';
@@ -388,19 +391,15 @@ const ConfigForm: React.FC = () => {
 
         <IonCard className="config-card">
           <IonItem button detail={false} lines="none" onClick={openEditProfileModal}>
-            <IonIcon icon={pencilOutline} slot="start" />
+            <img src={editMenuIcon} alt="" className="config-item-icon" slot="start" />
             <IonLabel>{t('config.editProfile')}</IonLabel>
           </IonItem>
           <IonItem button detail={false} lines="none" onClick={handleContactAlex}>
-            <IonIcon icon={logoWhatsapp} slot="start" />
+            <img src={whatsappMenuIcon} alt="" className="config-item-icon" slot="start" />
             <IonLabel>WhatsApp Alex</IonLabel>
           </IonItem>
-          <IonItem button detail={false} lines="none">
-            <IonIcon icon={settingsOutline} slot="start" />
-            <IonLabel>{t('config.settings')}</IonLabel>
-          </IonItem>
           <IonItem button detail={false} lines="none" onClick={() => setShowSupportModal(true)}>
-            <IonIcon icon={helpCircleOutline} slot="start" />
+            <img src={helpMenuIcon} alt="" className="config-item-icon" slot="start" />
             <IonLabel>{t('config.help')}</IonLabel>
           </IonItem>
         </IonCard>

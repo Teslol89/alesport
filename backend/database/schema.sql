@@ -128,7 +128,7 @@ CREATE INDEX IF NOT EXISTS idx_sessions_active_trainer ON sessions(trainer_id, s
 -- Links users to sessions (reservations).
 -- Rules:
 --   - one user can only have one active booking per session
---   - status: can be active or cancelled
+--   - status: can be active, cancelled or waitlist
 --   - cascade delete: if session is deleted, all its bookings are deleted
 
 CREATE TABLE IF NOT EXISTS bookings (
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS bookings (
         REFERENCES sessions(id)
         ON DELETE CASCADE,
     status VARCHAR(20) NOT NULL DEFAULT 'active'
-        CHECK (status IN ('active','cancelled')),
+        CHECK (status IN ('active','cancelled','waitlist')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -76,6 +76,51 @@ def test_waitlist_booking_can_be_activated_when_there_is_space(
     assert seed_session.status == "active"
 
 
+def test_cancelled_booking_is_reused_when_joining_waitlist(
+    client, seed_data, db_session
+):
+    seed_session = seed_data["session"]
+    seed_session.capacity = 1
+    seed_session.status = "completed"
+
+    occupant = User(
+        name="Occupant Client",
+        email="occupant@example.com",
+        password_hash=hash_password("occupant1234"),
+        role="client",
+        is_active=True,
+        membership_active=True,
+        is_verified=True,
+    )
+    cancelled_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="cancelled",
+    )
+    active_booking = Booking(
+        user_id=occupant.id,
+        session_id=seed_session.id,
+        status="active",
+    )
+    db_session.add_all([occupant, cancelled_booking])
+    db_session.flush()
+    active_booking.user_id = occupant.id
+    db_session.add(active_booking)
+    db_session.commit()
+    db_session.refresh(cancelled_booking)
+
+    headers = _login_headers(client, seed_data["client"].email, "client1234")
+    response = client.post(
+        "/api/bookings/",
+        headers=headers,
+        json={"session_id": seed_session.id},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "waitlist"
+    assert response.json()["id"] == cancelled_booking.id
+
+
 def test_session_becomes_completed_when_booking_reaches_capacity(
     client, seed_data, db_session
 ):

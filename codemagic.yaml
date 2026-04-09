@@ -48,7 +48,13 @@ workflows:
       - name: Use Codemagic signing profiles
         script: |
           cd ios/App
-          xcode-project use-profiles
+          xcode-project use-profiles \
+            --project App.xcodeproj \
+            --archive-method app-store \
+            --custom-export-options='{"method":"app-store-connect","destination":"export","compileBitcode":false}'
+
+          echo "Generated export options:"
+          cat "$HOME/export_options.plist"
 
       # Build (archive)
       - name: Build iOS
@@ -70,24 +76,9 @@ workflows:
         script: |
           cd ios/App
 
-          cat > ExportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store-connect</string>
-              <key>destination</key>
-              <string>export</string>
-              <key>compileBitcode</key>
-              <false/>
-          </dict>
-          </plist>
-          EOF
-
           xcodebuild -exportArchive \
           -archivePath $CM_BUILD_DIR/App.xcarchive \
-          -exportOptionsPlist ExportOptions.plist \
+          -exportOptionsPlist "$HOME/export_options.plist" \
           -exportPath $CM_BUILD_DIR/build
 
     artifacts:

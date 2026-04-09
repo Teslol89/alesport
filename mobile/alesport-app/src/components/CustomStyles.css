@@ -314,8 +314,7 @@ ion-modal ion-datetime {
 }
 
 /* Clase utilitaria + mapeo de botones secundarios */
-.app-btn-secondary,
-.social-btn {
+.app-btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -337,19 +336,16 @@ ion-modal ion-datetime {
   transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }
 
-.app-btn-secondary:hover,
-.social-btn:hover {
+.app-btn-secondary:hover {
   background: var(--app-btn-secondary-bg-hover);
 }
 
-.app-btn-secondary:active,
-.social-btn:active {
+.app-btn-secondary:active {
   background: var(--app-btn-secondary-bg-active);
   transform: scale(0.98);
 }
 
-.app-btn-secondary:disabled,
-.social-btn:disabled {
+.app-btn-secondary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

@@ -66,23 +66,6 @@ export async function loginUser(email: string, password: string) {
     return response.json();
 }
 
-// Login con Google
-export async function loginWithGoogle(idToken: string) {
-    const response = await fetch(`${baseApiUrl}/auth/google-login`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ id_token: idToken })
-    });
-
-    if (!response.ok) {
-        throw new Error('No se pudo iniciar sesión con Google.');
-    }
-
-    return response.json();
-}
-
 // Consulta si existe un usuario pendiente (no verificado) por email
 export async function getPendingUser(email: string) {
     const response = await fetch(`${baseApiUrl}/users/pending/${encodeURIComponent(email)}`);

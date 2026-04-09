@@ -16,11 +16,6 @@
         font-size: 0.9rem;
     }
 
-    .social-btn {
-        font-size: 1rem;
-        padding: 10px 0;
-    }
-
     .login-btn {
         font-size: 1rem;
         padding: 10px 0;
@@ -51,7 +46,7 @@
 /* Título principal */
 /* ---------------- */
 .login-logo {
-    margin-bottom: 48px;
+    margin-bottom: 32px;
 }
 
 /* ----------------------------- */
@@ -63,44 +58,28 @@
     font-size: 1rem;
 }
 
-/* ------------------------------------- */
-/* Botones sociales (Google, Apple, etc) */
-/* ------------------------------------- */
-/* Contenedor de los botones sociales (div) */
-.login-socials {
+.login-welcome {
+    max-width: 340px;
+    margin: 0 auto 0.35rem auto;
     display: flex;
-    justify-content: center;
-    gap: 12px;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
-/* Botón social genérico */
-.social-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    background: #f5f7fa;
-    color: #000000;
-    border: none;
-    border-radius: 10px;
-    padding: px;
+.login-welcome-title {
+    margin: 0;
+    color: #0b2d34;
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
-    font-size: 1rem;
-    gap: 8px;
-    cursor: pointer;
-    transition: background 0.2s;
+    font-size: 1.05rem;
+    font-weight: 700;
 }
 
-.social-btn:hover {
-    background: #e6f7f7;
-}
-
-/* Iconos de los botones sociales */
-.social-icon {
-    width: 24px;
-    height: 24px;
-    margin-right: 4px;
-    object-fit: contain;
+.login-welcome-text {
+    margin: 0;
+    color: #4c6970;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.45;
 }
 
 /* ------------------------------------------------ */
@@ -108,8 +87,7 @@
 /* ------------------------------------------------ */
 /* Contenedor del separador */
 .login-divider {
-    display: flex;
-    align-items: center;
+    display: block;
     margin: 18px 0 18px 0;
     color: #bbb;
     font-size: 1rem;
@@ -117,17 +95,13 @@
 
 /* Línea del separador */
 .divider-line {
-    flex: 1;
+    display: block;
+    width: 100%;
     height: 1px;
     background: #eee;
-    margin: 0 8px;
+    margin: 0;
 }
 
-/* Texto del separador */
-.divider-text {
-    font-size: 1rem;
-    color: #000000;
-}
 
 /* ----------------------------------- */
 /* Input de texto (correo, contraseña) */
@@ -214,7 +188,7 @@
     font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
-    margin-top: 50px;
+    margin-top: 24px;
     margin-bottom: 16px;
     transition: background 0.2s, transform 0.12s cubic-bezier(.4, 0, .2, 1);
 }

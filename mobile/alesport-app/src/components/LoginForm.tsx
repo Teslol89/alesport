@@ -1,23 +1,13 @@
-import React, { useState, useRef } from "react";
-import { Capacitor } from '@capacitor/core';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import React, { useRef, useState } from "react";
 import { loginUser } from "../api/auth";
-import { loginWithGoogle } from "../api/auth";
 import { useAuth } from "./AuthContext";
 import { useHistory } from "react-router-dom";
 import CustomToast from "./CustomStyles";
 
-
-
 import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
-import appleLogo from '../icons/appleLogo.svg';
-import googleLogo from '../icons/googleLogo.svg';
 import alesportLogoHori from '../assets/img/alesportLogoHori.png';
 import "./LoginForm.css";
-
-const GOOGLE_WEB_CLIENT_ID = '516623761240-o7mo7hvef1lej6474cjsutrqdpo688om.apps.googleusercontent.com';
-const IN_DEVELOPMENT_MESSAGE = 'En desarrollo.';
 
 const LoginForm: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -27,69 +17,8 @@ const LoginForm: React.FC = () => {
     const [toastPlacement, setToastPlacement] = useState<"top" | "center">("top");
     const [showPassword, setShowPassword] = useState(false);
     const passwordInputRef = useRef<HTMLInputElement>(null);
-    // toastKey eliminado, ya no es necesario
     const { setToken } = useAuth();
     const history = useHistory();
-    const isNativeIos = Capacitor.getPlatform() === 'ios';
-
-
-    // Inicializar GoogleAuth (solo una vez)
-    React.useEffect(() => {
-        if (isNativeIos) {
-            return;
-        }
-
-        GoogleAuth.initialize({
-            clientId: GOOGLE_WEB_CLIENT_ID,
-            scopes: ['profile', 'email'],
-            grantOfflineAccess: true,
-        });
-    }, [isNativeIos]);
-
-    const showInDevelopmentMessage = () => {
-        setToastType("info");
-        setToastPlacement("top");
-        setError(IN_DEVELOPMENT_MESSAGE);
-    };
-
-    const handleAppleLogin = () => {
-        showInDevelopmentMessage();
-    };
-
-    // Login con Google
-    const handleGoogleLogin = async () => {
-        setError(null);
-        setToastType("danger");
-        setToastPlacement("top");
-
-        if (isNativeIos) {
-            showInDevelopmentMessage();
-            return;
-        }
-
-        try {
-            const googleUser = await GoogleAuth.signIn();
-            const idToken = (googleUser as any).idToken;
-            if (!idToken) throw new Error('No se recibió idToken de Google');
-            const data = await loginWithGoogle(idToken);
-            setToken(data.access_token);
-        } catch (err: any) {
-            const rawMessage = String(err?.message ?? err?.error ?? '').toLowerCase();
-
-            if (rawMessage.includes("cancel") || err?.error === "popup_closed_by_user") {
-                await GoogleAuth.signOut();
-                setToastType("info");
-                setToastPlacement("top");
-                setError("Cancelado.");
-            } else if (rawMessage.includes('unimplemented') || rawMessage.includes('not implemented')) {
-                showInDevelopmentMessage();
-            } else {
-                setToastType("danger");
-                setToastPlacement("top");
-                setError(err?.message || "Error al iniciar sesión con Google");
-            }
-        }
-    };
 
     // Login tradicional
     const handleSubmit = async (e: React.FormEvent) => {
@@ -107,19 +36,13 @@ const LoginForm: React.FC = () => {
 
     return (
         <div className="login-container">
-            <img src={alesportLogoHori} alt="Logo" className="login-logo" />            
-            <div className="login-socials">
-                <button className="social-btn" type="button" onClick={handleAppleLogin}>
-                    <img src={appleLogo} alt="Apple" className="social-icon" /> Apple
-                </button>
-                <button className="social-btn" type="button" onClick={handleGoogleLogin}>
-                    <img src={googleLogo} alt="Google" className="social-icon" /> Google
-                </button>
+            <img src={alesportLogoHori} alt="Logo" className="login-logo" />
+            <div className="login-welcome">
+                <p className="login-welcome-title">Bienvenido a Alesport</p>
+                <p className="login-welcome-text">Tu espacio para reservar clases y seguir avanzando en tu entrenamiento día a día.</p>
             </div>
-            <div className="login-divider">
-                <span className="divider-line"></span>
-                <span className="divider-text">o</span>
-                <span className="divider-line"></span>
+            <div className="login-divider" aria-hidden="true">
+                <span className="divider-line login-divider-line-full"></span>
             </div>
             <form onSubmit={handleSubmit}>
                 <input

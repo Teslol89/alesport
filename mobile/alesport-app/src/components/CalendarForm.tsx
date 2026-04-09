@@ -599,7 +599,7 @@ const Calendar: React.FC = () => {
             const isBookedByClient = Boolean(myActiveBookingsBySession[session.id]);
             const isAtCapacity = canManageSessionBookings ? occupancy >= session.capacity : session.status === 'completed';
             const isPast = isPastSession(session);
-            const colorClass = isAtCapacity && !isBookedByClient ? 'danger' : 'success';
+            const colorClass = isPast ? 'medium' : (isAtCapacity && !isBookedByClient ? 'danger' : 'success');
             const cardClass = `session-card ${isClient ? 'session-card-client' : ''} ion-color-${colorClass}`;
             const hasClassName = Boolean(session.class_name && session.class_name.trim().length > 0);
             const hasNotes = Boolean(session.notes && session.notes.trim().length > 0);
@@ -619,11 +619,9 @@ const Calendar: React.FC = () => {
                         <div className="calendar-client-actions calendar-client-actions--header">
                           {isBookedByClient ? (
                             <span className="calendar-client-status calendar-client-status--booked calendar-client-action-primary">{t('calendar.bookedByYou')}</span>
-                          ) : isPast ? (
-                            <span className="calendar-client-status calendar-client-status--muted calendar-client-action-primary">{t('calendar.pastClassReadOnly')}</span>
                           ) : isAtCapacity ? (
                             <span className="calendar-client-status calendar-client-status--full calendar-client-action-primary">{t('calendar.full')}</span>
-                          ) : (
+                          ) : isPast ? null : (
                             <button
                               className="calendar-hour-modal-save calendar-client-action-primary"
                               onClick={() => { void handleReserveSession(session); }}
@@ -682,18 +680,10 @@ const Calendar: React.FC = () => {
                 const nextDate = next.slice(0, 10);
                 setSelectedDate(nextDate);
                 setWeekAnchorDate(nextDate);
+                setShowMonthModal(false);
               }
             }}
           />
-          <button
-            className="calendar-close-modal-btn"
-            onClick={(e) => {
-              setShowMonthModal(false);
-              e.currentTarget.blur();
-            }}
-          >
-            {t('common.close')}
-          </button>
         </div>
       </IonModal>
 

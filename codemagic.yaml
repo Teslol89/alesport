@@ -4,6 +4,9 @@ workflows:
 
     environment:
       node: 22.14.0
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.alesport.app
 
       groups:
         - ios   # 👈 variables (TEAM_ID, API KEY, etc.)
@@ -40,6 +43,12 @@ workflows:
           npx cap sync ios
           cd ios/App
           xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
+
+      # Aplicar perfiles/certificados de Codemagic al proyecto Xcode
+      - name: Use Codemagic signing profiles
+        script: |
+          cd ios/App
+          xcode-project use-profiles
 
       # Build (archive)
       - name: Build iOS

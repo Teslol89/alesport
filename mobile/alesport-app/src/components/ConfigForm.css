@@ -193,6 +193,12 @@
   --border-color: transparent !important;
 }
 
+.config-item-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
 .config-stat-card {
   min-width: 80px;
   width: 100%;

@@ -381,6 +381,43 @@ def test_session_details_show_each_student_only_once(client, seed_data, db_sessi
     assert student_rows[0]["status"] == "active"
 
 
+def test_admin_search_shows_latest_status_only_once_per_student_session(client, seed_data, db_session):
+    seed_session = seed_data["session"]
+    seed_data["admin"].is_verified = True
+
+    active_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="active",
+    )
+    db_session.add(active_booking)
+    db_session.flush()
+
+    cancelled_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="cancelled",
+    )
+    db_session.add(cancelled_booking)
+    db_session.commit()
+    db_session.refresh(cancelled_booking)
+
+    headers = _login_headers(client, seed_data["admin"].email, "admin1234")
+    response = client.get("/api/bookings/", headers=headers)
+
+    assert response.status_code == 200
+
+    data = response.json()
+    student_rows = [
+        item for item in data
+        if item["user_id"] == seed_data["client"].id and item["session_id"] == seed_session.id
+    ]
+
+    assert len(student_rows) == 1
+    assert student_rows[0]["id"] == cancelled_booking.id
+    assert student_rows[0]["status"] == "cancelled"
+
+
 def test_cannot_create_booking_for_past_session(client, seed_data, db_session):
     seed_session = seed_data["session"]
     seed_data["client"].is_verified = True

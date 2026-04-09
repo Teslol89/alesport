@@ -104,6 +104,32 @@ def _collapse_session_bookings(bookings: list[Booking]) -> list[Booking]:
     return list(latest_by_user.values())
 
 
+def _collapse_latest_bookings_by_user_session(bookings: list[Booking]) -> list[Booking]:
+    """Deja una sola reserva visible por pareja (usuario, sesión), usando el estado más reciente.
+
+    Esto evita que vistas como `BuscarForm` muestren histórico antiguo (por ejemplo,
+    una fila `active` vieja) después de que la reserva actual ya esté `cancelled`.
+    """
+    if not bookings:
+        return []
+
+    fallback_min_dt = datetime.min.replace(tzinfo=timezone.utc)
+    latest_by_user_session: dict[tuple[int, int], Booking] = {}
+    ordered_bookings = sorted(
+        bookings,
+        key=lambda booking: (
+            _as_utc(getattr(booking, "created_at", None)) or fallback_min_dt,
+            booking.id,
+        ),
+        reverse=True,
+    )
+
+    for booking in ordered_bookings:
+        latest_by_user_session.setdefault((booking.user_id, booking.session_id), booking)
+
+    return list(latest_by_user_session.values())
+
+
 def _is_offer_expired(booking: Booking) -> bool:
     expires_at = _as_utc(getattr(booking, "offer_expires_at", None))
     return expires_at is not None and expires_at <= _utc_now()
@@ -274,13 +300,14 @@ def get_bookings_by_session(db: Session, session_id: int) -> list[dict]:
 
 
 def get_all_bookings(db: Session) -> list[dict]:
-    """Devuelve todas las reservas registradas en la base de datos."""
+    """Devuelve una sola fila visible por reserva actual de cada alumno en cada sesión."""
     bookings = db.query(Booking).all()
-    return _attach_user_data(db, bookings)
+    visible_bookings = _collapse_latest_bookings_by_user_session(bookings)
+    return _attach_user_data(db, visible_bookings)
 
 
 def get_bookings_by_user(db: Session, user_id: int) -> list[dict]:
-    """Devuelve todas las reservas de un usuario concreto."""
+    """Devuelve la reserva visible más reciente del usuario para cada sesión."""
     # Verificar que el usuario existe
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
@@ -295,7 +322,8 @@ def get_bookings_by_user(db: Session, user_id: int) -> list[dict]:
         for session in sessions:
             _process_waitlist_for_session(db, session)
         bookings = db.query(Booking).filter(Booking.user_id == user_id).all()
-    return _attach_user_data(db, bookings)
+    visible_bookings = _collapse_latest_bookings_by_user_session(bookings)
+    return _attach_user_data(db, visible_bookings)
 
 
 def create_booking(db: Session, current_user: User, booking_data) -> Booking:

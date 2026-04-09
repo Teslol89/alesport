@@ -1,7 +1,7 @@
 /* Buscador avanzado de reservas para admins, con filtros por texto y fecha, y resumen de resultados. */
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import logoIcon from '../icons/icon.png';
-import { IonDatetime, IonModal, IonSpinner } from '@ionic/react';
+import { IonDatetime, IonModal, IonSpinner, useIonViewWillEnter } from '@ionic/react';
 import { BookingItem, getAllBookings } from '../api/bookings';
 import { formatDateDdMmYy, formatHour, isSameDay, isSameWeek, toLocalISODate } from '../utils/funcionesGeneral';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -9,6 +9,8 @@ import { useAuth } from './AuthContext';
 import './BuscarForm.css';
 
 type PeriodFilter = 'all' | 'today' | 'week' | 'month';
+
+const SEARCH_AUTO_REFRESH_MS = 10000;
 
 const BuscarForm: React.FC = () => {
     const { t, dateLocale } = useLanguage();
@@ -23,7 +25,9 @@ const BuscarForm: React.FC = () => {
     const [showPeriodCalendar, setShowPeriodCalendar] = useState(false);
     // Barra de búsqueda siempre visible, sin lupa
 
-    useEffect(() => {
+    const loadBookings = useCallback((options?: { silent?: boolean }) => {
+        const silent = options?.silent ?? false;
+
         if (isLoadingProfile) {
             return;
         }
@@ -34,13 +38,52 @@ const BuscarForm: React.FC = () => {
             return;
         }
 
-        setLoading(true);
+        if (!silent) {
+            setLoading(true);
+        }
         setError(null);
+
         getAllBookings()
             .then(data => setBookings(data))
             .catch(() => setError(t('search.loadError')))
-            .finally(() => setLoading(false));
-    }, [isLoadingProfile, userRole, t]);
+            .finally(() => {
+                if (!silent) {
+                    setLoading(false);
+                }
+            });
+    }, [isLoadingProfile, t, userRole]);
+
+    useEffect(() => {
+        loadBookings();
+    }, [loadBookings]);
+
+    useIonViewWillEnter(() => {
+        loadBookings({ silent: true });
+    }, [loadBookings]);
+
+    useEffect(() => {
+        if (isLoadingProfile || userRole !== 'admin') {
+            return;
+        }
+
+        const refreshSearchState = () => {
+            if (document.visibilityState !== 'visible') {
+                return;
+            }
+
+            loadBookings({ silent: true });
+        };
+
+        const intervalId = window.setInterval(refreshSearchState, SEARCH_AUTO_REFRESH_MS);
+        window.addEventListener('focus', refreshSearchState);
+        document.addEventListener('visibilitychange', refreshSearchState);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.removeEventListener('focus', refreshSearchState);
+            document.removeEventListener('visibilitychange', refreshSearchState);
+        };
+    }, [isLoadingProfile, loadBookings, userRole]);
 
     const filteredBookings = useMemo(() => {
         const q = query.trim().toLowerCase();

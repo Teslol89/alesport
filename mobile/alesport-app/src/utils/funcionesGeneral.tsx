@@ -107,7 +107,9 @@ export function getMonthLabelES(date: Date): string {
 }
 
 export function mapBookingStatus(status: string): string {
-  return status === 'active' ? 'Activa' : 'Cancelada';
+  if (status === 'active') return 'Activa';
+  if (status === 'waitlist') return 'En cola';
+  return 'Cancelada';
 }
 
 export function isSameDay(baseDate: Date, targetDate: Date): boolean {

@@ -90,9 +90,9 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     void loadBookings();
   }, [loadBookings, refreshSignal]);
 
-  const activeBookings = useMemo(() => {
+  const visibleBookings = useMemo(() => {
     return bookings
-      .filter((booking) => booking.status === 'active')
+      .filter((booking) => booking.status === 'active' || booking.status === 'waitlist')
       .sort((a, b) => {
         const aSession = sessionsById[a.session_id];
         const bSession = sessionsById[b.session_id];
@@ -168,7 +168,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
           <div className="bookings-loading" aria-live="polite" aria-busy="true">
             <IonSpinner name="crescent" color="primary" />
           </div>
-        ) : activeBookings.length === 0 ? (
+        ) : visibleBookings.length === 0 ? (
           <div className="bookings-empty app-surface-card">
             <p>{t('myBookings.empty')}</p>
             <button className="bookings-primary-btn" onClick={() => history.push('/admin-calendar')}>
@@ -177,14 +177,17 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
           </div>
         ) : (
           <div className="bookings-list">
-            {activeBookings.map((booking) => {
+            {visibleBookings.map((booking) => {
               const session = sessionsById[booking.session_id];
               const isPast = session ? session.session_date < todayIso : false;
+              const isWaitlist = booking.status === 'waitlist';
 
               return (
                 <article key={booking.id} className="bookings-item app-surface-card">
                   <div className="bookings-item-main">
-                    <span className="bookings-badge">{t('calendar.bookedByYou')}</span>
+                    <span className={`bookings-badge${isWaitlist ? ' bookings-badge--waitlist' : ''}`}>
+                      {isWaitlist ? t('calendar.waitlist') : t('calendar.bookedByYou')}
+                    </span>
                     <h2>{session?.class_name || `${t('myBookings.sessionLabel')} #${booking.session_id}`}</h2>
                     <p className="bookings-date">{formatBookingDate(booking)}</p>
                     {session?.trainer_name ? (

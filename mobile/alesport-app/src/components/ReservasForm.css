@@ -124,6 +124,11 @@
   font-weight: 700;
 }
 
+.bookings-badge--waitlist {
+  background: rgba(255, 178, 36, 0.18);
+  color: #9a5a00;
+}
+
 .bookings-item-actions {
   display: flex;
   align-items: center;

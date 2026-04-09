@@ -9,13 +9,17 @@ from app.utils.utils import is_past_session_datetime
 
 
 PAST_SESSION_MUTATION_ERROR = "No se pueden modificar reservas de días pasados"
+ACTIVE_BOOKING_STATUS = "active"
+CANCELLED_BOOKING_STATUS = "cancelled"
+WAITLIST_BOOKING_STATUS = "waitlist"
+LIVE_BOOKING_STATUSES = (ACTIVE_BOOKING_STATUS, WAITLIST_BOOKING_STATUS)
 
 
 def _count_active_bookings(db: Session, session_id: int) -> int:
     """Cuenta cuántas reservas activas tiene una sesión."""
     return (
         db.query(Booking)
-        .filter(Booking.session_id == session_id, Booking.status == "active")
+        .filter(Booking.session_id == session_id, Booking.status == ACTIVE_BOOKING_STATUS)
         .count()
     )
 
@@ -47,9 +51,14 @@ def _collapse_session_bookings(bookings: list[Booking]) -> list[Booking]:
         return []
 
     latest_by_user: dict[int, Booking] = {}
+    status_priority = {
+        ACTIVE_BOOKING_STATUS: 2,
+        WAITLIST_BOOKING_STATUS: 1,
+        CANCELLED_BOOKING_STATUS: 0,
+    }
     ordered_bookings = sorted(
         bookings,
-        key=lambda booking: (booking.status == "active", booking.id),
+        key=lambda booking: (status_priority.get(booking.status, -1), booking.id),
         reverse=True,
     )
 
@@ -170,22 +179,44 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
             detail="No se puede reservar una sesión cancelada",
         )
 
-    # Verificar que hay plazas disponibles
-    active_bookings_count = _count_active_bookings(db, booking_data.session_id)
-    if active_bookings_count >= session.capacity:
+    existing_live_booking = (
+        db.query(Booking)
+        .filter(
+            Booking.user_id == current_user.id,
+            Booking.session_id == booking_data.session_id,
+            Booking.status.in_(LIVE_BOOKING_STATUSES),
+        )
+        .first()
+    )
+    if existing_live_booking is not None:
+        detail = (
+            "El usuario ya tiene una reserva activa en esta sesión"
+            if existing_live_booking.status == ACTIVE_BOOKING_STATUS
+            else "El usuario ya está en cola para esta sesión"
+        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="La sesión está completa, no hay plazas disponibles",
+            detail=detail,
         )
 
-    # Crear la reserva
+    active_bookings_count = _count_active_bookings(db, booking_data.session_id)
+    booking_status = (
+        WAITLIST_BOOKING_STATUS
+        if active_bookings_count >= session.capacity
+        else ACTIVE_BOOKING_STATUS
+    )
+
+    # Crear la reserva o la entrada en lista de espera.
     booking = Booking(
         user_id=current_user.id,
         session_id=booking_data.session_id,
-        status="active",
+        status=booking_status,
     )
     db.add(booking)
-    _sync_session_status_with_capacity(session, active_bookings_count + 1)
+    _sync_session_status_with_capacity(
+        session,
+        active_bookings_count + (1 if booking_status == ACTIVE_BOOKING_STATUS else 0),
+    )
     try:
         db.commit()
     except IntegrityError as exc:
@@ -253,14 +284,14 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
             detail="Rol no autorizado para cancelar reservas",
         )
 
-    # Solo se puede cancelar una reserva activa
-    if booking.status != "active":
+    # Se puede cancelar una reserva activa o salir de la cola.
+    if booking.status not in LIVE_BOOKING_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"La reserva ya está '{booking.status}', no se puede cancelar",
         )
 
-    booking.status = "cancelled"
+    booking.status = CANCELLED_BOOKING_STATUS
     db.flush()
     active_bookings_count = _count_active_bookings(db, booking.session_id)
     _sync_session_status_with_capacity(session, active_bookings_count)
@@ -273,7 +304,7 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
 
 
 def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Booking:
-    """Reactiva una reserva cancelada respetando permisos, estado de sesión y cupo."""
+    """Activa o reactiva una reserva en cola/cancelada respetando permisos y cupo."""
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if booking is None:
         raise HTTPException(
@@ -316,7 +347,7 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
             detail="Rol no autorizado para reactivar reservas",
         )
 
-    if booking.status != "cancelled":
+    if booking.status not in (CANCELLED_BOOKING_STATUS, WAITLIST_BOOKING_STATUS):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"La reserva está '{booking.status}', no se puede reactivar",
@@ -336,7 +367,7 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
             detail="La sesión está completa, no se puede reactivar la reserva",
         )
 
-    booking.status = "active"
+    booking.status = ACTIVE_BOOKING_STATUS
     _sync_session_status_with_capacity(session, active_bookings_count + 1)
     try:
         db.commit()

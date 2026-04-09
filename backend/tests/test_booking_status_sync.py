@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta, timezone
 
+from app.auth.security import hash_password
 from app.models.booking import Booking
+from app.models.user import User
 
 
 def _login_headers(client, email: str, password: str) -> dict[str, str]:
@@ -11,6 +13,67 @@ def _login_headers(client, email: str, password: str) -> dict[str, str]:
     assert response.status_code == 200
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+def test_full_session_creates_waitlist_booking(client, seed_data, db_session):
+    seed_session = seed_data["session"]
+    seed_session.capacity = 1
+    seed_session.status = "completed"
+
+    queued_client = User(
+        name="Queued Client",
+        email="queued@example.com",
+        password_hash=hash_password("queued1234"),
+        role="client",
+        is_active=True,
+        membership_active=True,
+        is_verified=True,
+    )
+    existing_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="active",
+    )
+    db_session.add_all([queued_client, existing_booking])
+    db_session.commit()
+    db_session.refresh(queued_client)
+
+    headers = _login_headers(client, queued_client.email, "queued1234")
+    response = client.post(
+        "/api/bookings/",
+        headers=headers,
+        json={"session_id": seed_session.id},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "waitlist"
+
+
+def test_waitlist_booking_can_be_activated_when_there_is_space(
+    client, seed_data, db_session
+):
+    seed_session = seed_data["session"]
+    seed_data["admin"].is_verified = True
+    seed_session.capacity = 2
+    seed_session.status = "completed"
+    queued_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_session.id,
+        status="waitlist",
+    )
+    db_session.add(queued_booking)
+    db_session.commit()
+    db_session.refresh(queued_booking)
+
+    headers = _login_headers(client, seed_data["admin"].email, "admin1234")
+    response = client.patch(f"/api/bookings/{queued_booking.id}/reactivate", headers=headers)
+
+    assert response.status_code == 200
+
+    db_session.refresh(seed_session)
+    db_session.refresh(queued_booking)
+    assert queued_booking.status == "active"
+    assert seed_session.status == "active"
 
 
 def test_session_becomes_completed_when_booking_reaches_capacity(

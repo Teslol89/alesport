@@ -26,6 +26,7 @@ type ReservasFormProps = {
 
 const LOOKBACK_DAYS = 14;
 const LOOKAHEAD_DAYS = 120;
+const BOOKINGS_AUTO_REFRESH_MS = 3000;
 
 function shiftDays(base: Date, amount: number) {
   const next = new Date(base);
@@ -113,6 +114,30 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   useEffect(() => {
     void loadBookings({ silent: hasLoadedBookingsRef.current });
   }, [loadBookings, refreshSignal]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const refreshBookingsState = () => {
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+
+      void loadBookings({ silent: true });
+    };
+
+    const intervalId = window.setInterval(refreshBookingsState, BOOKINGS_AUTO_REFRESH_MS);
+    window.addEventListener('focus', refreshBookingsState);
+    document.addEventListener('visibilitychange', refreshBookingsState);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshBookingsState);
+      document.removeEventListener('visibilitychange', refreshBookingsState);
+    };
+  }, [loadBookings, user?.id]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => setOfferClockMs(Date.now()), 1000);

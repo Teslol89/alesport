@@ -10,7 +10,7 @@ import './BuscarForm.css';
 
 type PeriodFilter = 'all' | 'today' | 'week' | 'month';
 
-const SEARCH_AUTO_REFRESH_MS = 10000;
+const SEARCH_AUTO_REFRESH_MS = 3000;
 
 const BuscarForm: React.FC = () => {
     const { t, dateLocale } = useLanguage();

@@ -11,6 +11,7 @@ import whatsappMenuIcon from '../icons/whatsapp.svg';
 import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
 import { getUserProfile, type UserProfile, updateUserProfile } from '../api/user';
+import { getCenterRules, updateCenterRules } from '../api/centerRules';
 import { useLanguage } from '../i18n/LanguageContext';
 import { getNotificationsEnabled, setNotificationsEnabled as updateNotificationsEnabled } from '../services/fcm';
 import { LegalText } from '../utils/legalText';
@@ -204,9 +205,49 @@ const ConfigForm: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const storedRules = readStoredCenterRules();
-    setCenterRules(storedRules ?? defaultCenterRules);
-  }, [defaultCenterRules]);
+    const fallbackRules = storedRules ?? defaultCenterRules;
+
+    const loadCenterRules = async () => {
+      try {
+        const sharedRules = await getCenterRules();
+        if (sharedRules.length > 0) {
+          if (!cancelled) {
+            setCenterRules(sharedRules);
+          }
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(CENTER_RULES_STORAGE_KEY, JSON.stringify(sharedRules));
+          }
+          return;
+        }
+
+        if (!cancelled) {
+          setCenterRules(fallbackRules);
+        }
+
+        if (canManageCenterRules && storedRules && storedRules.length > 0) {
+          const syncedRules = await updateCenterRules(storedRules);
+          if (!cancelled) {
+            setCenterRules(syncedRules);
+          }
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(CENTER_RULES_STORAGE_KEY, JSON.stringify(syncedRules));
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setCenterRules(fallbackRules);
+        }
+      }
+    };
+
+    void loadCenterRules();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canManageCenterRules, defaultCenterRules]);
 
   const openEditProfileModal = () => {
     setEditName(profile.name || '');
@@ -371,10 +412,31 @@ const ConfigForm: React.FC = () => {
     window.open(`https://wa.me/${SUPPORT_WHATSAPP_PHONE}?text=${message}`, '_blank', 'noopener,noreferrer');
   };
 
-  const persistCenterRules = (nextRules: string[]) => {
+  const persistCenterRules = async (nextRules: string[]) => {
+    const previousRules = centerRules;
     setCenterRules(nextRules);
+
     if (typeof window !== 'undefined') {
       localStorage.setItem(CENTER_RULES_STORAGE_KEY, JSON.stringify(nextRules));
+    }
+
+    if (!canManageCenterRules) {
+      return nextRules;
+    }
+
+    try {
+      const syncedRules = await updateCenterRules(nextRules);
+      setCenterRules(syncedRules);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(CENTER_RULES_STORAGE_KEY, JSON.stringify(syncedRules));
+      }
+      return syncedRules;
+    } catch (error) {
+      setCenterRules(previousRules);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(CENTER_RULES_STORAGE_KEY, JSON.stringify(previousRules));
+      }
+      throw error;
     }
   };
 
@@ -396,29 +458,40 @@ const ConfigForm: React.FC = () => {
     setEditingRuleIndex(null);
   };
 
-  const handleSaveCenterRule = () => {
+  const handleSaveCenterRule = async () => {
     const trimmedRule = ruleDraft.trim();
     if (trimmedRule.length < 4) {
       setToast({ show: true, message: t('config.centerRuleRequired'), type: 'danger' });
       return;
     }
 
-    if (editingRuleIndex !== null) {
-      const nextRules = centerRules.map((rule, index) => (index === editingRuleIndex ? trimmedRule : rule));
-      persistCenterRules(nextRules);
-      setToast({ show: true, message: t('config.centerRuleUpdated'), type: 'success' });
-    } else {
-      persistCenterRules([...centerRules, trimmedRule]);
-      setToast({ show: true, message: t('config.centerRuleAdded'), type: 'success' });
-    }
+    try {
+      if (editingRuleIndex !== null) {
+        const nextRules = centerRules.map((rule, index) => (index === editingRuleIndex ? trimmedRule : rule));
+        await persistCenterRules(nextRules);
+        setToast({ show: true, message: t('config.centerRuleUpdated'), type: 'success' });
+      } else {
+        await persistCenterRules([...centerRules, trimmedRule]);
+        setToast({ show: true, message: t('config.centerRuleAdded'), type: 'success' });
+      }
 
-    handleCloseCenterRuleEditor();
+      handleCloseCenterRuleEditor();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudieron guardar las normas del centro';
+      setToast({ show: true, message, type: 'danger' });
+    }
   };
 
-  const handleRemoveCenterRule = (indexToRemove: number) => {
+  const handleRemoveCenterRule = async (indexToRemove: number) => {
     const nextRules = centerRules.filter((_, index) => index !== indexToRemove);
-    persistCenterRules(nextRules);
-    setToast({ show: true, message: t('config.centerRuleRemoved'), type: 'success' });
+
+    try {
+      await persistCenterRules(nextRules);
+      setToast({ show: true, message: t('config.centerRuleRemoved'), type: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudieron guardar las normas del centro';
+      setToast({ show: true, message, type: 'danger' });
+    }
   };
 
   const handleOpenSupportEmail = () => {

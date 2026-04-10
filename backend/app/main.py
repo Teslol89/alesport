@@ -10,12 +10,13 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import text
 
 # ── Local ─────────────────────────────────────────────────────────────────────
-from app.database.db import engine
+from app.database.db import Base, engine
 from app.routers.user_router import router as user_router
 from app.routers.schedule_router import router as schedule_router
 from app.routers.session_router import router as session_router
 from app.routers.booking_router import router as booking_router
 from app.routers.auth_router import router as auth_router
+from app.routers.center_rules_router import router as center_rules_router
 
 # ── Configuración de la aplicación ────────────────────────────────────────────
 from fastapi.openapi.models import APIKey, APIKeyIn, SecuritySchemeType
@@ -35,6 +36,7 @@ app = FastAPI(
         {"name": "sessions", "description": "Gestión de sesiones"},
         {"name": "bookings", "description": "Reservas de sesiones"},
         {"name": "schedule", "description": "Horarios semanales"},
+        {"name": "settings", "description": "Configuración compartida de la app"},
     ],
     swagger_ui_parameters={"persistAuthorization": True},
 )
@@ -83,6 +85,10 @@ app.include_router(schedule_router, prefix="/api")
 app.include_router(session_router, prefix="/api")
 app.include_router(booking_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
+app.include_router(center_rules_router, prefix="/api")
+
+# Crea tablas nuevas que falten (por ejemplo, configuración compartida) sin tocar las existentes.
+Base.metadata.create_all(bind=engine)
 
 
 # ── Endpoints de sistema ──────────────────────────────────────────────────────

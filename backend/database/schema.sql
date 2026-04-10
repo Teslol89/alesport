@@ -123,6 +123,21 @@ CREATE INDEX IF NOT EXISTS idx_sessions_active_trainer ON sessions(trainer_id, s
 
 
 -- ===============================
+-- CENTER RULES
+-- ===============================
+-- Shared center rules visible to all authenticated users and editable by admins.
+
+CREATE TABLE IF NOT EXISTS center_rules (
+    id SERIAL PRIMARY KEY,
+    text TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_center_rules_sort_order ON center_rules(sort_order);
+
+
+-- ===============================
 -- BOOKINGS
 -- ===============================
 -- Links users to sessions (reservations).

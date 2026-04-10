@@ -676,7 +676,21 @@ const Calendar: React.FC = () => {
   }, [myBookings]);
 
   const activeBookingsCount = bookings.filter(b => b.status === 'active').length;
-  const isPastSession = (session: SessionItem) => session.session_date < getTodayIsoDate();
+  const isPastSession = (session: SessionItem) => {
+    const formattedStart = formatHour(session.start_time, session.session_date, '00:00');
+    const parsedStart = new Date(`${session.session_date}T${formattedStart}:00`);
+
+    if (!Number.isNaN(parsedStart.getTime())) {
+      return parsedStart.getTime() <= Date.now();
+    }
+
+    const fallbackStart = new Date(session.start_time);
+    if (!Number.isNaN(fallbackStart.getTime())) {
+      return fallbackStart.getTime() <= Date.now();
+    }
+
+    return session.session_date < getTodayIsoDate();
+  };
   const isDetailsSessionPast = detailsSession ? isPastSession(detailsSession) : false;
   const detailsClientBooking = detailsSession ? myClientBookingsBySession[detailsSession.id] : undefined;
   const loadingSkeletonRows = [1, 2, 3];

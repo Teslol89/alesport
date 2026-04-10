@@ -26,7 +26,7 @@ const Calendar: React.FC = () => {
   const { role: userRole, user } = useAuth();
   const location = useLocation();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
-  const AGENDA_AUTO_REFRESH_MS = 10000;
+  const AGENDA_AUTO_REFRESH_MS = 3000;
 
   type SessionItem = {
     id: number;

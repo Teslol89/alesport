@@ -120,7 +120,6 @@ def send_push_notification(
                 channel_id="alesport_alerts",
                 sound="default",
                 icon="ic_stat_alesport",
-                color="#0F5132",
             ),
         )
 

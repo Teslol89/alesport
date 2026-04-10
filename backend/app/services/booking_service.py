@@ -11,7 +11,7 @@ from app.services.notification_service import send_push_notification
 from app.utils.utils import is_past_session_datetime, to_local_datetime
 
 
-PAST_SESSION_MUTATION_ERROR = "No se pueden modificar reservas de días pasados"
+PAST_SESSION_MUTATION_ERROR = "No se pueden modificar reservas de clases iniciadas o pasadas"
 ACTIVE_BOOKING_STATUS = "active"
 CANCELLED_BOOKING_STATUS = "cancelled"
 WAITLIST_BOOKING_STATUS = "waitlist"

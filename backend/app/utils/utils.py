@@ -19,8 +19,8 @@ def to_local_datetime(value: datetime) -> datetime:
 
 
 def is_past_session_datetime(value: datetime) -> bool:
-    """Indica si una sesión pertenece a un día anterior al actual en horario local."""
-    return to_local_datetime(value).date() < datetime.now(LOCAL_TIMEZONE).date()
+    """Indica si una sesión ya ha empezado o pertenece a un momento anterior en horario local."""
+    return to_local_datetime(value) <= datetime.now(LOCAL_TIMEZONE)
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
     """Devuelve un logger configurado con el nombre dado o root."""

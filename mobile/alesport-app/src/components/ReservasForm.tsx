@@ -158,7 +158,18 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
       });
   }, [bookings, sessionsById]);
 
-  const todayIso = toIsoDate(new Date());
+  function hasSessionStarted(session?: SessionSummary) {
+    if (!session) {
+      return false;
+    }
+
+    const sessionStart = new Date(`${session.session_date}T${session.start_time}`);
+    if (!Number.isNaN(sessionStart.getTime())) {
+      return sessionStart.getTime() <= Date.now();
+    }
+
+    return session.session_date < toIsoDate(new Date());
+  }
 
   function getBookingDateParts(booking: BookingItem) {
     const session = sessionsById[booking.session_id];
@@ -215,7 +226,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
 
   async function handleCancelBooking(booking: BookingItem, confirmed = false) {
     const session = sessionsById[booking.session_id];
-    const isPast = session ? session.session_date < todayIso : false;
+    const isPast = hasSessionStarted(session);
 
     if (isPast) {
       setToast({ show: true, message: t('calendar.pastClassReadOnly'), type: 'info' });
@@ -250,7 +261,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
 
   async function handleConfirmBooking(booking: BookingItem) {
     const session = sessionsById[booking.session_id];
-    const isPast = session ? session.session_date < todayIso : false;
+    const isPast = hasSessionStarted(session);
 
     if (isPast) {
       setToast({ show: true, message: t('calendar.pastClassReadOnly'), type: 'info' });
@@ -293,7 +304,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
           <div className="bookings-list">
             {visibleBookings.map((booking) => {
               const session = sessionsById[booking.session_id];
-              const isPast = session ? session.session_date < todayIso : false;
+              const isPast = hasSessionStarted(session);
               const isWaitlist = booking.status === 'waitlist';
               const isOffered = booking.status === 'offered';
               const { dateText, timeText } = getBookingDateParts(booking);

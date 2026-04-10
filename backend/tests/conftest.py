@@ -32,6 +32,7 @@ os.environ.setdefault("JWT_EXPIRE_MINUTES", "60")
 
 # Importar modelos ANTES de crear fixtures (necesario para registrar tablas)
 import app.models.booking  # noqa: F401
+import app.models.center_rule  # noqa: F401
 import app.models.session  # noqa: F401
 import app.models.user  # noqa: F401
 import app.models.weekly_schedule  # noqa: F401

@@ -16,14 +16,19 @@
 /* 1) Contenedor principal */
 /* ------------------------------- */
 .config-form-container {
+  --config-bottom-nav-offset: calc(54px);
   width: 100%;
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px) + 12px);
+  padding-bottom: var(--config-bottom-nav-offset);
 }
 
 .config-form-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 60px - max(env(safe-area-inset-top), 1.1rem) - var(--config-bottom-nav-offset));
   padding: 0.85rem 0.9rem 1rem;
 }
 
@@ -439,7 +444,8 @@
 /* ------------------------------- */
 .config-logout {
   width: 100%;
-  margin: 1.2rem auto 0 auto;
+  margin: auto auto 0 auto;
+  padding-top: 1rem;
   display: flex;
   justify-content: center;
 }

@@ -88,7 +88,7 @@ const handleContactAlex = () => {
 };
 
 const ConfigForm: React.FC = () => {
-  const { logout } = useAuth();
+  const { logout, role } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const [profile, setProfile] = useState<Partial<UserProfile>>({});
   const [editName, setEditName] = useState('');
@@ -108,6 +108,7 @@ const ConfigForm: React.FC = () => {
     type: 'success',
   });
   const isEnglish = language === 'en';
+  const canShowAlexWhatsapp = (profile.role ?? role) === 'client';
 
   const syncProfileState = (nextProfile: Partial<UserProfile>) => {
     setProfile(nextProfile);
@@ -394,10 +395,12 @@ const ConfigForm: React.FC = () => {
             <img src={editMenuIcon} alt="" className="config-item-icon" slot="start" />
             <IonLabel>{t('config.editProfile')}</IonLabel>
           </IonItem>
-          <IonItem button detail={false} lines="none" onClick={handleContactAlex}>
-            <img src={whatsappMenuIcon} alt="" className="config-item-icon" slot="start" />
-            <IonLabel>WhatsApp Alex</IonLabel>
-          </IonItem>
+          {canShowAlexWhatsapp ? (
+            <IonItem button detail={false} lines="none" onClick={handleContactAlex}>
+              <img src={whatsappMenuIcon} alt="" className="config-item-icon" slot="start" />
+              <IonLabel>WhatsApp Alex</IonLabel>
+            </IonItem>
+          ) : null}
           <IonItem button detail={false} lines="none" onClick={() => setShowSupportModal(true)}>
             <img src={helpMenuIcon} alt="" className="config-item-icon" slot="start" />
             <IonLabel>{t('config.help')}</IonLabel>

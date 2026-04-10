@@ -1,21 +1,27 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
 import { cameraOutline, moonOutline, personCircleOutline, sunnyOutline } from 'ionicons/icons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import logoIcon from '../icons/icon.png';
 import editMenuIcon from '../icons/edit.svg';
 import helpMenuIcon from '../icons/help.svg';
+import normasMenuIcon from '../icons/normas.svg';
+import politicaPrivMenuIcon from '../icons/politicaPriv.svg';
 import whatsappMenuIcon from '../icons/whatsapp.svg';
 import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
 import { getUserProfile, type UserProfile, updateUserProfile } from '../api/user';
 import { useLanguage } from '../i18n/LanguageContext';
 import { getNotificationsEnabled, setNotificationsEnabled as updateNotificationsEnabled } from '../services/fcm';
+import { LegalText } from '../utils/legalText';
 import './ConfigForm.css';
 
 const DARK_MODE_STORAGE_KEY = 'alesport-dark-mode';
+const CENTER_RULES_STORAGE_KEY = 'alesport-center-rules';
 const APP_VERSION = '1.0.0';
 const SUPPORT_EMAIL = 'verdeguerlabs@verdeguerlabs.es';
+const SUPPORT_WHATSAPP_DISPLAY = '+34 633 52 31 26';
+const SUPPORT_WHATSAPP_PHONE = '34633523126';
 const SUPPORT_WEBSITE = 'https://www.verdeguerlabs.es';
 const PHONE_COMPACT_REGEX = /^(?:\+34)?[6789]\d{8}$/;
 const MAX_AVATAR_FILE_SIZE = 2 * 1024 * 1024;
@@ -87,6 +93,32 @@ const handleContactAlex = () => {
   window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
 };
 
+const readStoredCenterRules = (): string[] | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = localStorage.getItem(CENTER_RULES_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    const normalizedRules = parsed
+      .map((rule) => (typeof rule === 'string' ? rule.trim() : ''))
+      .filter((rule) => rule.length > 0);
+
+    return normalizedRules.length > 0 ? normalizedRules : null;
+  } catch {
+    return null;
+  }
+};
+
 const ConfigForm: React.FC = () => {
   const { logout, role } = useAuth();
   const { language, setLanguage, t } = useLanguage();
@@ -100,8 +132,14 @@ const ConfigForm: React.FC = () => {
   const [isUpdatingNotifications, setIsUpdatingNotifications] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showRulesModal, setShowRulesModal] = useState(false);
   const [showAvatarSourceAlert, setShowAvatarSourceAlert] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [centerRules, setCenterRules] = useState<string[]>([]);
+  const [showRuleEditorModal, setShowRuleEditorModal] = useState(false);
+  const [ruleDraft, setRuleDraft] = useState('');
+  const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' }>({
     show: false,
     message: '',
@@ -109,6 +147,18 @@ const ConfigForm: React.FC = () => {
   });
   const isEnglish = language === 'en';
   const canShowAlexWhatsapp = (profile.role ?? role) === 'client';
+  const canShowSupportWhatsapp = !canShowAlexWhatsapp;
+  const canManageCenterRules = (profile.role ?? role) === 'admin';
+  const defaultCenterRules = useMemo(
+    () => [
+      t('config.centerRule1'),
+      t('config.centerRule2'),
+      t('config.centerRule3'),
+      t('config.centerRule4'),
+      t('config.centerRule5'),
+    ],
+    [t]
+  );
 
   const syncProfileState = (nextProfile: Partial<UserProfile>) => {
     setProfile(nextProfile);
@@ -152,6 +202,11 @@ const ConfigForm: React.FC = () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const storedRules = readStoredCenterRules();
+    setCenterRules(storedRules ?? defaultCenterRules);
+  }, [defaultCenterRules]);
 
   const openEditProfileModal = () => {
     setEditName(profile.name || '');
@@ -311,6 +366,61 @@ const ConfigForm: React.FC = () => {
     }
   };
 
+  const handleOpenSupportWhatsapp = () => {
+    const message = encodeURIComponent('Hola, necesito soporte técnico para Alesport.');
+    window.open(`https://wa.me/${SUPPORT_WHATSAPP_PHONE}?text=${message}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const persistCenterRules = (nextRules: string[]) => {
+    setCenterRules(nextRules);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(CENTER_RULES_STORAGE_KEY, JSON.stringify(nextRules));
+    }
+  };
+
+  const handleOpenCenterRuleEditor = (indexToEdit?: number) => {
+    if (typeof indexToEdit === 'number') {
+      setEditingRuleIndex(indexToEdit);
+      setRuleDraft(centerRules[indexToEdit] || '');
+    } else {
+      setEditingRuleIndex(null);
+      setRuleDraft('');
+    }
+
+    setShowRuleEditorModal(true);
+  };
+
+  const handleCloseCenterRuleEditor = () => {
+    setShowRuleEditorModal(false);
+    setRuleDraft('');
+    setEditingRuleIndex(null);
+  };
+
+  const handleSaveCenterRule = () => {
+    const trimmedRule = ruleDraft.trim();
+    if (trimmedRule.length < 4) {
+      setToast({ show: true, message: t('config.centerRuleRequired'), type: 'danger' });
+      return;
+    }
+
+    if (editingRuleIndex !== null) {
+      const nextRules = centerRules.map((rule, index) => (index === editingRuleIndex ? trimmedRule : rule));
+      persistCenterRules(nextRules);
+      setToast({ show: true, message: t('config.centerRuleUpdated'), type: 'success' });
+    } else {
+      persistCenterRules([...centerRules, trimmedRule]);
+      setToast({ show: true, message: t('config.centerRuleAdded'), type: 'success' });
+    }
+
+    handleCloseCenterRuleEditor();
+  };
+
+  const handleRemoveCenterRule = (indexToRemove: number) => {
+    const nextRules = centerRules.filter((_, index) => index !== indexToRemove);
+    persistCenterRules(nextRules);
+    setToast({ show: true, message: t('config.centerRuleRemoved'), type: 'success' });
+  };
+
   const handleOpenSupportEmail = () => {
     window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Soporte Alesport')}`;
   };
@@ -354,7 +464,6 @@ const ConfigForm: React.FC = () => {
               <IonIcon icon={cameraOutline} />
             </span>
           </button>
-          <div className="config-profile-avatar-cta">{t('config.tapToEditPhoto')}</div>
           <div className="config-profile-name">{profile.name || t('config.nameFallback')}</div>
           <div className="config-profile-email">{profile.email || t('config.emailFallback')}</div>
           {profile.phone ? <div className="config-profile-phone">{profile.phone}</div> : null}
@@ -395,12 +504,26 @@ const ConfigForm: React.FC = () => {
             <img src={editMenuIcon} alt="" className="config-item-icon" slot="start" />
             <IonLabel>{t('config.editProfile')}</IonLabel>
           </IonItem>
+          <IonItem button detail={false} lines="none" onClick={() => setShowRulesModal(true)}>
+            <img src={normasMenuIcon} alt="" className="config-item-icon" slot="start" />
+            <IonLabel>{t('config.centerRules')}</IonLabel>
+          </IonItem>
           {canShowAlexWhatsapp ? (
             <IonItem button detail={false} lines="none" onClick={handleContactAlex}>
               <img src={whatsappMenuIcon} alt="" className="config-item-icon" slot="start" />
-              <IonLabel>WhatsApp Alex</IonLabel>
+              <IonLabel>{t('config.alexWhatsappButton')}</IonLabel>
             </IonItem>
           ) : null}
+          {canShowSupportWhatsapp ? (
+            <IonItem button detail={false} lines="none" onClick={handleOpenSupportWhatsapp}>
+              <img src={whatsappMenuIcon} alt="" className="config-item-icon" slot="start" />
+              <IonLabel>{t('config.supportWhatsappButton')}</IonLabel>
+            </IonItem>
+          ) : null}
+          <IonItem button detail={false} lines="none" onClick={() => setShowPrivacyModal(true)}>
+            <img src={politicaPrivMenuIcon} alt="" className="config-item-icon" slot="start" />
+            <IonLabel>{t('config.privacyPolicy')}</IonLabel>
+          </IonItem>
           <IonItem button detail={false} lines="none" onClick={() => setShowSupportModal(true)}>
             <img src={helpMenuIcon} alt="" className="config-item-icon" slot="start" />
             <IonLabel>{t('config.help')}</IonLabel>
@@ -591,6 +714,146 @@ const ConfigForm: React.FC = () => {
               onClick={() => setShowSupportModal(false)}
             >
               {t('common.close')}
+            </button>
+          </div>
+        </div>
+      </IonModal>
+
+      <IonModal
+        className="config-edit-modal-wrapper"
+        isOpen={showPrivacyModal}
+        onDidDismiss={() => setShowPrivacyModal(false)}
+      >
+        <div className="config-edit-modal">
+          <div className="config-edit-modal-header">
+            <h3>{t('config.privacyPolicyTitle')}</h3>
+            <p>{t('config.privacyPolicySubtitle')}</p>
+          </div>
+
+          <div className="config-legal-scroll">
+            <LegalText />
+          </div>
+
+          <div className="config-edit-actions">
+            <button
+              type="button"
+              className="app-btn-danger config-edit-action-btn"
+              onClick={() => setShowPrivacyModal(false)}
+            >
+              {t('common.close')}
+            </button>
+          </div>
+        </div>
+      </IonModal>
+
+      <IonModal
+        className="config-edit-modal-wrapper"
+        isOpen={showRulesModal}
+        onDidDismiss={() => {
+          setShowRulesModal(false);
+          handleCloseCenterRuleEditor();
+        }}
+      >
+        <div className="config-edit-modal">
+          <div className="config-edit-modal-header">
+            <h3>{t('config.centerRulesTitle')}</h3>
+          </div>
+          <div className="config-legal-scroll">
+            <p>{t('config.centerRulesIntro')}</p>
+
+            {centerRules.length > 0 ? (
+              <ul className="config-rules-list">
+                {centerRules.map((rule, index) => (
+                  <li key={`${rule}-${index}`} className="config-rules-item">
+                    <span className="config-rules-item-text">{rule}</span>
+                    {canManageCenterRules ? (
+                      <div className="config-rules-item-actions">
+                        <button
+                          type="button"
+                          className="config-rules-edit-btn"
+                          onClick={() => handleOpenCenterRuleEditor(index)}
+                          aria-label={`${t('config.centerRuleEditButton')} ${index + 1}`}
+                        >
+                          {t('config.centerRuleEditButton')}
+                        </button>
+                        <button
+                          type="button"
+                          className="config-rules-remove-btn"
+                          onClick={() => handleRemoveCenterRule(index)}
+                          aria-label={`${t('config.centerRuleRemoveButton')} ${index + 1}`}
+                        >
+                          {t('config.centerRuleRemoveButton')}
+                        </button>
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="config-rules-empty">{t('config.centerRulesEmpty')}</p>
+            )}
+
+            {canManageCenterRules ? (
+              <div className="config-rules-editor">
+                <button
+                  type="button"
+                  className="app-btn-primary config-rules-add-btn"
+                  onClick={() => handleOpenCenterRuleEditor()}
+                >
+                  {t('config.centerRuleAddButton')}
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="config-edit-actions">
+            <button
+              type="button"
+              className="app-btn-danger config-edit-action-btn"
+              onClick={() => setShowRulesModal(false)}
+            >
+              {t('common.close')}
+            </button>
+          </div>
+        </div>
+      </IonModal>
+
+      <IonModal
+        className="config-edit-modal-wrapper"
+        isOpen={showRuleEditorModal}
+        onDidDismiss={handleCloseCenterRuleEditor}
+      >
+        <div className="config-edit-modal">
+          <div className="config-edit-modal-header">
+            <h3>{editingRuleIndex !== null ? t('config.centerRuleEditTitle') : t('config.centerRuleAddTitle')}</h3>
+
+          </div>
+
+          <div className="config-rules-editor-modal-body">
+            <textarea
+              className="app-input config-rules-textarea"
+              value={ruleDraft}
+              onChange={(e) => setRuleDraft(e.target.value)}
+              placeholder={t('config.centerRulePlaceholder')}
+              maxLength={400}
+              rows={7}
+            />
+          </div>
+
+          <div className="config-edit-actions">
+            <button
+              type="button"
+              className="app-btn-danger config-edit-action-btn"
+              onClick={handleCloseCenterRuleEditor}
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type="button"
+              className="app-btn-primary config-edit-action-btn"
+              onClick={handleSaveCenterRule}
+            >
+              {t('common.save')}
             </button>
           </div>
         </div>

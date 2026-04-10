@@ -316,6 +316,19 @@
   --height: auto;
   --border-radius: 20px;
   --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
+  --backdrop-opacity: 1 !important;
+}
+
+.config-edit-modal-wrapper.ion-modal-overlay {
+  --backdrop-opacity: 1 !important;
+}
+
+.config-edit-modal-wrapper::part(backdrop),
+.config-edit-modal-wrapper .ion-backdrop,
+.config-edit-modal-wrapper .modal-backdrop,
+.config-edit-modal-wrapper .ion-modal-backdrop {
+  background: rgba(0, 0, 0, 0.48) !important;
+  opacity: 1 !important;
 }
 
 .config-edit-modal-wrapper::part(content) {
@@ -414,6 +427,103 @@
 .config-support-stack {
   display: grid;
   gap: 0.65rem;
+}
+
+.config-legal-scroll {
+  max-height: min(56vh, 420px);
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.config-legal-scroll p,
+.config-legal-scroll li {
+  color: #24444b;
+  line-height: 1.48;
+}
+
+.config-legal-scroll p {
+  margin-top: 0;
+}
+
+.config-legal-scroll ol {
+  margin: 0.65rem 0 0;
+  padding-left: 1.15rem;
+}
+
+.config-rules-editor {
+  display: flex;
+  width: 100%;
+  margin: 1rem 0 0;
+}
+
+.config-rules-add-btn {
+  width: 100%;
+  min-width: 100%;
+  height: 36px;
+  min-height: 36px;
+}
+
+.config-rules-editor-modal-body {
+  margin-top: 0.5rem;
+}
+
+.config-rules-textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.config-rules-list {
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding-left: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.config-rules-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+  background: #f5f7fa;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+}
+
+.config-rules-item-text {
+  width: 100%;
+  white-space: pre-wrap;
+}
+
+.config-rules-item-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-self: flex-end;
+}
+
+.config-rules-edit-btn,
+.config-rules-remove-btn {
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.config-rules-edit-btn {
+  color: #0089a6;
+}
+
+.config-rules-remove-btn {
+  color: #a63b4b;
+}
+
+.config-rules-empty {
+  margin-top: 0.85rem;
+  color: #5f6b76;
 }
 
 .config-support-actions {

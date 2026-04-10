@@ -247,7 +247,7 @@ const Calendar: React.FC = () => {
 
   function openEditSessionModal(session: SessionItem) {
     if (isPastSession(session)) {
-      setToast({ show: true, message: 'No se pueden modificar sesiones de días pasados', type: 'danger' });
+      setToast({ show: true, message: 'No se pueden modificar sesiones iniciadas o pasadas', type: 'danger' });
       return;
     }
 
@@ -297,7 +297,7 @@ const Calendar: React.FC = () => {
 
   async function handleCancelBooking(bookingId: number) {
     if (detailsSession && isPastSession(detailsSession)) {
-      setToast({ show: true, message: 'No se pueden modificar reservas de días pasados', type: 'danger' });
+      setToast({ show: true, message: 'No se pueden modificar reservas de clases iniciadas o pasadas', type: 'danger' });
       return;
     }
 
@@ -323,7 +323,7 @@ const Calendar: React.FC = () => {
 
   async function handleReactivateBooking(bookingId: number) {
     if (detailsSession && isPastSession(detailsSession)) {
-      setToast({ show: true, message: 'No se pueden modificar reservas de días pasados', type: 'danger' });
+      setToast({ show: true, message: 'No se pueden modificar reservas de clases iniciadas o pasadas', type: 'danger' });
       return;
     }
 

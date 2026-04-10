@@ -18,7 +18,7 @@ from app.services.notification_service import send_push_notification
 logger = get_logger(__name__)
 
 
-PAST_SESSION_UPDATE_ERROR = "No se pueden modificar sesiones de días pasados"
+PAST_SESSION_UPDATE_ERROR = "No se pueden modificar sesiones iniciadas o pasadas"
 
 
 # --- Función para convertir hora con tz a hora local sin tzinfo --- #

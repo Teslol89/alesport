@@ -89,9 +89,9 @@ export function getActiveLocale(): string {
   return document.documentElement.lang === 'en' ? 'en-GB' : 'es-ES';
 }
 
-export function formatFullDateES(dateStr: string): { day: string; fullDate: string } {
+export function formatFullDateES(dateStr: string, localeOverride?: string): { day: string; fullDate: string } {
   const date = new Date(dateStr);
-  const locale = getActiveLocale();
+  const locale = localeOverride || getActiveLocale();
   const day = date.toLocaleDateString(locale, { weekday: 'long' });
   const month = date.toLocaleDateString(locale, { month: 'long' });
   const fullDate = `${capitalizeFirst(month)} ${date.getDate()}, ${date.getFullYear()}`;
@@ -102,8 +102,8 @@ export function formatFullDateES(dateStr: string): { day: string; fullDate: stri
   };
 }
 
-export function getMonthLabelES(date: Date): string {
-  return capitalizeFirst(date.toLocaleDateString(getActiveLocale(), { month: 'long', year: 'numeric' }));
+export function getMonthLabelES(date: Date, localeOverride?: string): string {
+  return capitalizeFirst(date.toLocaleDateString(localeOverride || getActiveLocale(), { month: 'long', year: 'numeric' }));
 }
 
 export function mapBookingStatus(status: string): string {
@@ -147,7 +147,7 @@ function capitalizeFirst(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export function getCurrentWeekDays(baseDate?: string | Date) {
+export function getCurrentWeekDays(baseDate?: string | Date, localeOverride?: string) {
   const today = new Date();
   const referenceDate =
     typeof baseDate === 'string'
@@ -157,14 +157,14 @@ export function getCurrentWeekDays(baseDate?: string | Date) {
         : new Date(today);
 
   if (isNaN(referenceDate.getTime())) {
-    return getCurrentWeekDays();
+    return getCurrentWeekDays(undefined, localeOverride);
   }
 
   const dayOfWeek = referenceDate.getDay();
   const monday = new Date(referenceDate);
   monday.setDate(referenceDate.getDate() - ((dayOfWeek + 6) % 7));
   const days = [];
-  const locale = getActiveLocale();
+  const locale = localeOverride || getActiveLocale();
 
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
@@ -184,7 +184,7 @@ export function getCurrentWeekDays(baseDate?: string | Date) {
   return days;
 }
 
-export function getMonthDays(year: number, month: number) {
+export function getMonthDays(year: number, month: number, localeOverride?: string) {
   const todayIso = toLocalISODate(new Date());
   const days: {
     date: string;
@@ -194,7 +194,7 @@ export function getMonthDays(year: number, month: number) {
     isToday: boolean;
     isWeekend: boolean;
   }[] = [];
-  const locale = getActiveLocale();
+  const locale = localeOverride || getActiveLocale();
   const firstDay = new Date(year, month, 1);
   const mondayOffset = (firstDay.getDay() + 6) % 7;
   const gridStart = new Date(year, month, 1 - mondayOffset);

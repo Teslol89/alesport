@@ -23,7 +23,7 @@ import { clearPendingPushNavigation } from '../services/fcm';
 import { useAuth } from './AuthContext';
 
 const Calendar: React.FC = () => {
-  const { t, dateLocale, language } = useLanguage();
+  const { t, dateLocale } = useLanguage();
   const { role: userRole, user } = useAuth();
   const location = useLocation();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
@@ -42,10 +42,9 @@ const Calendar: React.FC = () => {
     status: string;
   };
 
-  const initialWeekDays = getCurrentWeekDays();
-  const todayDate = initialWeekDays.find((d: any) => d.isToday)?.date || initialWeekDays[0].date;
+  const todayDate = getTodayIsoDate();
   const [weekAnchorDate, setWeekAnchorDate] = useState(todayDate);
-  const weekDays = useMemo(() => getCurrentWeekDays(weekAnchorDate), [weekAnchorDate, language]);
+  const weekDays = useMemo(() => getCurrentWeekDays(weekAnchorDate, dateLocale), [weekAnchorDate, dateLocale]);
   const [selectedDate, setSelectedDate] = useState(todayDate);
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
@@ -63,6 +62,7 @@ const Calendar: React.FC = () => {
   const [editTrainerId, setEditTrainerId] = useState<number | null>(null);
   const [trainerOptions, setTrainerOptions] = useState<AssignableTrainer[]>([]);
   const [isLoadingTrainers, setIsLoadingTrainers] = useState(false);
+  const [showTrainerPicker, setShowTrainerPicker] = useState(false);
   const [showCapacityPicker, setShowCapacityPicker] = useState(false);
   const [showTimePickerModal, setShowTimePickerModal] = useState(false);
   const [isTimePickerPresented, setIsTimePickerPresented] = useState(false);
@@ -279,7 +279,12 @@ const Calendar: React.FC = () => {
     [sessions, selectedDate],
   );
 
-  const fechaES = formatFullDateES(selectedDate);
+  const selectedTrainerOption = useMemo(
+    () => trainerOptions.find((trainerOption) => trainerOption.id === editTrainerId) ?? null,
+    [trainerOptions, editTrainerId],
+  );
+
+  const fechaES = formatFullDateES(selectedDate, dateLocale);
 
   function openEditSessionModal(session: SessionItem) {
     if (isPastSession(session)) {
@@ -296,6 +301,7 @@ const Calendar: React.FC = () => {
     setEditNotes(session.notes || '');
     setEditCapacity(session.capacity);
     setEditTrainerId(session.trainer_id ?? null);
+    setShowTrainerPicker(false);
     setShowCapacityPicker(false);
 
     if (showDetailsModal) {
@@ -529,6 +535,7 @@ const Calendar: React.FC = () => {
 
       setShowHourModal(false);
       setEditingSession(null);
+      setShowTrainerPicker(false);
       setShowCapacityPicker(false);
       setToast({ show: true, message: 'Sesión actualizada correctamente', type: 'success' });
     } catch (error) {
@@ -548,6 +555,8 @@ const Calendar: React.FC = () => {
   function openTimePicker(target: 'start' | 'end') {
     const currentValue = target === 'start' ? newStartTime : newEndTime;
     const normalizedValue = currentValue ? `${currentValue.slice(0, 2)}:00` : '';
+    setShowTrainerPicker(false);
+    setShowCapacityPicker(false);
     setTimePickerTarget(target);
     setTimePickerValue(normalizedValue ? toPickerIso(normalizedValue) : `${TIME_PICKER_BASE_DATE}T08:00:00`);
     setShowTimePickerModal(true);
@@ -914,6 +923,7 @@ const Calendar: React.FC = () => {
       <IonModal className="calendar-hour-modal-wrapper" isOpen={showHourModal} focusTrap={false} onDidDismiss={() => {
         setShowHourModal(false);
         setEditingSession(null);
+        setShowTrainerPicker(false);
         setShowCapacityPicker(false);
         setIsTimePickerPresented(false);
       }}>
@@ -924,19 +934,35 @@ const Calendar: React.FC = () => {
             <div className="calendar-edit-session-block">
               <label className="calendar-hour-modal-label">
                 <span>{t('calendar.trainer')}</span>
-                <select
-                  className="calendar-edit-text-input calendar-edit-select"
-                  value={editTrainerId ?? ''}
-                  onChange={(e) => setEditTrainerId(e.target.value ? Number(e.target.value) : null)}
-                  disabled={isLoadingTrainers}
+                <button
+                  type="button"
+                  className="calendar-hour-picker-field calendar-edit-trainer-trigger"
+                  disabled={isLoadingTrainers || trainerOptions.length === 0}
+                  onClick={() => {
+                    setShowCapacityPicker(false);
+                    setShowTrainerPicker((prev) => !prev);
+                  }}
                 >
-                  <option value="">{isLoadingTrainers ? t('create.loadingTrainers') : t('create.selectTrainer')}</option>
-                  {trainerOptions.map((trainerOption) => (
-                    <option key={trainerOption.id} value={trainerOption.id}>
-                      {trainerOption.name}
-                    </option>
-                  ))}
-                </select>
+                  {isLoadingTrainers ? t('create.loadingTrainers') : (selectedTrainerOption?.name || t('create.selectTrainer'))}
+                </button>
+                {showTrainerPicker ? (
+                  <div className="calendar-trainer-picker-panel">
+                    {trainerOptions.map((trainerOption) => (
+                      <button
+                        key={trainerOption.id}
+                        type="button"
+                        className={`calendar-trainer-option ${editTrainerId === trainerOption.id ? 'selected' : ''}`}
+                        onClick={() => {
+                          setEditTrainerId(trainerOption.id);
+                          setShowTrainerPicker(false);
+                        }}
+                      >
+                        <span className="calendar-trainer-name">{trainerOption.name}</span>
+                        <span className="calendar-trainer-role">{trainerOption.role}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </label>
             </div>
           ) : null}
@@ -973,7 +999,10 @@ const Calendar: React.FC = () => {
               <button
                 type="button"
                 className="calendar-hour-picker-field"
-                onClick={() => setShowCapacityPicker(prev => !prev)}
+                onClick={() => {
+                  setShowTrainerPicker(false);
+                  setShowCapacityPicker(prev => !prev);
+                }}
               >
                 {editCapacity}
               </button>

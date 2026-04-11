@@ -1,4 +1,5 @@
 from app.auth.security import hash_password
+from app.models.booking import Booking
 from app.models.user import User
 
 
@@ -69,3 +70,48 @@ def test_superadmin_can_reassign_session_trainer(client, auth_headers, seed_data
 
     assert response.status_code == 200
     assert response.json()["trainer_id"] == seed_data["admin"].id
+
+
+def test_admin_updating_session_time_does_not_send_push_notification(
+    client, auth_headers, seed_data, db_session, monkeypatch
+):
+    """Cambiar la hora de una sesión no debe enviar push a los alumnos apuntados."""
+    from app.services import session_service
+
+    seed_data["client"].fcm_token = "client-token"
+    db_session.add(
+        Booking(
+            user_id=seed_data["client"].id,
+            session_id=seed_data["session"].id,
+            status="active",
+        )
+    )
+    db_session.commit()
+
+    sent_notifications: list[dict] = []
+
+    def fake_send_push_notification(tokens, title, body, data=None):
+        sent_notifications.append({
+            "tokens": tokens,
+            "title": title,
+            "body": body,
+            "data": data or {},
+        })
+
+    monkeypatch.setattr(
+        session_service,
+        "send_push_notification",
+        fake_send_push_notification,
+        raising=False,
+    )
+
+    headers = auth_headers(seed_data["admin"].email, "admin1234")
+    response = client.patch(
+        f"/api/sessions/{seed_data['session'].id}",
+        headers=headers,
+        json={"start_time": "18:00", "end_time": "19:00"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["start_time"].startswith("18:00")
+    assert sent_notifications == []

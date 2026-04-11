@@ -270,6 +270,8 @@
 .config-avatar-source-modal-wrapper .modal-backdrop,
 .config-avatar-source-modal-wrapper .ion-modal-backdrop {
   background: rgba(0, 0, 0, 0.48) !important;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   opacity: 1 !important;
 }
 
@@ -328,6 +330,8 @@
 .config-edit-modal-wrapper .modal-backdrop,
 .config-edit-modal-wrapper .ion-modal-backdrop {
   background: rgba(0, 0, 0, 0.48) !important;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   opacity: 1 !important;
 }
 

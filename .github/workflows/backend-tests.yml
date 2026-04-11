@@ -49,9 +49,13 @@ jobs:
         run: |
           echo "No migrations configuradas aún"
         # alembic upgrade head
-      - name: Seed de datos (opcional)
+      - name: Initialize database schema for CI
         run: |
-          python backend/seed.py || echo "No seed.py o no necesario"
+          python -c "import app.main"
+        working-directory: backend
+      - name: Seed de datos de prueba
+        run: |
+          python backend/seed.py
       - name: Mostrar contenido de main.py y ruta de trabajo
         run: |
           pwd

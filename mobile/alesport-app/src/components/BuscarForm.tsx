@@ -34,6 +34,22 @@ const BuscarForm: React.FC = () => {
         return t('search.all');
     }, [periodFilter, t]);
 
+    const periodDateLabel = useMemo(() => {
+        if (periodFilter !== 'month') {
+            return formatDateDdMmYy(periodDate);
+        }
+
+        const baseDate = new Date(`${periodDate}T00:00:00`);
+        if (Number.isNaN(baseDate.getTime())) {
+            return formatDateDdMmYy(periodDate);
+        }
+
+        return baseDate.toLocaleDateString(dateLocale, {
+            month: 'long',
+            year: 'numeric',
+        });
+    }, [dateLocale, periodDate, periodFilter]);
+
     const handlePickPeriodFilter = (nextFilter: PeriodFilter) => {
         setPeriodFilter(nextFilter);
         if (nextFilter === 'today') {
@@ -200,7 +216,7 @@ const BuscarForm: React.FC = () => {
                                     className="search-form-period-date-btn"
                                     onClick={() => setShowPeriodCalendar(true)}
                                 >
-                                    {formatDateDdMmYy(periodDate)}
+                                    {periodDateLabel}
                                 </button>
                             ) : null}
                         </div>
@@ -229,11 +245,6 @@ const BuscarForm: React.FC = () => {
                                         </button>
                                     ))}
                                 </div>
-                                <div className="search-form-date-modal-actions">
-                                    <button type="button" className="app-btn-danger" onClick={() => setShowPeriodFilterModal(false)}>
-                                        {t('common.cancel')}
-                                    </button>
-                                </div>
                             </div>
                         </IonModal>
 
@@ -243,28 +254,56 @@ const BuscarForm: React.FC = () => {
                             onDidDismiss={() => setShowPeriodCalendar(false)}
                         >
                             <div className="search-form-date-modal">
-                                <h4>{t('search.selectDate')}</h4>
+                                <h4>{periodFilter === 'month' ? t('search.selectMonth') : t('search.selectDate')}</h4>
                                 <IonDatetime
                                     className="search-form-date-calendar"
-                                    presentation="date"
+                                    presentation={periodFilter === 'month' ? 'month-year' : 'date'}
                                     firstDayOfWeek={1}
                                     locale={dateLocale}
                                     value={periodDate}
+                                    isDateEnabled={periodFilter === 'week'
+                                        ? (isoDate: string) => {
+                                            const day = new Date(isoDate).getDay();
+                                            return day === 1;
+                                        }
+                                        : undefined}
                                     onIonChange={(e) => {
                                         const next = e.detail.value;
                                         if (typeof next === 'string') {
+                                            if (periodFilter === 'month') {
+                                                const normalizedDate = new Date(next);
+                                                if (!Number.isNaN(normalizedDate.getTime())) {
+                                                    const year = normalizedDate.getFullYear();
+                                                    const month = String(normalizedDate.getMonth() + 1).padStart(2, '0');
+                                                    setPeriodDate(`${year}-${month}-01`);
+                                                    return;
+                                                }
+                                            }
+
+                                            if (periodFilter === 'week') {
+                                                const normalizedDate = new Date(next);
+                                                if (!Number.isNaN(normalizedDate.getTime()) && normalizedDate.getDay() === 1) {
+                                                    setPeriodDate(next.slice(0, 10));
+                                                    setShowPeriodCalendar(false);
+                                                }
+                                                return;
+                                            }
+
                                             setPeriodDate(next.slice(0, 10));
+                                            setShowPeriodCalendar(false);
                                         }
                                     }}
                                 />
-                                <div className="search-form-date-modal-actions">
-                                    <button type="button" className="app-btn-primary" onClick={() => setShowPeriodCalendar(false)}>
-                                        {t('common.accept')}
-                                    </button>
-                                    <button type="button" className="app-btn-danger" onClick={() => setShowPeriodCalendar(false)}>
-                                        {t('common.cancel')}
-                                    </button>
-                                </div>
+                                {periodFilter === 'month' ? (
+                                    <div className="search-form-date-modal-actions">
+                                        <button type="button" className="app-btn-primary" onClick={() => setShowPeriodCalendar(false)}>
+                                            {t('common.accept')}
+                                        </button>
+                                        <button type="button" className="app-btn-danger" onClick={() => setShowPeriodCalendar(false)}>
+                                            {t('common.cancel')}
+                                        </button>
+                                    </div>
+                                ) : null}
                             </div>
                         </IonModal>
 

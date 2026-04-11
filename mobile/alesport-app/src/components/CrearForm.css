@@ -13,6 +13,8 @@
 .crear-fixed-students-modal-wrapper .modal-backdrop,
 .crear-fixed-students-modal-wrapper .ion-modal-backdrop {
   background: rgba(0, 0, 0, 0.48) !important;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   opacity: 1 !important;
 }
 

@@ -456,8 +456,33 @@ body,
   --height: auto;
   --border-radius: 22px;
   --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
+  --backdrop-opacity: 1 !important;
   --ion-color-primary: #0089a6;
   --ion-color-primary-rgb: 0, 137, 166;
+}
+
+.calendar-month-modal-wrapper.ion-modal-overlay,
+.calendar-hour-modal-wrapper.ion-modal-overlay,
+.calendar-bookings-modal-wrapper.ion-modal-overlay {
+  --backdrop-opacity: 1 !important;
+}
+
+.calendar-month-modal-wrapper::part(backdrop),
+.calendar-month-modal-wrapper .ion-backdrop,
+.calendar-month-modal-wrapper .modal-backdrop,
+.calendar-month-modal-wrapper .ion-modal-backdrop,
+.calendar-hour-modal-wrapper::part(backdrop),
+.calendar-hour-modal-wrapper .ion-backdrop,
+.calendar-hour-modal-wrapper .modal-backdrop,
+.calendar-hour-modal-wrapper .ion-modal-backdrop,
+.calendar-bookings-modal-wrapper::part(backdrop),
+.calendar-bookings-modal-wrapper .ion-backdrop,
+.calendar-bookings-modal-wrapper .modal-backdrop,
+.calendar-bookings-modal-wrapper .ion-modal-backdrop {
+  background: rgba(0, 0, 0, 0.48) !important;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 1 !important;
 }
 
 .calendar-month-modal-wrapper::part(content) {
@@ -925,6 +950,8 @@ body,
 
 .calendar-time-picker-modal-wrapper::part(backdrop) {
   background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   transition: opacity 180ms ease, background-color 180ms ease;
 }
 

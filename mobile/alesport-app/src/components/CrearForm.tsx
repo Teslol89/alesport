@@ -933,7 +933,11 @@ const CrearForm: React.FC = () => {
                         setRecurringFixedStudentsSearch('');
                     }}
                 >
-                    <div className="crear-single-modal" onClick={closeRecurringSubmodalsOnEmptyClick} ref={recurringModalBodyRef}>
+                    <div
+                        className={`crear-single-modal ${(showCopyWeekModal || showRecurringFixedStudentsModal) ? 'app-stacked-modal-dimmed' : ''}`}
+                        onClick={closeRecurringSubmodalsOnEmptyClick}
+                        ref={recurringModalBodyRef}
+                    >
                         <div className="crear-single-modal-header">
                             <h3>{t('create.recurringWeeklyModalTitle')}</h3>
                             <button

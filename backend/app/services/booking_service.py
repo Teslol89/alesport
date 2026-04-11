@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.auth.roles import is_admin_role
 from app.models.booking import Booking
 from app.models.session import SessionModel
 from app.models.user import User

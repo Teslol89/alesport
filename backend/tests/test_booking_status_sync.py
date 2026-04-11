@@ -323,6 +323,29 @@ def test_session_returns_to_active_when_cancelling_a_booking(
     assert seed_session.status == "active"
 
 
+def test_client_can_cancel_own_booking_with_enough_notice(client, seed_data, db_session):
+    seed_session = seed_data["session"]
+    seed_data["client"].is_verified = True
+    seed_session.start_time = datetime.now(timezone.utc) + timedelta(days=1)
+    seed_session.end_time = seed_session.start_time + timedelta(hours=1)
+    db_session.commit()
+
+    headers = _login_headers(client, seed_data["client"].email, "client1234")
+    create_response = client.post(
+        "/api/bookings/",
+        headers=headers,
+        json={"session_id": seed_session.id},
+    )
+
+    assert create_response.status_code == 201
+
+    booking_id = create_response.json()["id"]
+    cancel_response = client.patch(f"/api/bookings/{booking_id}/cancel", headers=headers)
+
+    assert cancel_response.status_code == 200
+    assert cancel_response.json()["status"] == "cancelled"
+
+
 def test_reactivate_booking_corrects_stale_completed_session_when_there_is_space(
     client, seed_data, db_session
 ):

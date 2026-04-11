@@ -22,6 +22,7 @@ jobs:
           --health-cmd "pg_isready -U alesport" --health-interval 10s --health-timeout 5s --health-retries 5
     env:
       DATABASE_URL: postgresql://alesport:alesport@localhost:5432/alesport_test
+      API_BASE_URL: http://127.0.0.1:8000/api
     steps:
       - uses: actions/checkout@v4
       - name: Crear .env dummy para CI (raíz y backend)

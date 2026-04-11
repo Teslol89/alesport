@@ -38,9 +38,9 @@ from datetime import datetime, timedelta, time as dt_time
 import requests
 
 
-BASE_URL = os.getenv("API_BASE_URL", "https://api.verdeguerlabs.es/api")
+BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api").rstrip("/")
 USERS = [
-    {"email": "admin@demo.com", "password": "admin123", "role": "admin"},
+    {"email": "admin@demo.com", "password": "admin123", "role": "superadmin"},
     {"email": "trainer@demo.com", "password": "trainer123", "role": "trainer"},
     {"email": "cliente@demo.com", "password": "cliente123", "role": "client"},
 ]
@@ -181,6 +181,23 @@ def pick_session_for_role(sessions: list[dict], role: str, user_id: int | None) 
     return active_sessions[0]
 
 
+def resolve_manager_trainer_id(role: str, user_id: int | None, sessions: list[dict]) -> int | None:
+    """Obtiene un trainer_id válido para pruebas cuando el usuario autenticado es admin/superadmin."""
+    if role == "trainer":
+        return user_id
+
+    for session in sessions:
+        trainer_id = session.get("trainer_id")
+        try:
+            numeric_trainer_id = int(trainer_id)
+        except (TypeError, ValueError):
+            continue
+        if numeric_trainer_id > 0:
+            return numeric_trainer_id
+
+    return None
+
+
 def create_test_session(
     token: str,
     trainer_id: int | None,
@@ -250,23 +267,24 @@ def create_test_session_with_payload(token: str, payload: dict) -> dict | None:
     return None
 
 
-def run_common_checks(token: str, role: str):
+def run_common_checks(token: str, declared_role: str):
     headers = auth_headers(token)
 
     me = request_and_check("GET", "/auth/me", {200}, headers=headers).json()
     user_id = me.get("id")
+    actual_role = str(me.get("role") or declared_role)
 
     sessions_resp = request_and_check("GET", "/sessions/", {200}, headers=headers)
     sessions = sessions_resp.json() if isinstance(sessions_resp.json(), list) else []
 
-    if role in ("admin", "superadmin"):
+    if actual_role in ("admin", "superadmin"):
         request_and_check("GET", "/users/", {200}, headers=headers)
     else:
         request_and_check("GET", "/users/", {403}, headers=headers)
 
     request_and_check("GET", "/schedule/", {200}, headers=headers)
 
-    if role in ("admin", "superadmin"):
+    if actual_role in ("admin", "superadmin"):
         request_and_check(
             "POST",
             "/schedule/generate-sessions",
@@ -283,12 +301,13 @@ def run_common_checks(token: str, role: str):
             json={"weeks_ahead": 1},
         )
 
-    return user_id, sessions
+    return user_id, sessions, actual_role
 
 
 def run_role_specific_checks(token: str, role: str, user_id: int | None, sessions: list[dict]):
     headers = auth_headers(token)
     session = pick_session_for_role(sessions, role, user_id)
+    manager_trainer_id = resolve_manager_trainer_id(role, user_id, sessions)
 
     if role in ("admin", "superadmin", "trainer"):
         working_sessions = list(sessions)
@@ -297,7 +316,7 @@ def run_role_specific_checks(token: str, role: str, user_id: int | None, session
         print(f"  [TEST] Creando sesión nueva (class_name, notes)...")
         created_session = create_test_session(
             token,
-            user_id if role == "trainer" else None,
+            user_id if role == "trainer" else manager_trainer_id,
             TOMORROW.isoformat(),
             working_sessions,
         )
@@ -482,10 +501,27 @@ def run_session_validation_checks(admin_token: str):
     """Tests de validación para creación de sesiones: overlaps, fechas pasadas, campos inválidos."""
     print("\n===== TEST: VALIDACIONES DE SESIONES =====")
     headers = auth_headers(admin_token)
+    me = request_and_check("GET", "/auth/me", {200}, headers=headers).json()
+    current_role = str(me.get("role") or "admin")
+    current_user_id = me.get("id")
     
     # ========== TEST: No puede crear sesión en el pasado ==========
     print("[TEST] Intentando crear sesión en el pasado...")
     past_date = (TODAY - timedelta(days=1)).isoformat()
+    existing_sessions_response = requests.get(
+        f"{BASE_URL}/sessions/",
+        headers=headers,
+        timeout=20,
+    )
+    existing_sessions = existing_sessions_response.json() if existing_sessions_response.status_code == 200 else []
+    manager_trainer_id = resolve_manager_trainer_id(current_role, current_user_id, existing_sessions)
+
+    base_admin_payload = (
+        {"trainer_id": manager_trainer_id}
+        if current_role in ("admin", "superadmin") and manager_trainer_id is not None
+        else {}
+    )
+
     response = requests.post(
         f"{BASE_URL}/sessions/",
         json={
@@ -493,6 +529,7 @@ def run_session_validation_checks(admin_token: str):
             "start_time": "10:00",
             "end_time": "11:00",
             "capacity": 5,
+            **base_admin_payload,
         },
         headers=headers,
         timeout=20,
@@ -511,6 +548,7 @@ def run_session_validation_checks(admin_token: str):
             "start_time": "14:00",
             "end_time": "10:00",  # Antes que start_time
             "capacity": 5,
+            **base_admin_payload,
         },
         headers=headers,
         timeout=20,
@@ -528,6 +566,7 @@ def run_session_validation_checks(admin_token: str):
             "start_time": "10:00",
             "end_time": "11:00",
             "capacity": 5,
+            **base_admin_payload,
         },
         headers=headers,
         timeout=20,
@@ -539,16 +578,10 @@ def run_session_validation_checks(admin_token: str):
     
     # ========== TEST: Crear sesión exitosa con todos los campos ==========
     print("[TEST] Creando sesión con todos los campos nuevos...")
-    existing_sessions_response = requests.get(
-        f"{BASE_URL}/sessions/",
-        headers=headers,
-        timeout=20,
-    )
-    existing_sessions = existing_sessions_response.json() if existing_sessions_response.status_code == 200 else []
     success_payload = build_non_overlapping_session_payload(
         existing_sessions,
         [FUTURE_DATE.isoformat(), (FUTURE_DATE + timedelta(days=1)).isoformat(), (FUTURE_DATE + timedelta(days=2)).isoformat()],
-        trainer_id=None,
+        trainer_id=current_user_id if current_role == "trainer" else manager_trainer_id,
         class_name="Advanced Training",
         notes="Sesión completa con documentación",
         capacity=10,
@@ -587,14 +620,12 @@ def run_tests_for_user(user: dict):
     if token is None:
         raise AssertionError(f"No se pudo iniciar sesión para {user['email']}")
     
-    print(f"✓ Login exitoso")
-
-    user_id, sessions = run_common_checks(token, user["role"])
+    user_id, sessions, actual_role = run_common_checks(token, user["role"])
+    print(f"✓ Login exitoso (rol real: {actual_role})")
     print(f"✓ Checks comunes superados")
-    
-    
-    run_role_specific_checks(token, user["role"], user_id, sessions)
-    print(f"✓ Checks específicos de {user['role']} superados")
+
+    run_role_specific_checks(token, actual_role, user_id, sessions)
+    print(f"✓ Checks específicos de {actual_role} superados")
 
 
 if __name__ == "__main__":

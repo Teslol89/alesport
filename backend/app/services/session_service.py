@@ -305,6 +305,28 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
     # Obtener solo los campos que se quieren modificar
     patch = update_data.model_dump(exclude_unset=True, exclude_none=True)
 
+    if "trainer_id" in patch:
+        if current_user.role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Solo un administrador puede cambiar el entrenador de la sesión",
+            )
+
+        next_trainer = (
+            db.query(User)
+            .filter(
+                User.id == patch["trainer_id"],
+                User.role.in_(("admin", "trainer")),
+                User.is_active.is_(True),
+            )
+            .first()
+        )
+        if next_trainer is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Entrenador no encontrado o no disponible",
+            )
+
     # Detectar si va a cambiar la hora antes de aplicar el patch
     start_time_changed = "start_time" in patch
     old_start_time = session.start_time

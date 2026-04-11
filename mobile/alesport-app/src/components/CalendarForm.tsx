@@ -17,6 +17,7 @@ import {
 } from '../utils/funcionesGeneral';
 import { getSessionsByDateRange, updateSession, cancelSession } from '../api/sessions';
 import { BookingItem, cancelBooking, createBooking, getBookingsBySession, getBookingsByUser, reactivateBooking } from '../api/bookings';
+import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
 import { useLanguage } from '../i18n/LanguageContext';
 import { clearPendingPushNavigation } from '../services/fcm';
 import { useAuth } from './AuthContext';
@@ -59,6 +60,9 @@ const Calendar: React.FC = () => {
   const [editClassName, setEditClassName] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editCapacity, setEditCapacity] = useState(10);
+  const [editTrainerId, setEditTrainerId] = useState<number | null>(null);
+  const [trainerOptions, setTrainerOptions] = useState<AssignableTrainer[]>([]);
+  const [isLoadingTrainers, setIsLoadingTrainers] = useState(false);
   const [showCapacityPicker, setShowCapacityPicker] = useState(false);
   const [showTimePickerModal, setShowTimePickerModal] = useState(false);
   const [isTimePickerPresented, setIsTimePickerPresented] = useState(false);
@@ -87,6 +91,7 @@ const Calendar: React.FC = () => {
   const handledPushNavigationRef = useRef<string | null>(null);
   const bookingsInFlightRef = useRef<Record<number, Promise<BookingItem[]>>>({});
   const isClient = userRole === 'client';
+  const isAdmin = userRole === 'admin';
   const canManageSessionBookings = userRole === 'admin' || userRole === 'trainer';
 
   const invalidateSessionBookingsCache = useCallback((sessionId?: number) => {
@@ -188,6 +193,37 @@ const Calendar: React.FC = () => {
     void refreshMyBookings();
   }, [refreshMyBookings]);
 
+  useEffect(() => {
+    if (!isAdmin) {
+      setTrainerOptions([]);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingTrainers(true);
+
+    void getAssignableTrainers()
+      .then((options) => {
+        if (!cancelled) {
+          setTrainerOptions(options);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTrainerOptions([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingTrainers(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
+
   // También refrescar al entrar en la vista Agenda (cambio de tab/ruta)
   useIonViewWillEnter(() => {
     fetchSessions({ silent: true });
@@ -259,6 +295,7 @@ const Calendar: React.FC = () => {
     setEditClassName(session.class_name || '');
     setEditNotes(session.notes || '');
     setEditCapacity(session.capacity);
+    setEditTrainerId(session.trainer_id ?? null);
     setShowCapacityPicker(false);
 
     if (showDetailsModal) {
@@ -457,6 +494,11 @@ const Calendar: React.FC = () => {
       return;
     }
 
+    if (isAdmin && (!editTrainerId || !Number.isInteger(editTrainerId) || editTrainerId <= 0)) {
+      setToast({ show: true, message: t('create.invalidTrainer'), type: 'danger' });
+      return;
+    }
+
     try {
       const updated = await updateSession(editingSession.id, {
         start_time: newStartTime,
@@ -464,6 +506,7 @@ const Calendar: React.FC = () => {
         capacity: editCapacity,
         class_name: trimmedClassName,
         notes: editNotes.trim(),
+        trainer_id: isAdmin ? editTrainerId ?? undefined : undefined,
       });
 
       setSessions(prev => prev.map(session => (
@@ -877,6 +920,26 @@ const Calendar: React.FC = () => {
         <div className={`calendar-hour-modal ${isTimePickerPresented ? 'calendar-hour-modal--dimmed' : ''}`}>
           <h3>{t('calendar.editSession')}</h3>
           <p className="calendar-hour-modal-subtitle">{t('calendar.editSubtitle')}</p>
+          {isAdmin ? (
+            <div className="calendar-edit-session-block">
+              <label className="calendar-hour-modal-label">
+                <span>{t('calendar.trainer')}</span>
+                <select
+                  className="calendar-edit-text-input calendar-edit-select"
+                  value={editTrainerId ?? ''}
+                  onChange={(e) => setEditTrainerId(e.target.value ? Number(e.target.value) : null)}
+                  disabled={isLoadingTrainers}
+                >
+                  <option value="">{isLoadingTrainers ? t('create.loadingTrainers') : t('create.selectTrainer')}</option>
+                  {trainerOptions.map((trainerOption) => (
+                    <option key={trainerOption.id} value={trainerOption.id}>
+                      {trainerOption.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ) : null}
           <div className="calendar-edit-session-block">
             <label className="calendar-hour-modal-label">
               <span>{t('calendar.className')}</span>

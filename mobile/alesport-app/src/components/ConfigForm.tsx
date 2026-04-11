@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
 import { cameraOutline, moonOutline, personCircleOutline, sunnyOutline } from 'ionicons/icons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -204,50 +204,43 @@ const ConfigForm: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadCenterRules = useCallback(async () => {
     const storedRules = readStoredCenterRules();
     const fallbackRules = storedRules ?? defaultCenterRules;
 
-    const loadCenterRules = async () => {
-      try {
-        const sharedRules = await getCenterRules();
-        if (sharedRules.length > 0) {
-          if (!cancelled) {
-            setCenterRules(sharedRules);
-          }
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(CENTER_RULES_STORAGE_KEY, JSON.stringify(sharedRules));
-          }
-          return;
+    try {
+      const sharedRules = await getCenterRules();
+      if (sharedRules.length > 0) {
+        setCenterRules(sharedRules);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(CENTER_RULES_STORAGE_KEY, JSON.stringify(sharedRules));
         }
+        return;
+      }
 
-        if (!cancelled) {
-          setCenterRules(fallbackRules);
-        }
+      setCenterRules(fallbackRules);
 
-        if (canManageCenterRules && storedRules && storedRules.length > 0) {
-          const syncedRules = await updateCenterRules(storedRules);
-          if (!cancelled) {
-            setCenterRules(syncedRules);
-          }
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(CENTER_RULES_STORAGE_KEY, JSON.stringify(syncedRules));
-          }
-        }
-      } catch {
-        if (!cancelled) {
-          setCenterRules(fallbackRules);
+      if (canManageCenterRules && storedRules && storedRules.length > 0) {
+        const syncedRules = await updateCenterRules(storedRules);
+        setCenterRules(syncedRules);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(CENTER_RULES_STORAGE_KEY, JSON.stringify(syncedRules));
         }
       }
-    };
-
-    void loadCenterRules();
-
-    return () => {
-      cancelled = true;
-    };
+    } catch {
+      setCenterRules(fallbackRules);
+    }
   }, [canManageCenterRules, defaultCenterRules]);
+
+  useEffect(() => {
+    void loadCenterRules();
+  }, [loadCenterRules]);
+
+  useEffect(() => {
+    if (showRulesModal) {
+      void loadCenterRules();
+    }
+  }, [showRulesModal, loadCenterRules]);
 
   const openEditProfileModal = () => {
     setEditName(profile.name || '');

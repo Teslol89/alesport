@@ -801,6 +801,56 @@ body,
   appearance: none;
 }
 
+.calendar-edit-trainer-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.calendar-trainer-picker-panel {
+  margin-top: 0.3rem;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #d8e5e9;
+  border-radius: 14px;
+  padding: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+  box-sizing: border-box;
+}
+
+.calendar-trainer-option {
+  border: 1px solid #c8dbe0;
+  background: #f6f9fa;
+  color: #0f3037;
+  border-radius: 10px;
+  padding: 0.55rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  text-align: left;
+}
+
+.calendar-trainer-option.selected {
+  border-color: #0089a6;
+  background: rgba(0, 137, 166, 0.16);
+  color: #0a4a57;
+}
+
+.calendar-trainer-name {
+  font-weight: 700;
+}
+
+.calendar-trainer-role {
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
 .calendar-edit-textarea {
   resize: vertical;
   min-height: 96px;

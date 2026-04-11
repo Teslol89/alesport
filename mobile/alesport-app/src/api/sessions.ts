@@ -96,6 +96,7 @@ export async function updateSession(sessionId: number, payload: {
   capacity?: number;
   class_name?: string;
   notes?: string;
+  trainer_id?: number;
 }) {
   const url = `${baseApiUrl}/sessions/${sessionId}`;
   const response = await fetchWithAuth(url, {

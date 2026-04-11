@@ -768,7 +768,8 @@ body,
 }
 
 .calendar-edit-text-input,
-.calendar-edit-textarea {
+.calendar-edit-textarea,
+.calendar-edit-select {
   width: 100%;
   border: var(--app-input-border-width) solid var(--app-input-border-color);
   background: var(--app-input-bg);
@@ -788,11 +789,16 @@ body,
 }
 
 .calendar-edit-text-input:focus,
-.calendar-edit-textarea:focus {
+.calendar-edit-textarea:focus,
+.calendar-edit-select:focus {
   outline: none;
   border-color: var(--app-input-border-color-focus);
   background: var(--app-input-bg-focus);
   box-shadow: none;
+}
+
+.calendar-edit-select {
+  appearance: none;
 }
 
 .calendar-edit-textarea {
@@ -1324,6 +1330,7 @@ body,
   }
 
   .calendar-hour-modal-fields {
+    margin-top: 0.9rem;
     grid-template-columns: 1fr;
   }
 

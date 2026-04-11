@@ -112,6 +112,8 @@ class SessionUpdate(BaseModel):
     class_name: str | None = Field(default=None, min_length=1, max_length=120)
     # Notas internas opcionales
     notes: str | None = Field(default=None, max_length=1000)
+    # Reasignación de entrenador (solo admin)
+    trainer_id: int | None = Field(default=None, gt=0)
     # Nuevo estado de la sesión
     status: Literal["active", "cancelled", "completed"] | None = None
 

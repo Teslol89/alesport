@@ -148,6 +148,20 @@ def get_assignable_trainers(db: Session) -> list[User]:
     )
 
 
+def get_eligible_fixed_students(db: Session) -> list[User]:
+    """Devuelve clientes activos y al corriente de pago que pueden preasignarse a sesiones."""
+    return (
+        db.query(User)
+        .filter(
+            User.role == "client",
+            User.is_active.is_(True),
+            User.membership_active.is_(True),
+        )
+        .order_by(User.name.asc(), User.email.asc())
+        .all()
+    )
+
+
 def get_assignable_trainer_by_id(db: Session, trainer_id: int) -> User | None:
     """Busca un entrenador asignable concreto por ID."""
     return (

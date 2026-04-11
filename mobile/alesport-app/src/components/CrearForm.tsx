@@ -1,8 +1,8 @@
 /* =================== TIPOS Y CONSTANTES =================== */
 import logoIcon from '../icons/icon.png';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
-import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
+import { getAssignableTrainers, getEligibleFixedStudents, type AssignableTrainer, type FixedStudentCandidate } from '../api/user';
 import { createSingleSession, createRecurringSessions } from '../api/sessions';
 import { copyWeekSessions } from '../api/sessions';
 import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso, getMondayOfWeek, getSundayOfWeek } from '../utils/funcionesGeneral';
@@ -37,6 +37,7 @@ type RecurringSessionDraft = {
     trainerId: number | null;
     trainerName: string;
     notes: string;
+    fixedStudentIds: number[];
 };
 
 /* Fecha base para el time picker, que solo maneja horas y minutos.
@@ -84,8 +85,7 @@ const CrearForm: React.FC = () => {
             setRecurringTimePickerTarget(null);
             return;
         }
-        setShowRecurringTrainerPicker(false);
-        setShowRecurringDatePicker(false);
+        closeAllRecurringSubmodals();
         setTimeout(() => {
             const currentValue = target === 'start' ? recurringDraft.startTime : recurringDraft.endTime;
             const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
@@ -122,8 +122,11 @@ const CrearForm: React.FC = () => {
     const [showCapacityPicker, setShowCapacityPicker] = useState(false);
     const [showTrainerPicker, setShowTrainerPicker] = useState(false);
     const [trainerOptions, setTrainerOptions] = useState<AssignableTrainer[]>([]);
+    const [fixedStudentOptions, setFixedStudentOptions] = useState<FixedStudentCandidate[]>([]);
     const [isLoadingTrainers, setIsLoadingTrainers] = useState(false);
+    const [isLoadingFixedStudents, setIsLoadingFixedStudents] = useState(false);
     const [trainersError, setTrainersError] = useState<string | null>(null);
+    const [fixedStudentsError, setFixedStudentsError] = useState<string | null>(null);
     const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' | 'info' }>({
         show: false,
         message: '',
@@ -158,12 +161,20 @@ const CrearForm: React.FC = () => {
         trainerId: null,
         trainerName: '',
         notes: '',
+        fixedStudentIds: [],
     });
+
+    const selectedRecurringFixedStudents = useMemo(
+        () => fixedStudentOptions.filter((student) => recurringDraft.fixedStudentIds.includes(student.id)),
+        [fixedStudentOptions, recurringDraft.fixedStudentIds]
+    );
 
     // --- Lógica del picker de entrenador recurrente ---
     // (Agrupada aquí para claridad, cerca del modal recurrente)
     const [showRecurringTrainerPicker, setShowRecurringTrainerPicker] = useState(false);
+    const [showRecurringFixedStudentsPicker, setShowRecurringFixedStudentsPicker] = useState(false);
     const recurringTrainerPanelRef = useRef<HTMLDivElement | null>(null);
+    const recurringFixedStudentsPanelRef = useRef<HTMLDivElement | null>(null);
 
     // Estado para mostrar/ocultar el date picker y capacity picker recurrente semanal
     const [showRecurringDatePicker, setShowRecurringDatePicker] = useState(false);
@@ -173,6 +184,7 @@ const CrearForm: React.FC = () => {
     // Cierra todos los submodales de la clase recurrente semanal
     function closeAllRecurringSubmodals() {
         setShowRecurringTrainerPicker(false);
+        setShowRecurringFixedStudentsPicker(false);
         setShowRecurringDatePicker(false);
         setShowRecurringTimePicker(false);
         setShowRecurringCapacityPicker(false);
@@ -192,8 +204,7 @@ const CrearForm: React.FC = () => {
     }
 
     function toggleRecurringTrainerPicker() {
-        setShowRecurringDatePicker(false);
-        setShowRecurringTimePicker(false);
+        closeAllRecurringSubmodals();
         setTimeout(() => {
             setShowRecurringTrainerPicker(true);
         }, 10);
@@ -202,6 +213,31 @@ const CrearForm: React.FC = () => {
     function pickRecurringTrainer(trainer: AssignableTrainer) {
         setRecurringDraft((prev) => ({ ...prev, trainerId: trainer.id, trainerName: trainer.name }));
         setShowRecurringTrainerPicker(false);
+    }
+
+    function toggleRecurringFixedStudentsPicker() {
+        const nextOpen = !showRecurringFixedStudentsPicker;
+        closeAllRecurringSubmodals();
+        setShowRecurringFixedStudentsPicker(nextOpen);
+    }
+
+    function toggleRecurringFixedStudent(studentId: number) {
+        setRecurringDraft((draft) => {
+            const isSelected = draft.fixedStudentIds.includes(studentId);
+            if (!isSelected && draft.fixedStudentIds.length >= draft.capacity) {
+                setToast({
+                    show: true,
+                    message: t('create.fixedStudentsLimit'),
+                    type: 'danger',
+                });
+                return draft;
+            }
+
+            const fixedStudentIds = isSelected
+                ? draft.fixedStudentIds.filter((id) => id !== studentId)
+                : [...draft.fixedStudentIds, studentId];
+            return { ...draft, fixedStudentIds };
+        });
     }
 
     function closeRecurringSubmodalsOnEmptyClick(e: React.MouseEvent<HTMLElement>) {
@@ -277,29 +313,40 @@ const CrearForm: React.FC = () => {
     useEffect(() => {
         let cancelled = false;
 
-        async function loadAssignableTrainers() {
+        async function loadPickerData() {
             setIsLoadingTrainers(true);
+            setIsLoadingFixedStudents(true);
             setTrainersError(null);
+            setFixedStudentsError(null);
 
-            try {
-                const options = await getAssignableTrainers();
-                if (cancelled) {
-                    return;
-                }
-                setTrainerOptions(options);
-                // Ya no asignamos entrenador por defecto
-            } catch {
-                if (!cancelled) {
-                    setTrainersError('No se pudieron cargar los entrenadores.');
-                }
-            } finally {
-                if (!cancelled) {
-                    setIsLoadingTrainers(false);
-                }
+            const [trainersResult, fixedStudentsResult] = await Promise.allSettled([
+                getAssignableTrainers(),
+                getEligibleFixedStudents(),
+            ]);
+
+            if (cancelled) {
+                return;
             }
+
+            if (trainersResult.status === 'fulfilled') {
+                setTrainerOptions(trainersResult.value);
+            } else {
+                setTrainerOptions([]);
+                setTrainersError('No se pudieron cargar los entrenadores.');
+            }
+
+            if (fixedStudentsResult.status === 'fulfilled') {
+                setFixedStudentOptions(fixedStudentsResult.value);
+            } else {
+                setFixedStudentOptions([]);
+                setFixedStudentsError('No se pudieron cargar los alumnos activos.');
+            }
+
+            setIsLoadingTrainers(false);
+            setIsLoadingFixedStudents(false);
         }
 
-        loadAssignableTrainers();
+        void loadPickerData();
 
         return () => {
             cancelled = true;
@@ -855,7 +902,7 @@ const CrearForm: React.FC = () => {
                                 className="crear-single-modal-close"
                                 onClick={() => {
                                     setShowRecurringModal(false);
-                                    setShowRecurringTrainerPicker(false);
+                                    closeAllRecurringSubmodals();
                                 }}
                                 aria-label={t('common.close')}
                             >
@@ -1006,6 +1053,46 @@ const CrearForm: React.FC = () => {
                                 </div>
                             ) : null}
                             {trainersError ? <p className="crear-validation-error">{trainersError}</p> : null}
+
+                            <label className="crear-field-label" htmlFor="rec-fixed-students">{t('create.fixedStudents')}</label>
+                            <button
+                                id="rec-fixed-students"
+                                type="button"
+                                className="crear-input crear-date-btn"
+                                disabled={isLoadingFixedStudents || fixedStudentOptions.length === 0}
+                                onClick={toggleRecurringFixedStudentsPicker}
+                            >
+                                {isLoadingFixedStudents
+                                    ? t('create.loadingFixedStudents')
+                                    : selectedRecurringFixedStudents.length > 0
+                                        ? selectedRecurringFixedStudents.map((student) => student.name).join(', ')
+                                        : t('create.selectFixedStudents')}
+                            </button>
+
+                            {showRecurringFixedStudentsPicker ? (
+                                <div className="crear-fixed-student-picker-panel" ref={recurringFixedStudentsPanelRef}>
+                                    {fixedStudentOptions.length === 0 ? (
+                                        <p className="crear-fixed-student-empty">{t('create.noFixedStudentsAvailable')}</p>
+                                    ) : fixedStudentOptions.map((student) => {
+                                        const isSelected = recurringDraft.fixedStudentIds.includes(student.id);
+                                        return (
+                                            <button
+                                                key={student.id}
+                                                type="button"
+                                                className={`crear-fixed-student-option ${isSelected ? 'selected' : ''}`}
+                                                onClick={() => toggleRecurringFixedStudent(student.id)}
+                                            >
+                                                <span className="crear-fixed-student-name">{student.name}</span>
+                                                <span className="crear-fixed-student-meta">{student.email}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            ) : null}
+                            {fixedStudentsError ? <p className="crear-validation-error">{fixedStudentsError}</p> : null}
+                            {selectedRecurringFixedStudents.length > recurringDraft.capacity ? (
+                                <p className="crear-validation-error">{t('create.fixedStudentsLimit')}</p>
+                            ) : null}
 
                             {/* Campo Nombre de la clase */}
                             <label className="crear-field-label" htmlFor="rec-class-name">{t('create.className')}</label>
@@ -1210,6 +1297,7 @@ const CrearForm: React.FC = () => {
                                 <p>Horario: {recurringDraft.startTime} - {recurringDraft.endTime}</p>
                                 <p>Capacidad: {recurringDraft.capacity}</p>
                                 <p>Entrenador: {recurringDraft.trainerName.trim() || 'Sin asignar'}</p>
+                                <p>{t('create.fixedStudents')}: {selectedRecurringFixedStudents.length > 0 ? selectedRecurringFixedStudents.map((student) => student.name).join(', ') : t('create.noneSelected')}</p>
                             </div>
 
                             <div className="crear-actions-row">
@@ -1228,6 +1316,7 @@ const CrearForm: React.FC = () => {
                                             trainerId: null,
                                             trainerName: '',
                                             notes: '',
+                                            fixedStudentIds: [],
                                         });
                                         closeAllRecurringSubmodals();
                                     }}
@@ -1257,6 +1346,7 @@ const CrearForm: React.FC = () => {
                                                     class_name: recurringDraft.className.trim(),
                                                     notes: recurringDraft.notes.trim() || undefined,
                                                     trainer_id: recurringDraft.trainerId || undefined,
+                                                    fixed_student_ids: recurringDraft.fixedStudentIds,
                                                 });
                                             }
                                         }
@@ -1288,6 +1378,7 @@ const CrearForm: React.FC = () => {
                                                     trainerId: null,
                                                     trainerName: '',
                                                     notes: '',
+                                                    fixedStudentIds: [],
                                                 });
                                                 closeAllRecurringSubmodals();
                                             }, 1000);

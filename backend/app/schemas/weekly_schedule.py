@@ -13,6 +13,7 @@ class WeeklyScheduleResponse(BaseModel):
     end_time: time
     capacity: int
     is_active: bool
+    fixed_student_ids: list[int] = Field(default_factory=list)
     created_at: datetime
 
     # Permite a Pydantic leer datos directamente desde objetos ORM de SQLAlchemy
@@ -30,6 +31,8 @@ class WeeklyScheduleCreate(BaseModel):
     start_time: time
     end_time: time
     capacity: int = Field(gt=0, le=10)
+    # Clientes que deben quedar apuntados automáticamente a todas las sesiones generadas por este horario.
+    fixed_student_ids: list[int] = Field(default_factory=list)
     # Número de semanas futuras para las que se generan sesiones automáticamente
     weeks_ahead: int = Field(default=4, ge=1, le=12)
 
@@ -43,6 +46,11 @@ class WeeklyScheduleCreate(BaseModel):
                 )
         if self.start_time >= self.end_time:
             raise ValueError("start_time debe ser anterior a end_time")
+
+        unique_ids = list(dict.fromkeys(self.fixed_student_ids))
+        self.fixed_student_ids = unique_ids
+        if len(unique_ids) > self.capacity:
+            raise ValueError("No puede haber más alumnos fijos que plazas en el horario")
         return self
 
 

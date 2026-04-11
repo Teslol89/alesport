@@ -7,8 +7,8 @@ from app.auth.roles import can_manage_sessions_role, is_admin_role
 from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.user import User, User as UserModel
-from app.schemas.user import AssignableTrainerResponse, UserResponse, UserProfileUpdate
-from app.services.user_service import get_all_users, get_assignable_trainers
+from app.schemas.user import AssignableTrainerResponse, FixedStudentCandidateResponse, UserResponse, UserProfileUpdate
+from app.services.user_service import get_all_users, get_assignable_trainers, get_eligible_fixed_students
 
 
 # --- INICIALIZAR ROUTER ANTES DE USARLO ---
@@ -73,6 +73,20 @@ def list_assignable_trainers(
             detail="Solo administradores o entrenadores pueden ver esta lista",
         )
     return get_assignable_trainers(db)
+
+
+@router.get("/eligible-fixed-students", response_model=list[FixedStudentCandidateResponse])
+def list_eligible_fixed_students(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Devuelve clientes activos y con membresía vigente para preasignarlos como alumnos fijos."""
+    if not can_manage_sessions_role(current_user.role):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo administradores o entrenadores pueden ver esta lista",
+        )
+    return get_eligible_fixed_students(db)
 
 
 @router.get("/me", response_model=UserResponse)

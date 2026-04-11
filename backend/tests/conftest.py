@@ -36,6 +36,7 @@ import app.models.center_rule  # noqa: F401
 import app.models.session  # noqa: F401
 import app.models.user  # noqa: F401
 import app.models.weekly_schedule  # noqa: F401
+import app.models.weekly_schedule_student  # noqa: F401
 from app.auth.security import hash_password
 from app.database.db import Base, get_db
 from app.main import app

@@ -7,6 +7,12 @@ export type AssignableTrainer = {
   role: "admin" | "trainer";
 };
 
+export type FixedStudentCandidate = {
+  id: number;
+  name: string;
+  email: string;
+};
+
 export type UserProfile = {
   id: number;
   name: string;
@@ -72,6 +78,27 @@ export async function saveFcmToken(token: string): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ fcm_token: token }),
   });
+}
+
+export async function getEligibleFixedStudents(): Promise<FixedStudentCandidate[]> {
+  const response = await fetchWithAuth(`${baseApiUrl}/users/eligible-fixed-students`);
+
+  if (!response.ok) {
+    throw new Error("No se pudo cargar la lista de alumnos activos");
+  }
+
+  const users = await response.json();
+  if (!Array.isArray(users)) {
+    return [];
+  }
+
+  return users
+    .map((user: any) => ({
+      id: Number(user.id),
+      name: String(user.name ?? "").trim(),
+      email: String(user.email ?? "").trim(),
+    }))
+    .filter((user: FixedStudentCandidate) => Number.isFinite(user.id) && user.id > 0 && user.name.length > 0);
 }
 
 export async function getAssignableTrainers(): Promise<AssignableTrainer[]> {

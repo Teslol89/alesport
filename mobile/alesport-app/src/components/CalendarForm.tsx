@@ -72,7 +72,6 @@ const Calendar: React.FC = () => {
   // Estado modal detalles/alumnos
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsSession, setDetailsSession] = useState<SessionItem | null>(null);
-  const [pendingEditSession, setPendingEditSession] = useState<SessionItem | null>(null);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [sessionOccupancy, setSessionOccupancy] = useState<Record<number, number>>({});
@@ -303,12 +302,6 @@ const Calendar: React.FC = () => {
     setEditTrainerId(session.trainer_id ?? null);
     setShowTrainerPicker(false);
     setShowCapacityPicker(false);
-
-    if (showDetailsModal) {
-      setPendingEditSession(session);
-      setShowDetailsModal(false);
-      return;
-    }
 
     setShowHourModal(true);
   }
@@ -1087,10 +1080,6 @@ const Calendar: React.FC = () => {
         keepContentsMounted={true}
         onDidDismiss={() => {
           setShowDetailsModal(false);
-          if (pendingEditSession) {
-            setPendingEditSession(null);
-            setShowHourModal(true);
-          }
         }}
       >
         <div className="calendar-bookings-modal">

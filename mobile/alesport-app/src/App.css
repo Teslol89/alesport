@@ -39,6 +39,17 @@
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
 }
 
+.app-blur-target {
+    transform: translateZ(0);
+    transition: filter 180ms ease, opacity 180ms ease;
+    will-change: filter;
+}
+
+.app-blur-target--modal-open {
+    filter: blur(2px);
+    opacity: 0.96;
+}
+
 ion-tab-button,
 ion-tab-button.tab-selected,
 ion-tab-button:active,

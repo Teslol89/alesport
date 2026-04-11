@@ -608,7 +608,7 @@ const CrearForm: React.FC = () => {
     }
 
     return (
-        <div className="crear-form-container">
+        <div className={`crear-form-container app-blur-target ${(showSingleModal || showRecurringModal) ? 'app-blur-target--modal-open' : ''}`}>
             <div className="crear-top-bar">
                 <img src={logoIcon} alt="Logo gimnasio" className="crear-top-logo" />
                 <div className="crear-top-title crear-top-title-absolute">{t('create.title')}</div>

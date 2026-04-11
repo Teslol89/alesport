@@ -502,7 +502,7 @@ const ConfigForm: React.FC = () => {
   };
 
   return (
-    <div className="config-form-container">
+    <div className={`config-form-container app-blur-target ${(showEditProfileModal || showSupportModal || showPrivacyModal || showRulesModal || showAvatarSourceAlert || showRuleEditorModal) ? 'app-blur-target--modal-open' : ''}`}>
       <div className="config-top-bar">
         <img src={logoIcon} alt="Logo gimnasio" className="config-top-logo" />
         <div className="config-top-title config-top-title-absolute">{t('config.title')}</div>

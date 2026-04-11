@@ -258,11 +258,11 @@
   --height: auto;
   --border-radius: 12px;
   --box-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
-  --backdrop-opacity: 1 !important;
+  --backdrop-opacity: 0.42 !important;
 }
 
 .config-avatar-source-modal-wrapper.ion-modal-overlay {
-  --backdrop-opacity: 1 !important;
+  --backdrop-opacity: 0.42 !important;
 }
 
 .config-avatar-source-modal-wrapper::part(backdrop),
@@ -270,9 +270,7 @@
 .config-avatar-source-modal-wrapper .modal-backdrop,
 .config-avatar-source-modal-wrapper .ion-modal-backdrop {
   background: rgba(0, 0, 0, 0.48) !important;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  opacity: 1 !important;
+  transition: opacity 180ms ease, background-color 180ms ease;
 }
 
 .config-avatar-source-modal-wrapper::part(content) {
@@ -318,11 +316,11 @@
   --height: auto;
   --border-radius: 20px;
   --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
-  --backdrop-opacity: 1 !important;
+  --backdrop-opacity: 0.42 !important;
 }
 
 .config-edit-modal-wrapper.ion-modal-overlay {
-  --backdrop-opacity: 1 !important;
+  --backdrop-opacity: 0.42 !important;
 }
 
 .config-edit-modal-wrapper::part(backdrop),
@@ -330,9 +328,7 @@
 .config-edit-modal-wrapper .modal-backdrop,
 .config-edit-modal-wrapper .ion-modal-backdrop {
   background: rgba(0, 0, 0, 0.48) !important;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  opacity: 1 !important;
+  transition: opacity 180ms ease, background-color 180ms ease;
 }
 
 .config-edit-modal-wrapper::part(content) {

@@ -125,3 +125,13 @@ class AssignableTrainerResponse(BaseModel):
     role: str
 
     model_config = {"from_attributes": True}
+
+
+class FixedStudentCandidateResponse(BaseModel):
+    """Cliente activo y con membresía vigente que puede seleccionarse como alumno fijo."""
+
+    id: int
+    name: str
+    email: str
+
+    model_config = {"from_attributes": True}

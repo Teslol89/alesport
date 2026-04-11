@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+from app.models.booking import Booking
 from app.models.session import SessionModel
 from app.models.user import User
 
@@ -18,6 +19,51 @@ logger = get_logger(__name__)
 
 
 PAST_SESSION_UPDATE_ERROR = "No se pueden modificar sesiones iniciadas o pasadas"
+
+
+def _get_valid_fixed_students(db: Session, student_ids: list[int] | None) -> list[User]:
+    normalized_ids = list(dict.fromkeys(int(student_id) for student_id in (student_ids or []) if int(student_id) > 0))
+    if not normalized_ids:
+        return []
+
+    students = (
+        db.query(User)
+        .filter(
+            User.id.in_(normalized_ids),
+            User.role == "client",
+            User.is_active.is_(True),
+            User.membership_active.is_(True),
+        )
+        .all()
+    )
+    students_by_id = {student.id: student for student in students}
+    missing_ids = [student_id for student_id in normalized_ids if student_id not in students_by_id]
+    if missing_ids:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Los alumnos seleccionados deben ser clientes activos con la membresía vigente",
+        )
+
+    return [students_by_id[student_id] for student_id in normalized_ids]
+
+
+def _attach_fixed_students_to_new_session(db: Session, session: SessionModel, students: list[User]) -> None:
+    if not students:
+        return
+
+    db.add_all(
+        [
+            Booking(
+                user_id=student.id,
+                session_id=session.id,
+                status="active",
+            )
+            for student in students
+        ]
+    )
+
+    if len(students) >= session.capacity and session.status != "cancelled":
+        session.status = "completed"
 
 
 # --- Función para convertir hora con tz a hora local sin tzinfo --- #
@@ -73,6 +119,10 @@ def create_session(db: Session, create_data, current_user: User) -> SessionModel
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo entrenadores o administradores pueden crear sesiones",
         )
+
+    fixed_students = _get_valid_fixed_students(
+        db, getattr(create_data, "fixed_student_ids", [])
+    )
 
     # Determinar trainer_id
     if is_admin_role(current_user.role):
@@ -137,6 +187,18 @@ def create_session(db: Session, create_data, current_user: User) -> SessionModel
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Datos de sesión inválidos",
         )
+
+    if fixed_students:
+        try:
+            _attach_fixed_students_to_new_session(db, new_session, fixed_students)
+            db.commit()
+            db.refresh(new_session)
+        except IntegrityError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudieron asignar los alumnos seleccionados a la sesión",
+            ) from exc
 
     # Obtener nombre del trainer para response
     trainer = db.query(User).filter(User.id == trainer_id).first()
@@ -418,10 +480,14 @@ def create_recurring_sessions(
         )
 
     new_sessions = []
+    fixed_students_by_session: list[list[User]] = []
     trainer_id = None
     try:
         # Validar y preparar todas las sesiones antes de insertar
         for create_data in create_data_list:
+            fixed_students = _get_valid_fixed_students(
+                db, getattr(create_data, "fixed_student_ids", [])
+            )
             # Determinar trainer_id
             if is_admin_role(current_user.role):
                 if getattr(create_data, "trainer_id", None) is None:
@@ -475,6 +541,7 @@ def create_recurring_sessions(
                 status="active",
             )
             new_sessions.append(new_session)
+            fixed_students_by_session.append(fixed_students)
 
         # Si todas las validaciones pasan, insertar todas en bloque
         for session in new_sessions:
@@ -482,10 +549,22 @@ def create_recurring_sessions(
         db.commit()
         for session in new_sessions:
             db.refresh(session)
+
+        if any(fixed_students_by_session):
+            for session, fixed_students in zip(new_sessions, fixed_students_by_session):
+                _attach_fixed_students_to_new_session(db, session, fixed_students)
+            db.commit()
+            for session in new_sessions:
+                db.refresh(session)
+
         # Añadir trainer_name dinámicamente
-        trainer = db.query(User).filter(User.id == trainer_id).first()
+        trainer_ids = {session.trainer_id for session in new_sessions}
+        trainers_by_id = {
+            trainer.id: trainer.name
+            for trainer in db.query(User).filter(User.id.in_(trainer_ids)).all()
+        }
         for session in new_sessions:
-            setattr(session, "trainer_name", trainer.name if trainer else "")
+            setattr(session, "trainer_name", trainers_by_id.get(session.trainer_id, ""))
         return new_sessions
     except IntegrityError as exc:
         db.rollback()

@@ -16,6 +16,7 @@ export async function createRecurringSessions(sessions: Array<{
   class_name: string;
   notes?: string;
   trainer_id?: number;
+  fixed_student_ids?: number[];
 }>) {
   const url = `${baseApiUrl}/sessions/recurring`;
   const response = await fetchWithAuth(url, {
@@ -51,6 +52,7 @@ export async function createSingleSession(payload: {
   class_name: string;
   notes?: string;
   trainer_id?: number;
+  fixed_student_ids?: number[];
 }) {
   const url = `${baseApiUrl}/sessions/`;
   const response = await fetchWithAuth(url, {

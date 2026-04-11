@@ -27,12 +27,19 @@ class SessionCreate(BaseModel):
     notes: str | None = Field(default=None, max_length=1000)
     # Trainer ID (opcional: solo si lo asigna un admin)
     trainer_id: int | None = Field(default=None, gt=0)
+    # Clientes que deben quedar reservados automáticamente en esta sesión
+    fixed_student_ids: list[int] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_time_range(self):
         """Valida que start_time < end_time."""
         if self.start_time >= self.end_time:
             raise ValueError("start_time debe ser anterior a end_time")
+
+        unique_ids = list(dict.fromkeys(self.fixed_student_ids))
+        self.fixed_student_ids = unique_ids
+        if len(unique_ids) > self.capacity:
+            raise ValueError("No puede haber más alumnos fijos que plazas en la sesión")
         return self
 
 

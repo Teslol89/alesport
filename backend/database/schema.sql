@@ -82,6 +82,29 @@ CREATE INDEX IF NOT EXISTS idx_schedule_active ON weekly_schedule(is_active);
 
 
 -- ===============================
+-- WEEKLY SCHEDULE STUDENTS
+-- ===============================
+-- Fixed students automatically pre-booked into sessions generated from a recurring schedule.
+
+CREATE TABLE IF NOT EXISTS weekly_schedule_students (
+    id SERIAL PRIMARY KEY,
+    weekly_schedule_id INTEGER NOT NULL
+        REFERENCES weekly_schedule(id)
+        ON DELETE CASCADE,
+    user_id INTEGER NOT NULL
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_weekly_schedule_student UNIQUE (weekly_schedule_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_weekly_schedule_students_schedule ON weekly_schedule_students(weekly_schedule_id);
+CREATE INDEX IF NOT EXISTS idx_weekly_schedule_students_user ON weekly_schedule_students(user_id);
+CREATE INDEX IF NOT EXISTS idx_weekly_schedule_students_active ON weekly_schedule_students(is_active);
+
+
+-- ===============================
 -- SESSIONS
 -- ===============================
 -- Concrete session instances (specific date/time), based on weekly_schedule.

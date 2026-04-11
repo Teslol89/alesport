@@ -43,3 +43,29 @@ def test_trainer_cannot_reassign_session_to_someone_else(client, auth_headers, s
 
     assert response.status_code == 403
     assert response.json()["detail"] == "Solo un administrador puede cambiar el entrenador de la sesión"
+
+
+def test_superadmin_can_reassign_session_trainer(client, auth_headers, seed_data, db_session):
+    """El superadmin puede gestionar sesiones, pero no aparece como entrenador asignable."""
+    superadmin = User(
+        name="Marcos",
+        email="marcos@example.com",
+        password_hash=hash_password("marcos1234"),
+        role="superadmin",
+        is_active=True,
+        membership_active=True,
+        is_verified=True,
+    )
+    db_session.add(superadmin)
+    db_session.commit()
+
+    headers = auth_headers(superadmin.email, "marcos1234")
+
+    response = client.patch(
+        f"/api/sessions/{seed_data['session'].id}",
+        headers=headers,
+        json={"trainer_id": seed_data['admin'].id},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["trainer_id"] == seed_data["admin"].id

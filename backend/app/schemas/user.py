@@ -115,3 +115,13 @@ class UserResponse(BaseModel):
 
     # Permite a Pydantic leer datos directamente desde objetos ORM de SQLAlchemy
     model_config = {"from_attributes": True}
+
+
+class AssignableTrainerResponse(BaseModel):
+    """Datos mínimos de un usuario que sí puede aparecer como entrenador asignable."""
+
+    id: int
+    name: str
+    role: str
+
+    model_config = {"from_attributes": True}

@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.auth.roles import is_admin_role
 from app.models.booking import Booking
 from app.models.session import SessionModel
 from app.models.user import User
@@ -477,7 +478,7 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
         )
 
     # Autorización por rol
-    if current_user.role == "admin":
+    if is_admin_role(current_user.role):
         pass
     elif current_user.role == "client":
         if booking.user_id != current_user.id:
@@ -551,7 +552,7 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
             detail=PAST_SESSION_MUTATION_ERROR,
         )
 
-    if current_user.role == "admin":
+    if is_admin_role(current_user.role):
         pass
     elif current_user.role == "client":
         if booking.user_id != current_user.id:

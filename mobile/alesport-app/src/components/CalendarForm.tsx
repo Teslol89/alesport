@@ -91,8 +91,8 @@ const Calendar: React.FC = () => {
   const handledPushNavigationRef = useRef<string | null>(null);
   const bookingsInFlightRef = useRef<Record<number, Promise<BookingItem[]>>>({});
   const isClient = userRole === 'client';
-  const isAdmin = userRole === 'admin';
-  const canManageSessionBookings = userRole === 'admin' || userRole === 'trainer';
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+  const canManageSessionBookings = userRole === 'admin' || userRole === 'superadmin' || userRole === 'trainer';
 
   const invalidateSessionBookingsCache = useCallback((sessionId?: number) => {
     if (typeof sessionId === 'number') {

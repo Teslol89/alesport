@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.auth.roles import is_admin_role
 from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.user import User
@@ -38,7 +39,7 @@ def create_schedule(
     """Crea un nuevo horario semanal y genera automáticamente las sesiones futuras.
     Solo el administrador puede crear horarios (trainer_id se especifica en el body).
     """
-    if current_user.role != "admin":
+    if not is_admin_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo el administrador puede crear horarios semanales",
@@ -53,7 +54,7 @@ def generate_sessions(
     current_user: User = Depends(get_current_user),
 ):
     """Genera sesiones futuras manualmente a partir de los horarios semanales activos."""
-    if current_user.role != "admin":
+    if not is_admin_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo administradores pueden generar sesiones manualmente",

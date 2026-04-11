@@ -9,7 +9,9 @@ from app.models.session import SessionModel
 from app.models.user import User
 from app.models.weekly_schedule import WeeklySchedule
 
+from app.auth.roles import ASSIGNABLE_TRAINER_ROLES
 from app.schemas.weekly_schedule import SessionGenerationRequest
+from app.services.user_service import get_assignable_trainer_by_id
 
 
 LOCAL_TIMEZONE = ZoneInfo("Europe/Madrid")
@@ -24,19 +26,11 @@ def get_weekly_schedule(db: Session) -> list[WeeklySchedule]:
 def create_weekly_schedule(db: Session, schedule_data) -> WeeklySchedule:
     """Crea un nuevo horario semanal y genera automáticamente las sesiones futuras."""
     # Verificar que el trainer_id corresponde a un entrenador activo
-    trainer = (
-        db.query(User)
-        .filter(
-            User.id == schedule_data.trainer_id,
-            User.role == "trainer",
-            User.is_active.is_(True),
-        )
-        .first()
-    )
+    trainer = get_assignable_trainer_by_id(db, schedule_data.trainer_id)
     if trainer is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="trainer_id debe pertenecer a un entrenador activo",
+            detail="trainer_id debe pertenecer a un entrenador disponible",
         )
 
     # Extraer weeks_ahead antes de crear el ORM (no es columna de la tabla)
@@ -102,7 +96,7 @@ def generate_sessions_from_schedule(
         .filter(
             WeeklySchedule.is_active.is_(True),
             User.is_active.is_(True),
-            User.role == "trainer",
+            User.role.in_(tuple(ASSIGNABLE_TRAINER_ROLES)),
         )
         .all()
     )

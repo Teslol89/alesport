@@ -75,7 +75,8 @@ export async function saveFcmToken(token: string): Promise<void> {
 }
 
 export async function getAssignableTrainers(): Promise<AssignableTrainer[]> {
-  const response = await fetchWithAuth(`${baseApiUrl}/users`);
+  const response = await fetchWithAuth(`${baseApiUrl}/users/assignable-trainers`);
+
   if (response.status === 403) {
     const meResponse = await fetchWithAuth(`${baseApiUrl}/auth/me`);
     if (!meResponse.ok) {
@@ -83,7 +84,8 @@ export async function getAssignableTrainers(): Promise<AssignableTrainer[]> {
     }
     const me = await meResponse.json();
     const meRole = typeof me?.role === "string" ? me.role : "";
-    if ((meRole === "admin" || meRole === "trainer") && me?.id && me?.name) {
+    const meCanTeach = meRole === "trainer" || meRole === "admin";
+    if (meCanTeach && me?.id && me?.name) {
       return [{ id: Number(me.id), name: String(me.name).trim(), role: meRole }];
     }
     return [];
@@ -98,23 +100,11 @@ export async function getAssignableTrainers(): Promise<AssignableTrainer[]> {
     return [];
   }
 
-  const trainerUsers = users
-    .filter((user: any) => {
-      const role = typeof user?.role === "string" ? user.role : "";
-      return (role === "admin" || role === "trainer") && user?.is_active !== false;
-    })
+  return users
     .map((user: any) => ({
       id: Number(user.id),
       name: String(user.name ?? "").trim(),
       role: user.role as "admin" | "trainer",
     }))
-    .filter((user: AssignableTrainer) => Number.isFinite(user.id) && user.id > 0 && user.name.length > 0)
-    .sort((a: AssignableTrainer, b: AssignableTrainer) => {
-      if (a.role !== b.role) {
-        return a.role === "admin" ? -1 : 1;
-      }
-      return a.name.localeCompare(b.name, "es", { sensitivity: "base" });
-    });
-
-  return trainerUsers;
+    .filter((user: AssignableTrainer) => Number.isFinite(user.id) && user.id > 0 && user.name.length > 0);
 }

@@ -3,15 +3,17 @@ import os
 from fastapi import APIRouter, Depends, HTTPException, status, Path, Body
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from app.auth.roles import can_manage_sessions_role, is_admin_role
 from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.user import User, User as UserModel
-from app.schemas.user import UserResponse, UserProfileUpdate
-from app.services.user_service import get_all_users
+from app.schemas.user import AssignableTrainerResponse, UserResponse, UserProfileUpdate
+from app.services.user_service import get_all_users, get_assignable_trainers
 
 
 # --- INICIALIZAR ROUTER ANTES DE USARLO ---
 router = APIRouter(prefix="/users", tags=["users"])
+
 
 # --- ENDPOINTS PÚBLICOS PARA USUARIO PENDIENTE DE VERIFICACIÓN ---
 @router.get("/pending/{email}", response_model=UserResponse, tags=["users"])
@@ -39,9 +41,10 @@ def delete_pending_user_by_email(
     db.commit()
     return
 
+
 # --- ESQUEMA PATCH ---
 class UserUpdateIsActive(BaseModel):
-    is_active: bool
+    is_active: bool | None = None
 
 
 @router.get("/", response_model=list[UserResponse])
@@ -50,12 +53,26 @@ def get_users(
     current_user: User = Depends(get_current_user),
 ):
     """Devuelve todos los usuarios registrados (uso administrativo)."""
-    if current_user.role != "admin":
+    if not is_admin_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo administradores pueden ver la lista de usuarios",
         )
     return get_all_users(db)
+
+
+@router.get("/assignable-trainers", response_model=list[AssignableTrainerResponse])
+def list_assignable_trainers(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Devuelve los usuarios que pueden impartir clases, excluyendo al superadmin técnico."""
+    if not can_manage_sessions_role(current_user.role):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo administradores o entrenadores pueden ver esta lista",
+        )
+    return get_assignable_trainers(db)
 
 
 @router.get("/me", response_model=UserResponse)
@@ -111,13 +128,22 @@ def patch_user_is_active(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Permite a un admin activar/desactivar usuarios (campo is_active)."""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Solo admin puede modificar usuarios")
+    """Permite a un administrador activar o desactivar usuarios."""
+    if not is_admin_role(current_user.role):
+        raise HTTPException(
+            status_code=403, detail="Solo admin puede modificar usuarios"
+        )
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if update.is_active is None:
+        raise HTTPException(
+            status_code=400, detail="No se enviaron cambios para actualizar"
+        )
+
     user.is_active = update.is_active
+
     db.commit()
     db.refresh(user)
     return user

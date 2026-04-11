@@ -3,8 +3,14 @@ from datetime import datetime, timedelta, time
 from sqlalchemy import create_engine, text
 from passlib.context import CryptContext
 
-# Configuración de conexión (ajusta según tu entorno)
-DB_URL = "postgresql+psycopg://postgres:Verdeguer89**@212.227.99.222:5432/alesportAPP"
+# Configuración de conexión: usar la BD indicada por entorno para no tocar servidores remotos por accidente.
+DB_URL = os.getenv("DATABASE_URL")
+if not DB_URL:
+    raise RuntimeError("DATABASE_URL no está configurada")
+
+if DB_URL.startswith("postgresql://") and "+psycopg" not in DB_URL:
+    DB_URL = DB_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+
 engine = create_engine(DB_URL)
 
 # Hasher bcrypt
@@ -14,7 +20,7 @@ def hash_pwd(pwd):
     return pwd_context.hash(pwd)
 
 USERS = [
-    {"name": "Admin", "email": "admin@demo.com", "password": "admin123", "role": "admin"},
+    {"name": "SuperAdmin", "email": "admin@demo.com", "password": "admin123", "role": "superadmin"},
     {"name": "Trainer", "email": "trainer@demo.com", "password": "trainer123", "role": "trainer"},
     {"name": "Cliente", "email": "cliente@demo.com", "password": "cliente123", "role": "client"},
 ]
@@ -61,11 +67,18 @@ with engine.begin() as conn:
         session_end = datetime.combine(session_date, end)
         res = conn.execute(
             text("""
-            INSERT INTO sessions (trainer_id, start_time, end_time, capacity, status)
-            VALUES (:trainer_id, :start_time, :end_time, :capacity, 'active')
+            INSERT INTO sessions (trainer_id, start_time, end_time, capacity, class_name, notes, status)
+            VALUES (:trainer_id, :start_time, :end_time, :capacity, :class_name, :notes, 'active')
             RETURNING id
             """),
-            dict(trainer_id=trainer_id, start_time=session_start, end_time=session_end, capacity=5)
+            dict(
+                trainer_id=trainer_id,
+                start_time=session_start,
+                end_time=session_end,
+                capacity=5,
+                class_name=f"Clase demo {i + 1}",
+                notes="Sesión generada por seed local",
+            )
         )
         session_ids.append(res.scalar())
 

@@ -60,18 +60,22 @@ jobs:
         working-directory: backend/app
       - name: Start backend (Uvicorn)
         run: |
-          uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload --log-level debug > /tmp/uvicorn.log 2>&1 &
+          nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --log-level debug > /tmp/uvicorn.log 2>&1 &
+          echo $! > /tmp/uvicorn.pid
         working-directory: backend
       - name: Wait for backend to be ready
         run: |
-          for i in {1..15}; do
-            if nc -z 127.0.0.1 8000; then
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/api > /dev/null; then
               echo "Backend is up!"
-              break
+              exit 0
             fi
-            echo "Waiting for backend..."
+            echo "Waiting for backend... attempt $i/30"
             sleep 2
           done
+          echo "Backend did not start in time"
+          cat /tmp/uvicorn.log || echo "No log file"
+          exit 1
       - name: Mostrar procesos y logs de Uvicorn
         run: |
           ps aux

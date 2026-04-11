@@ -33,6 +33,7 @@ def create_test_recurring_sessions(token: str, trainer_id: int | None, start_dat
     print(f"[RECURRING TEST ERROR] {response.status_code} {response.text}")
     return None
 import os
+import time
 from datetime import datetime, timedelta, time as dt_time
 
 import requests
@@ -55,12 +56,35 @@ def auth_headers(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
 
 
-def login(email: str, password: str) -> str | None:
-    response = requests.post(
-        f"{BASE_URL}/auth/login",
-        json={"email": email, "password": password},
-        timeout=20,
+def wait_for_api(timeout_seconds: int = 60) -> None:
+    last_error = "sin respuesta"
+    for attempt in range(1, timeout_seconds + 1):
+        try:
+            response = requests.get(BASE_URL, timeout=5)
+            if response.ok:
+                print(f"[API READY] Backend disponible tras {attempt}s")
+                return
+            last_error = f"HTTP {response.status_code}: {response.text}"
+        except requests.RequestException as exc:
+            last_error = str(exc)
+        time.sleep(1)
+
+    raise RuntimeError(
+        f"La API no respondió en {timeout_seconds}s en {BASE_URL}. Último error: {last_error}"
     )
+
+
+def login(email: str, password: str) -> str | None:
+    try:
+        response = requests.post(
+            f"{BASE_URL}/auth/login",
+            json={"email": email, "password": password},
+            timeout=20,
+        )
+    except requests.RequestException as exc:
+        print(f"[LOGIN ERROR] {email}: no se pudo conectar a {BASE_URL}/auth/login ({exc})")
+        return None
+
     if response.status_code == 200:
         return response.json().get("access_token")
     print(f"[LOGIN ERROR] {email}: {response.status_code} {response.text}")
@@ -633,7 +657,9 @@ if __name__ == "__main__":
     print(f"BASE_URL: {BASE_URL}")
     print(f"Timestamp: {datetime.now().isoformat(timespec='seconds')}")
     print(f"Today: {TODAY}, Tomorrow: {TOMORROW}, Future: {FUTURE_DATE}")
-    
+
+    wait_for_api()
+
     # Primero obtener token de admin para tests generales
     admin_token = login(USERS[0]["email"], USERS[0]["password"])
     if admin_token is None:

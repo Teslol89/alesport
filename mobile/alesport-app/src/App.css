@@ -50,6 +50,12 @@
     opacity: 0.96;
 }
 
+.app-stacked-modal-dimmed {
+    filter: brightness(0.78) saturate(0.92);
+    opacity: 0.88;
+    transition: filter 180ms ease, opacity 180ms ease;
+}
+
 ion-tab-button,
 ion-tab-button.tab-selected,
 ion-tab-button:active,

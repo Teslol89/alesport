@@ -609,7 +609,7 @@ const ConfigForm: React.FC = () => {
         isOpen={showEditProfileModal}
         onDidDismiss={() => setShowEditProfileModal(false)}
       >
-        <div className="config-edit-modal">
+        <div className={`config-edit-modal ${showAvatarSourceAlert ? 'app-stacked-modal-dimmed' : ''}`}>
           <div className="config-edit-modal-header">
             <h3>{t('config.editProfileTitle')}</h3>
             <p>{t('config.editProfileSubtitle')}</p>
@@ -821,7 +821,7 @@ const ConfigForm: React.FC = () => {
           handleCloseCenterRuleEditor();
         }}
       >
-        <div className="config-edit-modal">
+        <div className={`config-edit-modal ${showRuleEditorModal ? 'app-stacked-modal-dimmed' : ''}`}>
           <div className="config-edit-modal-header">
             <h3>{t('config.centerRulesTitle')}</h3>
           </div>

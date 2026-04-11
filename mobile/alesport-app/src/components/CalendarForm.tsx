@@ -1082,7 +1082,7 @@ const Calendar: React.FC = () => {
           setShowDetailsModal(false);
         }}
       >
-        <div className="calendar-bookings-modal">
+        <div className={`calendar-bookings-modal ${showHourModal ? 'app-stacked-modal-dimmed' : ''}`}>
           <h3>{t('calendar.detailsTitle')}</h3>
           {detailsSession ? (
             <>

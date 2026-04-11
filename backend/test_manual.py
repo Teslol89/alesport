@@ -259,14 +259,14 @@ def run_common_checks(token: str, role: str):
     sessions_resp = request_and_check("GET", "/sessions/", {200}, headers=headers)
     sessions = sessions_resp.json() if isinstance(sessions_resp.json(), list) else []
 
-    if role == "admin":
+    if role in ("admin", "superadmin"):
         request_and_check("GET", "/users/", {200}, headers=headers)
     else:
         request_and_check("GET", "/users/", {403}, headers=headers)
 
     request_and_check("GET", "/schedule/", {200}, headers=headers)
 
-    if role == "admin":
+    if role in ("admin", "superadmin"):
         request_and_check(
             "POST",
             "/schedule/generate-sessions",
@@ -290,7 +290,7 @@ def run_role_specific_checks(token: str, role: str, user_id: int | None, session
     headers = auth_headers(token)
     session = pick_session_for_role(sessions, role, user_id)
 
-    if role in ("admin", "trainer"):
+    if role in ("admin", "superadmin", "trainer"):
         working_sessions = list(sessions)
 
         # ========== TEST: Crear sesión nueva con campos nuevos ==========
@@ -315,7 +315,7 @@ def run_role_specific_checks(token: str, role: str, user_id: int | None, session
                 "class_name": "Overlap Should Fail",
                 "notes": "Debe rechazar por solape",
             }
-            if role == "admin" and created_session.get("trainer_id") is not None:
+            if role in ("admin", "superadmin") and created_session.get("trainer_id") is not None:
                 overlapping_payload["trainer_id"] = created_session.get("trainer_id")
 
             request_and_check(
@@ -331,7 +331,7 @@ def run_role_specific_checks(token: str, role: str, user_id: int | None, session
             second_payload = build_non_overlapping_session_payload(
                 working_sessions,
                 [created_session.get("session_date", TOMORROW.isoformat())],
-                trainer_id=created_session.get("trainer_id") if role == "admin" else user_id,
+                trainer_id=created_session.get("trainer_id") if role in ("admin", "superadmin") else user_id,
                 class_name="Second Session For Overlap Edit",
                 notes="Base para probar PATCH solapado",
                 capacity=6,

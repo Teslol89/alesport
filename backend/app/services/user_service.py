@@ -6,6 +6,8 @@
 # aplicación (routers, otros servicios, etc.).
 
 from sqlalchemy.orm import Session
+from sqlalchemy import case
+from app.auth.roles import ASSIGNABLE_TRAINER_ROLES
 from app.models.user import User
 from app.schemas.user import UserCreate
 from app.auth.security import hash_password
@@ -120,6 +122,39 @@ El equipo de Alesport
 def get_all_users(db: Session) -> list[User]:
     """Devuelve todos los usuarios registrados en la base de datos."""
     return db.query(User).all()
+
+
+def _assignable_trainer_filters():
+    """Define quién puede salir como entrenador asignable en la app.
+
+    Reglas actuales:
+    - cualquier usuario activo con rol `trainer`
+    - cualquier usuario activo con rol `admin`
+    - `superadmin` queda excluido para que no aparezca como entrenador
+    """
+    return (
+        User.is_active.is_(True),
+        User.role.in_(tuple(ASSIGNABLE_TRAINER_ROLES)),
+    )
+
+
+def get_assignable_trainers(db: Session) -> list[User]:
+    """Devuelve solo usuarios que realmente pueden impartir sesiones."""
+    return (
+        db.query(User)
+        .filter(*_assignable_trainer_filters())
+        .order_by(case((User.role == "admin", 0), else_=1), User.name.asc())
+        .all()
+    )
+
+
+def get_assignable_trainer_by_id(db: Session, trainer_id: int) -> User | None:
+    """Busca un entrenador asignable concreto por ID."""
+    return (
+        db.query(User)
+        .filter(User.id == trainer_id, *_assignable_trainer_filters())
+        .first()
+    )
 
 
 # --- CREAR USUARIO NUEVO ---

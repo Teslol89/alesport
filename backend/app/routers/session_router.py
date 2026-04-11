@@ -5,6 +5,7 @@ from datetime import date
 from typing import Optional
 
 from app.database.db import get_db
+from app.auth.roles import can_manage_sessions_role, is_admin_role
 from app.auth.security import get_current_user
 from app.models.user import User
 from app.schemas.session import (
@@ -70,12 +71,12 @@ def patch_week_sessions(
     """Permite al entrenador ajustar en bloque una semana concreta de sesiones.
     Los admins deben incluir trainer_id en el body para indicar de qué entrenador.
     """
-    if current_user.role not in ("trainer", "admin"):
+    if not can_manage_sessions_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo entrenadores o administradores pueden modificar sesiones",
         )
-    if current_user.role == "admin":
+    if is_admin_role(current_user.role):
         if update_data.trainer_id is None:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -101,7 +102,7 @@ def patch_session(
     Los trainers solo pueden modificar sus propias sesiones.
     Los admins pueden modificar cualquiera.
     """
-    if current_user.role not in ("trainer", "admin"):
+    if not can_manage_sessions_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo entrenadores o administradores pueden modificar sesiones",
@@ -121,7 +122,7 @@ def delete_session(
     Los trainers solo pueden cancelar sus propias sesiones.
     Los admins pueden cancelar cualquiera.
     """
-    if current_user.role not in ("trainer", "admin"):
+    if not can_manage_sessions_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo entrenadores o administradores pueden cancelar sesiones",
@@ -150,7 +151,7 @@ def copy_week_endpoint(
     current_user: User = Depends(get_current_user),
 ):
     """Copia todas las sesiones activas o completadas de una semana a otra para el entrenador actual (o el indicado por admin)."""
-    if current_user.role == "admin":
+    if is_admin_role(current_user.role):
         # Si el admin NO pasa trainer_id, copia todas las sesiones de todos los entrenadores
         trainer_id = req.trainer_id if req.trainer_id is not None else None
     else:

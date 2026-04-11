@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'client'
-        CHECK (role IN ('admin','trainer','client')),
+        CHECK (role IN ('superadmin','admin','trainer','client')),
     phone VARCHAR(20),
     avatar_url TEXT,
     fcm_token TEXT,

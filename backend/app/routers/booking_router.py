@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database.db import get_db
+from app.auth.roles import is_admin_role
 from app.auth.security import get_current_user
 from app.models.user import User
 from app.models.session import SessionModel
@@ -29,7 +30,7 @@ def read_bookings_by_session(
     session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
     if session is None:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
-    if current_user.role != "admin" and session.trainer_id != current_user.id:
+    if not is_admin_role(current_user.role) and session.trainer_id != current_user.id:
         raise HTTPException(
             status_code=403, detail="No autorizado para ver reservas de esta sesión"
         )
@@ -41,7 +42,7 @@ def read_all_bookings(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     """Devuelve todas las reservas registradas (uso administrativo)."""
-    if current_user.role != "admin":
+    if not is_admin_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo administradores pueden ver todas las reservas",
@@ -56,7 +57,7 @@ def read_bookings_by_user(
     current_user: User = Depends(get_current_user),
 ):
     """Devuelve todas las reservas de un usuario concreto."""
-    if current_user.role != "admin" and current_user.id != user_id:
+    if not is_admin_role(current_user.role) and current_user.id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo administradores pueden ver reservas de otros usuarios",

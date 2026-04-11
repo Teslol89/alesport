@@ -15,6 +15,7 @@ const SEARCH_AUTO_REFRESH_MS = 3000;
 const BuscarForm: React.FC = () => {
     const { t, dateLocale } = useLanguage();
     const { role: userRole, isLoadingProfile } = useAuth();
+    const isAdmin = userRole === 'admin' || userRole === 'superadmin';
     const todayIso = toLocalISODate(new Date());
     const [bookings, setBookings] = useState<BookingItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -32,7 +33,7 @@ const BuscarForm: React.FC = () => {
             return;
         }
 
-        if (userRole !== 'admin') {
+        if (!isAdmin) {
             setBookings([]);
             setLoading(false);
             return;
@@ -51,7 +52,7 @@ const BuscarForm: React.FC = () => {
                     setLoading(false);
                 }
             });
-    }, [isLoadingProfile, t, userRole]);
+    }, [isAdmin, isLoadingProfile, t]);
 
     useEffect(() => {
         loadBookings();
@@ -62,7 +63,7 @@ const BuscarForm: React.FC = () => {
     }, [loadBookings]);
 
     useEffect(() => {
-        if (isLoadingProfile || userRole !== 'admin') {
+        if (isLoadingProfile || !isAdmin) {
             return;
         }
 
@@ -83,7 +84,7 @@ const BuscarForm: React.FC = () => {
             window.removeEventListener('focus', refreshSearchState);
             document.removeEventListener('visibilitychange', refreshSearchState);
         };
-    }, [isLoadingProfile, loadBookings, userRole]);
+    }, [isAdmin, isLoadingProfile, loadBookings]);
 
     const filteredBookings = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -158,7 +159,7 @@ const BuscarForm: React.FC = () => {
                     <div className="search-form-loading">
                         <IonSpinner name="crescent" color="primary" />
                     </div>
-                ) : userRole !== 'admin' ? (
+                ) : !isAdmin ? (
                     <p className="search-form-empty">{t('search.adminOnly')}</p>
                 ) : (
                     <div className="search-form-body">

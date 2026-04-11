@@ -104,9 +104,9 @@ function MainRoutes() {
   const isCrearActive = location.pathname.startsWith('/crear');
   const isBookingsActive = location.pathname.startsWith('/bookings');
   const isConfigActive = location.pathname.startsWith('/config');
-  const isAdmin = role === 'admin';
+  const isAdmin = role === 'admin' || role === 'superadmin';
   const isClient = role === 'client';
-  const canManageSessions = role === 'admin' || role === 'trainer';
+  const canManageSessions = role === 'admin' || role === 'superadmin' || role === 'trainer';
   const isAuthRoute = [
     '/login',
     '/register',
@@ -142,8 +142,8 @@ function MainRoutes() {
     <IonTabs>
       <IonRouterOutlet>
         <PrivateRoute exact path="/admin-calendar" component={AdminCalendarPage} />
-        <PrivateRoute exact path="/search" component={TabSearch} allowedRoles={["admin"]} />
-        <PrivateRoute exact path="/crear" component={Crear} allowedRoles={["admin", "trainer"]} />
+        <PrivateRoute exact path="/search" component={TabSearch} allowedRoles={["admin", "superadmin"]} />
+        <PrivateRoute exact path="/crear" component={Crear} allowedRoles={["admin", "superadmin", "trainer"]} />
         <PrivateRoute exact path="/bookings" component={Reservas} allowedRoles={["client"]} />
         <PrivateRoute path="/config" component={Config} />
         <Route exact path="/" component={RootRedirect} />

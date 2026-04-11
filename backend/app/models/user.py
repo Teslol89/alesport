@@ -11,7 +11,7 @@ from app.database.db import Base
 class User(Base):
     """Mapeo ORM de la tabla 'users'.
     Representa a cualquier persona registrada en la aplicación.
-    El campo 'role' determina los permisos: 'admin', 'trainer' o 'client'.
+    El campo 'role' determina los permisos: 'superadmin', 'admin', 'trainer' o 'client'.
     """
 
     __tablename__ = "users"
@@ -24,7 +24,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
     # Contraseña hasheada; nunca se almacena en texto plano
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
-    # Rol del usuario: 'admin', 'trainer' o 'client'
+    # Rol del usuario: 'superadmin', 'admin', 'trainer' o 'client'
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="client")
     # Teléfono de contacto (opcional)
     phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)

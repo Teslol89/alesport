@@ -13,7 +13,9 @@ from app.models.booking import Booking
 import logging
 
 from app.utils.utils import LOCAL_TIMEZONE, get_logger, is_past_session_datetime, to_local_datetime
+from app.auth.roles import can_manage_sessions_role, is_admin_role
 from app.services.notification_service import send_push_notification
+from app.services.user_service import get_assignable_trainer_by_id
 
 logger = get_logger(__name__)
 
@@ -69,21 +71,26 @@ def create_session(db: Session, create_data, current_user: User) -> SessionModel
     se usa ese trainer_id. Caso contrario, se usa el del usuario autenticado
     (solo trainers y admins pueden crear sesiones).
     """
-    if current_user.role not in ("trainer", "admin"):
+    if not can_manage_sessions_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo entrenadores o administradores pueden crear sesiones",
         )
 
     # Determinar trainer_id
-    if current_user.role == "admin" and create_data.trainer_id is not None:
+    if is_admin_role(current_user.role):
+        if create_data.trainer_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Debes seleccionar un entrenador para la sesión",
+            )
+
         trainer_id = create_data.trainer_id
-        # Validar que el trainer existe
-        trainer = db.query(User).filter(User.id == trainer_id).first()
-        if not trainer:
+        trainer = get_assignable_trainer_by_id(db, trainer_id)
+        if trainer is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Usuario/entrenador con id {trainer_id} no encontrado",
+                detail="Entrenador no encontrado o no disponible",
             )
     else:
         trainer_id = current_user.id
@@ -296,7 +303,7 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
         )
 
     # Admin puede modificar cualquier sesión; trainer solo las suyas
-    if current_user.role != "admin" and session.trainer_id != current_user.id:
+    if not is_admin_role(current_user.role) and session.trainer_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para modificar esta sesión",
@@ -306,21 +313,13 @@ def update_session(db: Session, session_id: int, update_data, current_user) -> d
     patch = update_data.model_dump(exclude_unset=True, exclude_none=True)
 
     if "trainer_id" in patch:
-        if current_user.role != "admin":
+        if not is_admin_role(current_user.role):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Solo un administrador puede cambiar el entrenador de la sesión",
             )
 
-        next_trainer = (
-            db.query(User)
-            .filter(
-                User.id == patch["trainer_id"],
-                User.role.in_(("admin", "trainer")),
-                User.is_active.is_(True),
-            )
-            .first()
-        )
+        next_trainer = get_assignable_trainer_by_id(db, patch["trainer_id"])
         if next_trainer is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -456,7 +455,7 @@ def create_recurring_sessions(
     - current_user: usuario autenticado (admin o trainer)
     Devuelve la lista de sesiones creadas.
     """
-    if current_user.role not in ("trainer", "admin"):
+    if not can_manage_sessions_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo entrenadores o administradores pueden crear sesiones",
@@ -468,16 +467,19 @@ def create_recurring_sessions(
         # Validar y preparar todas las sesiones antes de insertar
         for create_data in create_data_list:
             # Determinar trainer_id
-            if (
-                current_user.role == "admin"
-                and getattr(create_data, "trainer_id", None) is not None
-            ):
+            if is_admin_role(current_user.role):
+                if getattr(create_data, "trainer_id", None) is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="Debes seleccionar un entrenador para cada sesión",
+                    )
+
                 trainer_id = create_data.trainer_id
-                trainer = db.query(User).filter(User.id == trainer_id).first()
-                if not trainer:
+                trainer = get_assignable_trainer_by_id(db, trainer_id)
+                if trainer is None:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail=f"Usuario/entrenador con id {trainer_id} no encontrado",
+                        detail="Entrenador no encontrado o no disponible",
                     )
             else:
                 trainer_id = current_user.id

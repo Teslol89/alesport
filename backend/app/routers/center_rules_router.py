@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.auth.roles import is_admin_role
 from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.center_rule import CenterRuleModel
@@ -32,7 +33,7 @@ def update_center_rules(
     current_user: User = Depends(get_current_user),
 ):
     """Permite al admin actualizar la lista completa de normas compartidas."""
-    if current_user.role != "admin":
+    if not is_admin_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo administradores pueden actualizar las normas del centro",

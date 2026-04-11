@@ -147,9 +147,10 @@ const ConfigForm: React.FC = () => {
     type: 'success',
   });
   const isEnglish = language === 'en';
-  const canShowAlexWhatsapp = (profile.role ?? role) === 'client';
+  const resolvedRole = profile.role ?? role;
+  const canShowAlexWhatsapp = resolvedRole === 'client';
   const canShowSupportWhatsapp = !canShowAlexWhatsapp;
-  const canManageCenterRules = (profile.role ?? role) === 'admin';
+  const canManageCenterRules = resolvedRole === 'admin' || resolvedRole === 'superadmin';
   const defaultCenterRules = useMemo(
     () => [
       t('config.centerRule1'),

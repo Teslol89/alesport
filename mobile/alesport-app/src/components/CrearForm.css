@@ -1,7 +1,7 @@
-/* Forzar sombreado oscuro en el fondo de todos los modales personalizados */
+/* Fondo oscuro suave para los modales personalizados */
 .crear-single-modal-wrapper.ion-modal-overlay,
 .crear-fixed-students-modal-wrapper.ion-modal-overlay {
-  --backdrop-opacity: 1 !important;
+  --backdrop-opacity: 0.42 !important;
 }
 
 .crear-single-modal-wrapper::part(backdrop),
@@ -13,9 +13,7 @@
 .crear-fixed-students-modal-wrapper .modal-backdrop,
 .crear-fixed-students-modal-wrapper .ion-modal-backdrop {
   background: rgba(0, 0, 0, 0.48) !important;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  opacity: 1 !important;
+  transition: opacity 180ms ease, background-color 180ms ease;
 }
 
 /* Botón para abrir el modal de copiar semana anterior */

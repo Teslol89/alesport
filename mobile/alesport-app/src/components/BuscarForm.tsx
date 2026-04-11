@@ -148,7 +148,7 @@ const BuscarForm: React.FC = () => {
     }, [periodFilteredBookings]);
 
     return (
-        <div className="search-form-container">
+        <div className={`search-form-container app-blur-target ${showPeriodCalendar ? 'app-blur-target--modal-open' : ''}`}>
             <div className="search-top-bar">
                 <img src={logoIcon} alt="Logo gimnasio" className="search-top-logo" />
                 <div className="search-top-title search-top-title-absolute">{t('search.title')}</div>

@@ -164,11 +164,11 @@
 	--width: min(92vw, 420px);
 	--height: auto;
 	--border-radius: 20px;
-	--backdrop-opacity: 1 !important;
+	--backdrop-opacity: 0.42 !important;
 }
 
 .search-form-date-modal-wrapper.ion-modal-overlay {
-	--backdrop-opacity: 1 !important;
+	--backdrop-opacity: 0.42 !important;
 }
 
 .search-form-date-modal-wrapper::part(backdrop),
@@ -176,9 +176,7 @@
 .search-form-date-modal-wrapper .modal-backdrop,
 .search-form-date-modal-wrapper .ion-modal-backdrop {
 	background: rgba(0, 0, 0, 0.48) !important;
-	backdrop-filter: blur(2px);
-	-webkit-backdrop-filter: blur(2px);
-	opacity: 1 !important;
+	transition: opacity 180ms ease, background-color 180ms ease;
 }
 
 .search-form-date-modal {

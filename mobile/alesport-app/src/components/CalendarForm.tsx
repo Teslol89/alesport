@@ -757,7 +757,7 @@ const Calendar: React.FC = () => {
   }
 
   return (
-    <div className="calendar-container">
+    <div className={`calendar-container app-blur-target ${(showMonthModal || showHourModal || showDetailsModal) ? 'app-blur-target--modal-open' : ''}`}>
       {/* Top bar fija con fecha y botón */}
       <div className="calendar-top-bar">
         <div className="calendar-selected-date">

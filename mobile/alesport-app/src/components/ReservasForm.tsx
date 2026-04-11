@@ -285,7 +285,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   }
 
   return (
-    <div className="bookings-form-container">
+    <div className={`bookings-form-container app-blur-target ${pendingCancelBooking ? 'app-blur-target--modal-open' : ''}`}>
       <div className="bookings-top-bar">
         <img src={logoIcon} alt="Logo gimnasio" className="bookings-top-logo" />
         <div className="bookings-top-title bookings-top-title-absolute">{t('myBookings.title')}</div>

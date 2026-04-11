@@ -85,14 +85,13 @@ const CrearForm: React.FC = () => {
             setRecurringTimePickerTarget(null);
             return;
         }
+
         closeAllRecurringSubmodals();
-        setTimeout(() => {
-            const currentValue = target === 'start' ? recurringDraft.startTime : recurringDraft.endTime;
-            const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
-            setRecurringTimePickerTarget(target);
-            setRecurringTimePickerValue(toPickerTimeIso(normalizedValue, TIME_PICKER_BASE_DATE));
-            setShowRecurringTimePicker(true);
-        }, 10);
+        const currentValue = target === 'start' ? recurringDraft.startTime : recurringDraft.endTime;
+        const normalizedValue = currentValue ? currentValue.slice(0, 5) : '09:00';
+        setRecurringTimePickerTarget(target);
+        setRecurringTimePickerValue(toPickerTimeIso(normalizedValue, TIME_PICKER_BASE_DATE));
+        setShowRecurringTimePicker(true);
     }
 
     function applyRecurringPickedTime() {
@@ -172,9 +171,35 @@ const CrearForm: React.FC = () => {
     // --- Lógica del picker de entrenador recurrente ---
     // (Agrupada aquí para claridad, cerca del modal recurrente)
     const [showRecurringTrainerPicker, setShowRecurringTrainerPicker] = useState(false);
-    const [showRecurringFixedStudentsPicker, setShowRecurringFixedStudentsPicker] = useState(false);
+    const [showRecurringFixedStudentsModal, setShowRecurringFixedStudentsModal] = useState(false);
+    const [recurringFixedStudentsSearch, setRecurringFixedStudentsSearch] = useState('');
+    const [recurringFixedStudentsDraftIds, setRecurringFixedStudentsDraftIds] = useState<number[]>([]);
     const recurringTrainerPanelRef = useRef<HTMLDivElement | null>(null);
-    const recurringFixedStudentsPanelRef = useRef<HTMLDivElement | null>(null);
+
+    const recurringFixedStudentsTriggerLabel = useMemo(() => {
+        if (selectedRecurringFixedStudents.length === 0) {
+            return t('create.selectFixedStudents');
+        }
+
+        if (selectedRecurringFixedStudents.length <= 2) {
+            return selectedRecurringFixedStudents.map((student) => student.name).join(', ');
+        }
+
+        const previewNames = selectedRecurringFixedStudents.slice(0, 2).map((student) => student.name).join(', ');
+        return `${previewNames} +${selectedRecurringFixedStudents.length - 2}`;
+    }, [selectedRecurringFixedStudents, t]);
+
+    const filteredFixedStudentOptions = useMemo(() => {
+        const query = recurringFixedStudentsSearch.trim().toLowerCase();
+        if (!query) {
+            return fixedStudentOptions;
+        }
+
+        return fixedStudentOptions.filter((student) => (
+            student.name.toLowerCase().includes(query)
+            || student.email.toLowerCase().includes(query)
+        ));
+    }, [fixedStudentOptions, recurringFixedStudentsSearch]);
 
     // Estado para mostrar/ocultar el date picker y capacity picker recurrente semanal
     const [showRecurringDatePicker, setShowRecurringDatePicker] = useState(false);
@@ -184,7 +209,7 @@ const CrearForm: React.FC = () => {
     // Cierra todos los submodales de la clase recurrente semanal
     function closeAllRecurringSubmodals() {
         setShowRecurringTrainerPicker(false);
-        setShowRecurringFixedStudentsPicker(false);
+        setShowRecurringFixedStudentsModal(false);
         setShowRecurringDatePicker(false);
         setShowRecurringTimePicker(false);
         setShowRecurringCapacityPicker(false);
@@ -203,41 +228,56 @@ const CrearForm: React.FC = () => {
         closeAllRecurringSubmodals();
     }
 
+    // Abre/cierra el picker de entrenador recurrente semanal
     function toggleRecurringTrainerPicker() {
+        if (showRecurringTrainerPicker) {
+            setShowRecurringTrainerPicker(false);
+            return;
+        }
+
         closeAllRecurringSubmodals();
-        setTimeout(() => {
-            setShowRecurringTrainerPicker(true);
-        }, 10);
+        setShowRecurringTrainerPicker(true);
     }
 
+    // Selecciona el entrenador en recurrente semanal
     function pickRecurringTrainer(trainer: AssignableTrainer) {
         setRecurringDraft((prev) => ({ ...prev, trainerId: trainer.id, trainerName: trainer.name }));
         setShowRecurringTrainerPicker(false);
     }
-
-    function toggleRecurringFixedStudentsPicker() {
-        const nextOpen = !showRecurringFixedStudentsPicker;
+    
+    function openRecurringFixedStudentsModal() {
         closeAllRecurringSubmodals();
-        setShowRecurringFixedStudentsPicker(nextOpen);
+        setRecurringFixedStudentsDraftIds([...recurringDraft.fixedStudentIds]);
+        setRecurringFixedStudentsSearch('');
+        setShowRecurringFixedStudentsModal(true);
+    }
+
+    function closeRecurringFixedStudentsModal() {
+        setShowRecurringFixedStudentsModal(false);
+        setRecurringFixedStudentsSearch('');
     }
 
     function toggleRecurringFixedStudent(studentId: number) {
-        setRecurringDraft((draft) => {
-            const isSelected = draft.fixedStudentIds.includes(studentId);
-            if (!isSelected && draft.fixedStudentIds.length >= draft.capacity) {
+        setRecurringFixedStudentsDraftIds((currentIds) => {
+            const isSelected = currentIds.includes(studentId);
+            if (!isSelected && currentIds.length >= recurringDraft.capacity) {
                 setToast({
                     show: true,
                     message: t('create.fixedStudentsLimit'),
                     type: 'danger',
                 });
-                return draft;
+                return currentIds;
             }
 
-            const fixedStudentIds = isSelected
-                ? draft.fixedStudentIds.filter((id) => id !== studentId)
-                : [...draft.fixedStudentIds, studentId];
-            return { ...draft, fixedStudentIds };
+            return isSelected
+                ? currentIds.filter((id) => id !== studentId)
+                : [...currentIds, studentId];
         });
+    }
+
+    function applyRecurringFixedStudentsSelection() {
+        setRecurringDraft((draft) => ({ ...draft, fixedStudentIds: recurringFixedStudentsDraftIds }));
+        closeRecurringFixedStudentsModal();
     }
 
     function closeRecurringSubmodalsOnEmptyClick(e: React.MouseEvent<HTMLElement>) {
@@ -252,15 +292,13 @@ const CrearForm: React.FC = () => {
             return;
         }
         closeAllRecurringSubmodals();
+        setShowRecurringDatePicker(true);
         setTimeout(() => {
-            setShowRecurringDatePicker(true);
-            setTimeout(() => {
-                const panel = document.querySelector('.crear-single-date-panel');
-                if (panel && recurringModalBodyRef.current) {
-                    scrollRecurringSubpanelIntoView(panel as HTMLDivElement);
-                }
-            }, 50);
-        }, 10);
+            const panel = document.querySelector('.crear-single-date-panel');
+            if (panel && recurringModalBodyRef.current) {
+                scrollRecurringSubpanelIntoView(panel as HTMLDivElement);
+            }
+        }, 50);
     }
     // Centrar el panel de capacidad recurrente al abrirlo
     useEffect(() => {
@@ -891,7 +929,8 @@ const CrearForm: React.FC = () => {
                     keepContentsMounted={true}
                     onDidDismiss={() => {
                         setShowRecurringModal(false);
-                        setShowRecurringTrainerPicker(false);
+                        closeAllRecurringSubmodals();
+                        setRecurringFixedStudentsSearch('');
                     }}
                 >
                     <div className="crear-single-modal" onClick={closeRecurringSubmodalsOnEmptyClick} ref={recurringModalBodyRef}>
@@ -1060,39 +1099,83 @@ const CrearForm: React.FC = () => {
                                 type="button"
                                 className="crear-input crear-date-btn"
                                 disabled={isLoadingFixedStudents || fixedStudentOptions.length === 0}
-                                onClick={toggleRecurringFixedStudentsPicker}
+                                onClick={openRecurringFixedStudentsModal}
                             >
-                                {isLoadingFixedStudents
-                                    ? t('create.loadingFixedStudents')
-                                    : selectedRecurringFixedStudents.length > 0
-                                        ? selectedRecurringFixedStudents.map((student) => student.name).join(', ')
-                                        : t('create.selectFixedStudents')}
+                                {isLoadingFixedStudents ? t('create.loadingFixedStudents') : recurringFixedStudentsTriggerLabel}
                             </button>
-
-                            {showRecurringFixedStudentsPicker ? (
-                                <div className="crear-fixed-student-picker-panel" ref={recurringFixedStudentsPanelRef}>
-                                    {fixedStudentOptions.length === 0 ? (
-                                        <p className="crear-fixed-student-empty">{t('create.noFixedStudentsAvailable')}</p>
-                                    ) : fixedStudentOptions.map((student) => {
-                                        const isSelected = recurringDraft.fixedStudentIds.includes(student.id);
-                                        return (
-                                            <button
-                                                key={student.id}
-                                                type="button"
-                                                className={`crear-fixed-student-option ${isSelected ? 'selected' : ''}`}
-                                                onClick={() => toggleRecurringFixedStudent(student.id)}
-                                            >
-                                                <span className="crear-fixed-student-name">{student.name}</span>
-                                                <span className="crear-fixed-student-meta">{student.email}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            ) : null}
                             {fixedStudentsError ? <p className="crear-validation-error">{fixedStudentsError}</p> : null}
                             {selectedRecurringFixedStudents.length > recurringDraft.capacity ? (
                                 <p className="crear-validation-error">{t('create.fixedStudentsLimit')}</p>
                             ) : null}
+
+                            <IonModal
+                                className="crear-fixed-students-modal-wrapper"
+                                isOpen={showRecurringFixedStudentsModal}
+                                onDidDismiss={closeRecurringFixedStudentsModal}
+                            >
+                                <div className="crear-fixed-students-modal">
+                                    <div className="crear-single-modal-header">
+                                        <h3>{t('create.fixedStudents')}</h3>
+                                        <button
+                                            type="button"
+                                            className="crear-single-modal-close"
+                                            onClick={closeRecurringFixedStudentsModal}
+                                            aria-label={t('common.close')}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+
+                                    <div className="crear-fixed-students-modal-content">
+                                        <input
+                                            type="text"
+                                            className="crear-input crear-fixed-students-search"
+                                            value={recurringFixedStudentsSearch}
+                                            onChange={(e) => setRecurringFixedStudentsSearch(e.target.value)}
+                                            placeholder={t('create.searchFixedStudents')}
+                                        />
+
+                                        <p className="crear-fixed-students-counter">
+                                            {t('create.selectedStudents')}: {recurringFixedStudentsDraftIds.length}
+                                        </p>
+
+                                        <div className="crear-fixed-students-modal-list">
+                                            {filteredFixedStudentOptions.length === 0 ? (
+                                                <p className="crear-fixed-student-empty">
+                                                    {recurringFixedStudentsSearch.trim()
+                                                        ? t('create.noStudentsFound')
+                                                        : t('create.noFixedStudentsAvailable')}
+                                                </p>
+                                            ) : filteredFixedStudentOptions.map((student) => {
+                                                const isSelected = recurringFixedStudentsDraftIds.includes(student.id);
+                                                return (
+                                                    <button
+                                                        key={student.id}
+                                                        type="button"
+                                                        className={`crear-fixed-student-option ${isSelected ? 'selected' : ''}`}
+                                                        onClick={() => toggleRecurringFixedStudent(student.id)}
+                                                    >
+                                                        <span className="crear-fixed-student-name">{student.name}</span>
+                                                        <span className="crear-fixed-student-meta">{student.email}</span>
+                                                        <span className={`crear-fixed-student-check ${isSelected ? 'selected' : ''}`}>
+                                                            {isSelected ? '✓' : '+'}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="crear-time-picker-actions">
+                                            <button type="button" className="crear-btn-primary" onClick={applyRecurringFixedStudentsSelection}>
+                                                {t('common.apply')}
+                                            </button>
+                                            <button type="button" className="app-btn-danger" onClick={closeRecurringFixedStudentsModal}>
+                                                {t('common.cancel')}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </IonModal>
 
                             {/* Campo Nombre de la clase */}
                             <label className="crear-field-label" htmlFor="rec-class-name">{t('create.className')}</label>

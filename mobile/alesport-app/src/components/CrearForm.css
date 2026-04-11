@@ -1,12 +1,17 @@
 /* Forzar sombreado oscuro en el fondo de todos los modales personalizados */
-.crear-single-modal-wrapper.ion-modal-overlay {
+.crear-single-modal-wrapper.ion-modal-overlay,
+.crear-fixed-students-modal-wrapper.ion-modal-overlay {
   --backdrop-opacity: 1 !important;
 }
 
 .crear-single-modal-wrapper::part(backdrop),
 .crear-single-modal-wrapper .ion-backdrop,
 .crear-single-modal-wrapper .modal-backdrop,
-.crear-single-modal-wrapper .ion-modal-backdrop {
+.crear-single-modal-wrapper .ion-modal-backdrop,
+.crear-fixed-students-modal-wrapper::part(backdrop),
+.crear-fixed-students-modal-wrapper .ion-backdrop,
+.crear-fixed-students-modal-wrapper .modal-backdrop,
+.crear-fixed-students-modal-wrapper .ion-modal-backdrop {
   background: rgba(0, 0, 0, 0.48) !important;
   opacity: 1 !important;
 }
@@ -667,23 +672,58 @@
   text-transform: uppercase;
 }
 
-.crear-fixed-student-picker-panel {
-  margin-top: 0.5rem;
-  background: #ffffff;
-  border: 1px solid #d8e5e9;
-  border-radius: 14px;
-  padding: 0.6rem;
+.crear-fixed-students-modal-wrapper {
+  --width: min(92vw, 520px);
+  --height: auto;
+  --border-radius: 22px;
+  --box-shadow: 0 24px 44px rgba(0, 0, 0, 0.18);
+}
+
+.crear-fixed-students-modal-wrapper::part(content) {
+  width: min(92vw, 520px);
+  max-height: min(84vh, 720px);
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.crear-fixed-students-modal {
+  padding: 1.2rem;
+  background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
+  color: #000000;
+}
+
+.crear-fixed-students-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.crear-fixed-students-search {
+  width: 100%;
+}
+
+.crear-fixed-students-counter {
+  margin: 0;
+  color: #4c6970;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.crear-fixed-students-modal-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.5rem;
+  max-height: min(46vh, 360px);
+  overflow-y: auto;
+  padding-right: 0.1rem;
 }
 
 .crear-fixed-student-option {
+  position: relative;
   border: 1px solid #c8dbe0;
   background: #f6f9fa;
   color: #0f3037;
   border-radius: 10px;
-  padding: 0.55rem;
+  padding: 0.55rem 2.4rem 0.55rem 0.55rem;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -707,6 +747,28 @@
   font-size: 0.78rem;
   font-weight: 600;
   opacity: 0.8;
+}
+
+.crear-fixed-student-check {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #b7d6de;
+  background: #ffffff;
+  color: #0a4a57;
+  font-weight: 700;
+}
+
+.crear-fixed-student-check.selected {
+  background: #0089a6;
+  border-color: #0089a6;
+  color: #ffffff;
 }
 
 .crear-fixed-student-empty {

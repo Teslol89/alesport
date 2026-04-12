@@ -1,47 +1,81 @@
 workflows:
-  ios-ipa:
-    name: Alesport iOS IPA
-    max_build_duration: 120
-    instance_type: mac_mini_m2
+  ionic-ios:
+    name: Ionic iOS Build
+
+    integrations:
+      app_store_connect: codemagic
 
     environment:
       node: 22.14.0
-      xcode: latest
-      cocoapods: default
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.alesport.app
-      vars:
-        APP_ROOT: mobile/alesport-app
+      groups:
+        - ios
+
+    working_directory: mobile/alesport-app
 
     scripts:
       - name: Install dependencies
-        script: |
-          cd "$CM_BUILD_DIR/$APP_ROOT"
-          npm ci
+        script: npm install --legacy-peer-deps
 
       - name: Build web app
-        script: |
-          cd "$CM_BUILD_DIR/$APP_ROOT"
-          npm run build
+        script: npm run build
 
-      - name: Sync Capacitor iOS
+      - name: Prepare iOS project
         script: |
-          cd "$CM_BUILD_DIR/$APP_ROOT"
+          npx cap --version
+
+          if [ ! -d ios/App ]; then
+            npx cap add ios
+          fi
+
+          if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
+            plutil -lint ios/App/App/GoogleService-Info.plist
+          fi
+
+      - name: Sync Capacitor
+        script: |
           npx cap sync ios
+          cd ios/App
+          xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
 
-      - name: Apply signing profiles
+      - name: Use Codemagic signing profiles
         script: |
-          cd "$CM_BUILD_DIR/$APP_ROOT/ios/App"
-          xcode-project use-profiles --project App.xcodeproj
+          cd ios/App
+          xcode-project use-profiles \
+            --project App.xcodeproj \
+            --archive-method app-store \
+            --export-options-plist "$CM_BUILD_DIR/export_options.plist"
 
-      - name: Build signed IPA
+          test -f "$CM_BUILD_DIR/export_options.plist"
+          plutil -lint "$CM_BUILD_DIR/export_options.plist"
+
+      - name: Build iOS
         script: |
-          cd "$CM_BUILD_DIR/$APP_ROOT/ios/App"
-          xcode-project build-ipa --project App.xcodeproj --scheme App
+          cd ios/App
+          xcodebuild -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
+            -archivePath $CM_BUILD_DIR/App.xcarchive \
+            archive
+
+      - name: Export IPA
+        script: |
+          cd ios/App
+          xcodebuild -exportArchive \
+            -archivePath $CM_BUILD_DIR/App.xcarchive \
+            -exportOptionsPlist "$CM_BUILD_DIR/export_options.plist" \
+            -exportPath $CM_BUILD_DIR/build
 
     artifacts:
-      - "mobile/alesport-app/build/ios/ipa/*.ipa"
-      - "/tmp/xcodebuild_logs/*.log"
-      - "$HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app"
-      - "$HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM"
+      - "$CM_BUILD_DIR/build/*.ipa"
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: false

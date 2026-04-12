@@ -3,138 +3,45 @@ workflows:
     name: Alesport iOS IPA
     max_build_duration: 120
     instance_type: mac_mini_m2
+
     environment:
+      node: 22.14.0
+      xcode: latest
+      cocoapods: default
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.alesport.app
       vars:
         APP_ROOT: mobile/alesport-app
-        XCODE_PROJECT: mobile/alesport-app/ios/App/App.xcodeproj
-        XCODE_SCHEME: App
-      xcode: latest
-      cocoapods: default
+
     scripts:
-      - name: Install npm dependencies
+      - name: Install dependencies
         script: |
           cd "$CM_BUILD_DIR/$APP_ROOT"
           npm ci
 
-      - name: Build web assets
+      - name: Build web app
         script: |
           cd "$CM_BUILD_DIR/$APP_ROOT"
           npm run build
 
-      - name: Sync Capacitor iOS project
+      - name: Sync Capacitor iOS
         script: |
           cd "$CM_BUILD_DIR/$APP_ROOT"
           npx cap sync ios
 
-      - name: Apply signing profiles to Xcode project
+      - name: Apply signing profiles
         script: |
-          xcode-project use-profiles \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT"
+          cd "$CM_BUILD_DIR/$APP_ROOT/ios/App"
+          xcode-project use-profiles --project App.xcodeproj
 
       - name: Build signed IPA
         script: |
-          xcode-project build-ipa \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
-            --scheme "$XCODE_SCHEME"
+          cd "$CM_BUILD_DIR/$APP_ROOT/ios/App"
+          xcode-project build-ipa --project App.xcodeproj --scheme App
 
     artifacts:
-      - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYMworkflows:
-  ionic-ios:
-    name: Ionic iOS Build
-
-    integrations:
-      app_store_connect: codemagic
-
-    environment:
-      node: 22.14.0
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.alesport.app
-
-      groups:
-        - ios   # 👈 variables (TEAM_ID, API KEY, etc.)
-
-    working_directory: mobile/alesport-app
-
-    scripts:
-      # Instalar dependencias
-      - name: Install dependencies
-        script: npm install --legacy-peer-deps
-
-      # Build web (Vite → dist)
-      - name: Build web app
-        script: npm run build
-
-      # Preparar proyecto iOS nativo sin perder configuración manual
-      - name: Prepare iOS project
-        script: |
-          # Usar la CLI local del proyecto para evitar incompatibilidades en CI
-          npx cap --version
-
-          if [ ! -d ios/App ]; then
-            npx cap add ios
-          fi
-
-          if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
-            echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
-            plutil -lint ios/App/App/GoogleService-Info.plist
-          fi
-
-      # Sincronizar Capacitor
-      - name: Sync Capacitor
-        script: |
-          npx cap sync ios
-          cd ios/App
-          xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
-
-      # Aplicar perfiles/certificados de Codemagic al proyecto Xcode
-      - name: Use Codemagic signing profiles
-        script: |
-          cd ios/App
-          xcode-project use-profiles \
-            --project App.xcodeproj \
-            --archive-method app-store \
-            --export-options-plist "$CM_BUILD_DIR/export_options.plist"
-
-          test -f "$CM_BUILD_DIR/export_options.plist"
-          plutil -lint "$CM_BUILD_DIR/export_options.plist"
-
-      # Build (archive)
-      - name: Build iOS
-        script: |
-          cd ios/App
-
-          # Los perfiles ya se aplican con `xcode-project use-profiles`, así que no
-          # debemos forzar firma automática por línea de comandos aquí.
-          xcodebuild -project App.xcodeproj \
-          -scheme App \
-          -configuration Release \
-          -sdk iphoneos \
-          DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
-          -archivePath $CM_BUILD_DIR/App.xcarchive \
-          archive
-
-      # Exportar IPA para App Store / TestFlight
-      - name: Export IPA
-        script: |
-          cd ios/App
-
-          xcodebuild -exportArchive \
-          -archivePath $CM_BUILD_DIR/App.xcarchive \
-          -exportOptionsPlist "$CM_BUILD_DIR/export_options.plist" \
-          -exportPath $CM_BUILD_DIR/build
-
-    artifacts:
-      - $CM_BUILD_DIR/build/*.ipa
-
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: false
-        submit_to_app_store: false
+      - "mobile/alesport-app/build/ios/ipa/*.ipa"
+      - "/tmp/xcodebuild_logs/*.log"
+      - "$HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app"
+      - "$HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM"

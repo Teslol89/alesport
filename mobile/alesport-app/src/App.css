@@ -56,6 +56,11 @@
     transition: filter 180ms ease, opacity 180ms ease;
 }
 
+:root {
+    --app-tabbar-height: 54px;
+    --app-bottom-nav-offset: calc(var(--app-tabbar-height) + env(safe-area-inset-bottom, 0px) + 12px);
+}
+
 ion-tab-button,
 ion-tab-button.tab-selected,
 ion-tab-button:active,
@@ -71,7 +76,7 @@ ion-tab-bar.tabbar-glass {
     background: rgba(0, 0, 0, 0.3) !important;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
-    height: 54px !important;
+    height: var(--app-tabbar-height) !important;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.05rem) !important;
     border-top: none !important;
     box-shadow: none !important;

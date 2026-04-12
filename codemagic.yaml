@@ -55,7 +55,17 @@ workflows:
       - name: Set unique iOS build number
         script: |
           cd ios/App
-          agvtool new-version -all "$CM_BUILD_ID"
+          BUILD_NUMBER="$PROJECT_BUILD_NUMBER"
+          if [ -z "$BUILD_NUMBER" ]; then
+            BUILD_NUMBER="$CM_BUILD_NUMBER"
+          fi
+
+          case "$BUILD_NUMBER" in
+            ''|*[!0-9]*) BUILD_NUMBER="$(date +%s)" ;;
+          esac
+
+          echo "Using iOS CFBundleVersion: $BUILD_NUMBER"
+          agvtool new-version -all "$BUILD_NUMBER"
 
       - name: Build iOS
         script: |

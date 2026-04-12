@@ -20,7 +20,12 @@ def hash_pwd(pwd):
     return pwd_context.hash(pwd)
 
 USERS = [
-    {"name": "SuperAdmin", "email": "admin@demo.com", "password": "admin123", "role": "superadmin"},
+    {
+        "name": "SuperAdmin",
+        "email": "verdeguerlabs@verdeguerlabs.es",
+        "password": os.getenv("SUPERADMIN_PASSWORD", "Verdeguer89**"),
+        "role": "superadmin",
+    },
     {"name": "Trainer", "email": "trainer@demo.com", "password": "trainer123", "role": "trainer"},
     {"name": "Cliente", "email": "cliente@demo.com", "password": "cliente123", "role": "client"},
 ]

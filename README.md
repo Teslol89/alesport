@@ -252,11 +252,12 @@ El backend quedará corriendo en segundo plano, se reiniciará si falla y arranc
 - Subir el archivo al VPS (por ejemplo, con FileZilla).
 - En el VPS, activar el entorno virtual y ejecutar:
    ```bash
+   export SUPERADMIN_PASSWORD='TU_PASSWORD_SUPERADMIN'
    source venv/bin/activate
    python backend/seed.py
    ```
 - Esto crea 3 usuarios de prueba:
-   - admin@demo.com / admin123 (rol: admin)
+   - verdeguerlags@verdeguerlabs.es / SUPERADMIN_PASSWORD (rol: admin)
    - trainer@demo.com / trainer123 (rol: trainer)
    - cliente@demo.com / cliente123 (rol: client)
 

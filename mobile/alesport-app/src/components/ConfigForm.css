@@ -16,7 +16,7 @@
 /* 1) Contenedor principal */
 /* ------------------------------- */
 .config-form-container {
-  --config-bottom-nav-offset: calc(54px);
+  --config-bottom-nav-offset: var(--app-bottom-nav-offset, calc(54px + env(safe-area-inset-bottom, 0px) + 12px));
   width: 100%;
   min-height: 100%;
   display: flex;

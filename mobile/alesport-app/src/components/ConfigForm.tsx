@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IonCard, IonIcon, IonItem, IonLabel, IonModal, IonToggle } from '@ionic/react';
+import { App as CapacitorApp } from '@capacitor/app';
 import { cameraOutline, moonOutline, personCircleOutline, sunnyOutline } from 'ionicons/icons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import logoIcon from '../icons/icon.png';
@@ -27,6 +28,14 @@ const SUPPORT_WEBSITE = 'https://www.verdeguerlabs.es';
 const PHONE_COMPACT_REGEX = /^(?:\+34)?[6789]\d{8}$/;
 const MAX_AVATAR_FILE_SIZE = 2 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+const formatVersionLabel = (version: string, build?: string): string => {
+  if (!build || build.trim().length === 0) {
+    return version;
+  }
+
+  return `${version} (${build})`;
+};
 
 /* Función para formatear los dígitos del teléfono en grupos de 3 */
 const formatPhoneGroups = (digits: string) => {
@@ -138,6 +147,7 @@ const ConfigForm: React.FC = () => {
   const [showAvatarSourceAlert, setShowAvatarSourceAlert] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [centerRules, setCenterRules] = useState<string[]>([]);
+  const [appVersionLabel, setAppVersionLabel] = useState(() => formatVersionLabel(APP_VERSION));
   const [showRuleEditorModal, setShowRuleEditorModal] = useState(false);
   const [ruleDraft, setRuleDraft] = useState('');
   const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
@@ -199,6 +209,29 @@ const ConfigForm: React.FC = () => {
         setNotifications(enabled);
       }
     });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAppVersion = async () => {
+      try {
+        const info = await CapacitorApp.getInfo();
+        if (!cancelled) {
+          setAppVersionLabel(formatVersionLabel(info.version || APP_VERSION, info.build));
+        }
+      } catch {
+        if (!cancelled) {
+          setAppVersionLabel(formatVersionLabel(APP_VERSION));
+        }
+      }
+    };
+
+    void loadAppVersion();
 
     return () => {
       cancelled = true;
@@ -741,7 +774,7 @@ const ConfigForm: React.FC = () => {
           <div className="config-support-stack">
             <div className="config-readonly-card">
               <span className="config-readonly-label">{t('config.versionLabel')}</span>
-              <span className="config-readonly-value">Alesport v{APP_VERSION}</span>
+              <span className="config-readonly-value">Alesport v{appVersionLabel}</span>
             </div>
             <div className="config-readonly-card">
               <span className="config-readonly-label">{t('config.developedByLabel')}</span>

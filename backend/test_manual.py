@@ -41,7 +41,11 @@ import requests
 
 BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api").rstrip("/")
 USERS = [
-    {"email": "admin@demo.com", "password": "admin123", "role": "superadmin"},
+    {
+        "email": "verdeguerlabs@verdeguerlabs.es",
+        "password": os.getenv("SUPERADMIN_PASSWORD", "Verdeguer89**"),
+        "role": "superadmin",
+    },
     {"email": "trainer@demo.com", "password": "trainer123", "role": "trainer"},
     {"email": "cliente@demo.com", "password": "cliente123", "role": "client"},
 ]

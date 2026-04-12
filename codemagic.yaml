@@ -1,4 +1,50 @@
 workflows:
+  ios-ipa:
+    name: Alesport iOS IPA
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.alesport.app
+      vars:
+        APP_ROOT: mobile/alesport-app
+        XCODE_PROJECT: mobile/alesport-app/ios/App/App.xcodeproj
+        XCODE_SCHEME: App
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          cd "$CM_BUILD_DIR/$APP_ROOT"
+          npm ci
+
+      - name: Build web assets
+        script: |
+          cd "$CM_BUILD_DIR/$APP_ROOT"
+          npm run build
+
+      - name: Sync Capacitor iOS project
+        script: |
+          cd "$CM_BUILD_DIR/$APP_ROOT"
+          npx cap sync ios
+
+      - name: Apply signing profiles to Xcode project
+        script: |
+          xcode-project use-profiles \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT"
+
+      - name: Build signed IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYMworkflows:
   ionic-ios:
     name: Ionic iOS Build
 

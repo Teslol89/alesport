@@ -194,9 +194,10 @@ const translations: Record<Language, Record<string, unknown>> = {
             copy: 'Copiar',
         },
         calendar: {
-            viewMonth: 'Ver mes',
+            viewMonth: 'Mes',
             noClassesToday: 'No hay clases para hoy.',
             selectDate: 'Seleccionar fecha',
+            selectMonth: 'Seleccionar mes',
             editSession: 'Editar sesión',
             editSubtitle: 'Ajusta horario, capacidad y detalles de la clase',
             className: 'Nombre de la clase',
@@ -427,9 +428,10 @@ const translations: Record<Language, Record<string, unknown>> = {
             copy: 'Copy',
         },
         calendar: {
-            viewMonth: 'View month',
+            viewMonth: 'Month',
             noClassesToday: 'There are no classes for today.',
             selectDate: 'Select date',
+            selectMonth: 'Select month',
             editSession: 'Edit session',
             editSubtitle: 'Adjust the schedule, capacity and class details',
             className: 'Class name',

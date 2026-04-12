@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner, IonDatetime, useIonViewWillEnter } from '@ionic/react';
+import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonSpinner, IonDatetime, useIonViewDidEnter, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react';
 import { useLocation } from 'react-router-dom';
 import './CalendarForm.css';
 import CustomToast from './CustomStyles';
@@ -11,7 +11,6 @@ import {
   formatFullDateES,
   formatHour,
   fromPickerTimeIso,
-  getCurrentWeekDays,
   getTodayIsoDate,
   toPickerTimeIso,
 } from '../utils/funcionesGeneral';
@@ -44,9 +43,34 @@ const Calendar: React.FC = () => {
 
   const todayDate = getTodayIsoDate();
   const [weekAnchorDate, setWeekAnchorDate] = useState(todayDate);
-  const weekDays = useMemo(() => getCurrentWeekDays(weekAnchorDate, dateLocale), [weekAnchorDate, dateLocale]);
+  const monthDays = useMemo(() => {
+    const [yearRaw, monthRaw] = weekAnchorDate.split('-');
+    const year = Number(yearRaw);
+    const month = Number(monthRaw);
+
+    if (!Number.isFinite(year) || !Number.isFinite(month)) {
+      return [] as Array<{ date: string; label: string; num: number }>;
+    }
+
+    const totalDays = new Date(year, month, 0).getDate();
+    const weekdayFormatter = new Intl.DateTimeFormat(dateLocale, { weekday: 'short' });
+
+    return Array.from({ length: totalDays }, (_, index) => {
+      const day = index + 1;
+      const date = new Date(year, month - 1, day);
+      const isoDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const weekdayLabel = weekdayFormatter.format(date).replace('.', '');
+
+      return {
+        date: isoDate,
+        label: weekdayLabel,
+        num: day,
+      };
+    });
+  }, [dateLocale, weekAnchorDate]);
   const [selectedDate, setSelectedDate] = useState(todayDate);
   const [showMonthModal, setShowMonthModal] = useState(false);
+  const [monthDraftDate, setMonthDraftDate] = useState(`${todayDate.slice(0, 7)}-01`);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -146,16 +170,16 @@ const Calendar: React.FC = () => {
     }
   }, [isClient, user?.id]);
 
-  // Sincronizar selectedDate cuando se abre el modal de mes
+  // Sincronizar borrador cuando se abre el modal de mes
   useEffect(() => {
     if (showMonthModal) {
-      setSelectedDate(weekAnchorDate);
+      setMonthDraftDate(`${weekAnchorDate.slice(0, 7)}-01`);
     }
   }, [showMonthModal, weekAnchorDate]);
 
-  // Obtener rango de la semana actual
-  const startDate = weekDays[0].date;
-  const endDate = weekDays[6].date;
+  // Obtener rango del mes visible
+  const startDate = monthDays[0]?.date ?? weekAnchorDate;
+  const endDate = monthDays[monthDays.length - 1]?.date ?? weekAnchorDate;
 
   const fetchSessions = useCallback((options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
@@ -228,6 +252,13 @@ const Calendar: React.FC = () => {
     fetchSessions({ silent: true });
     void refreshMyBookings();
   }, [fetchSessions, refreshMyBookings]);
+
+  useIonViewWillLeave(() => {
+    // Dejamos preparado "hoy" al salir para evitar saltos al volver a Agenda.
+    const today = getTodayIsoDate();
+    setSelectedDate(today);
+    setWeekAnchorDate(today);
+  }, []);
 
   useEffect(() => {
     if (!isClient && !canManageSessionBookings) {
@@ -569,8 +600,7 @@ const Calendar: React.FC = () => {
     setShowTimePickerModal(false);
   }
 
-
-  useEffect(() => {
+  const scrollSelectedDayIntoView = useCallback((behavior: ScrollBehavior = 'smooth') => {
     const scrollContainer = dayScrollRef.current;
     const selectedButton = dayButtonRefs.current[selectedDate];
 
@@ -578,29 +608,33 @@ const Calendar: React.FC = () => {
       return;
     }
 
-    const selectedIndex = weekDays.findIndex((day: any) => day.date === selectedDate);
+    const targetLeft = selectedButton.offsetLeft - (scrollContainer.clientWidth / 2) + (selectedButton.clientWidth / 2);
+    const maxScrollLeft = Math.max(0, scrollContainer.scrollWidth - scrollContainer.clientWidth);
+    const clampedLeft = Math.min(Math.max(0, targetLeft), maxScrollLeft);
 
+    scrollContainer.scrollTo({
+      left: clampedLeft,
+      behavior,
+    });
+  }, [selectedDate]);
+
+
+  useEffect(() => {
     const alignSelectedDay = () => {
-      const maxScrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
-
-      if (selectedIndex >= weekDays.length - 2) {
-        scrollContainer.scrollTo({
-          left: maxScrollLeft,
-          behavior: 'smooth',
-        });
-        return;
-      }
-
-      selectedButton.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'nearest',
-        block: 'nearest',
-      });
+      scrollSelectedDayIntoView('auto');
     };
 
     const frameId = window.requestAnimationFrame(alignSelectedDay);
     return () => window.cancelAnimationFrame(frameId);
-  }, [selectedDate, weekDays]);
+    // Solo re-alinear cuando cambia el mes visible, no en cada tap de día.
+  }, [monthDays, scrollSelectedDayIntoView]);
+
+  useIonViewDidEnter(() => {
+    // Al volver desde otra pestaña, centramos el día activo cuando el layout ya está listo.
+    window.requestAnimationFrame(() => {
+      scrollSelectedDayIntoView('auto');
+    });
+  }, [scrollSelectedDayIntoView]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => setOfferClockMs(Date.now()), 1000);
@@ -756,6 +790,12 @@ const Calendar: React.FC = () => {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
+  function handleGoToday() {
+    const today = getTodayIsoDate();
+    setSelectedDate(today);
+    setWeekAnchorDate(today);
+  }
+
   return (
     <div className={`calendar-container app-blur-target ${(showMonthModal || showHourModal || showDetailsModal) ? 'app-blur-target--modal-open' : ''}`}>
       {/* Top bar fija con fecha y botón */}
@@ -764,19 +804,30 @@ const Calendar: React.FC = () => {
           <div className="calendar-selected-day">{fechaES.day}</div>
           <div className="calendar-selected-fulldate">{fechaES.fullDate}</div>
         </div >
-        <button
-          className="calendar-view-month-btn"
-          onClick={(e) => {
-            setShowMonthModal(true);
-            e.currentTarget.blur();
-          }}
-        >
-          {t('calendar.viewMonth')}
-        </button>
+        <div className="calendar-top-actions">
+          <button
+            className="calendar-today-btn"
+            onClick={(e) => {
+              handleGoToday();
+              e.currentTarget.blur();
+            }}
+          >
+            {t('search.today')}
+          </button>
+          <button
+            className="calendar-view-month-btn"
+            onClick={(e) => {
+              setShowMonthModal(true);
+              e.currentTarget.blur();
+            }}
+          >
+            {t('calendar.viewMonth')}
+          </button>
+        </div>
       </div>
       {/* Scroll de días debajo */}
       <div className="calendar-days-scroll" ref={dayScrollRef}>
-        {weekDays.map((day: any) => (
+        {monthDays.map((day: any) => (
           <button
             key={day.date}
             ref={(el) => { dayButtonRefs.current[day.date] = el; }}
@@ -892,23 +943,50 @@ const Calendar: React.FC = () => {
       {/* Modal de mes completo */}
       <IonModal className="calendar-month-modal-wrapper" isOpen={showMonthModal} onDidDismiss={() => setShowMonthModal(false)}>
         <div className="calendar-month-modal">
-          <h4>{t('calendar.selectDate')}</h4>
+          <h4>{t('calendar.selectMonth')}</h4>
           <IonDatetime
             className="calendar-month-date-calendar"
-            presentation="date"
+            presentation="month-year"
             firstDayOfWeek={1}
             locale={dateLocale}
-            value={selectedDate}
+            value={monthDraftDate}
             onIonChange={(e) => {
               const next = e.detail.value;
               if (typeof next === 'string') {
-                const nextDate = next.slice(0, 10);
-                setSelectedDate(nextDate);
-                setWeekAnchorDate(nextDate);
-                setShowMonthModal(false);
+                setMonthDraftDate(next.slice(0, 10));
               }
             }}
           />
+          <div className="calendar-month-modal-actions">
+            <button
+              type="button"
+              className="app-btn-primary"
+              onClick={() => {
+                const [nextYearRaw, nextMonthRaw] = monthDraftDate.slice(0, 7).split('-');
+                const nextYear = Number(nextYearRaw);
+                const nextMonth = Number(nextMonthRaw);
+
+                if (!Number.isFinite(nextYear) || !Number.isFinite(nextMonth)) {
+                  setShowMonthModal(false);
+                  return;
+                }
+
+                const nextDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+                setSelectedDate(nextDate);
+                setWeekAnchorDate(nextDate);
+                setShowMonthModal(false);
+              }}
+            >
+              {t('common.accept')}
+            </button>
+            <button
+              type="button"
+              className="app-btn-danger"
+              onClick={() => setShowMonthModal(false)}
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
         </div>
       </IonModal>
 

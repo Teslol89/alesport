@@ -16,6 +16,7 @@ engine = create_engine(DB_URL)
 # Hasher bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"])
 
+# Función auxiliar para hashear contraseñas
 def hash_pwd(pwd):
     return pwd_context.hash(pwd)
 

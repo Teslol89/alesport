@@ -1,13 +1,12 @@
 # --- IMPORTS ORDENADOS Y COMPLETOS ---
-import os
 from fastapi import APIRouter, Depends, HTTPException, status, Path, Body
-from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 from app.auth.roles import can_manage_sessions_role, is_admin_role
 from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.user import User, User as UserModel
-from app.schemas.user import AssignableTrainerResponse, FixedStudentCandidateResponse, UserResponse, UserProfileUpdate
+from app.schemas.user import AssignableTrainerResponse, FixedStudentCandidateResponse, UserAdminUpdate, UserResponse, UserProfileUpdate
 from app.services.user_service import get_all_users, get_assignable_trainers, get_eligible_fixed_students
 
 
@@ -40,11 +39,6 @@ def delete_pending_user_by_email(
     db.delete(user)
     db.commit()
     return
-
-
-# --- ESQUEMA PATCH ---
-class UserUpdateIsActive(BaseModel):
-    is_active: bool | None = None
 
 
 @router.get("/", response_model=list[UserResponse])
@@ -138,11 +132,11 @@ def update_fcm_token(
 @router.patch("/{user_id}", response_model=UserResponse)
 def patch_user_is_active(
     user_id: int = Path(..., description="ID del usuario a modificar"),
-    update: UserUpdateIsActive = Body(...),
+    update: UserAdminUpdate = Body(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Permite a un administrador activar o desactivar usuarios."""
+    """Permite a un administrador gestionar acceso, membresía y cupo mensual."""
     if not is_admin_role(current_user.role):
         raise HTTPException(
             status_code=403, detail="Solo admin puede modificar usuarios"
@@ -151,12 +145,23 @@ def patch_user_is_active(
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    if update.is_active is None:
+    if (
+        update.is_active is None
+        and update.membership_active is None
+        and "monthly_booking_quota" not in update.model_fields_set
+    ):
         raise HTTPException(
             status_code=400, detail="No se enviaron cambios para actualizar"
         )
 
-    user.is_active = update.is_active
+    if update.is_active is not None:
+        user.is_active = update.is_active
+
+    if update.membership_active is not None:
+        user.membership_active = update.membership_active
+
+    if "monthly_booking_quota" in update.model_fields_set:
+        user.monthly_booking_quota = update.monthly_booking_quota
 
     db.commit()
     db.refresh(user)

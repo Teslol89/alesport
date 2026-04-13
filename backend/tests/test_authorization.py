@@ -73,6 +73,66 @@ def test_client_can_create_booking(client, auth_headers, seed_data):
     assert body["status"] == "active"  # Status inicial
 
 
+def test_admin_can_patch_client_plan_settings(client, auth_headers, seed_data):
+    """Un admin puede actualizar acceso, membresía y cupo mensual de un cliente."""
+    headers = auth_headers(seed_data["admin"].email, "admin1234")
+
+    response = client.patch(
+        f"/api/users/{seed_data['client'].id}",
+        headers=headers,
+        json={
+            "is_active": True,
+            "membership_active": True,
+            "monthly_booking_quota": 8,
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["monthly_booking_quota"] == 8
+    assert body["is_active"] is True
+    assert body["membership_active"] is True
+
+
+def test_client_cannot_exceed_monthly_booking_quota(client, auth_headers, seed_data, db_session):
+    """Un cliente con cupo mensual alcanzado no puede crear otra reserva activa ese mes."""
+    from datetime import timedelta
+    from app.models.booking import Booking
+    from app.models.session import SessionModel
+
+    seed_data["client"].monthly_booking_quota = 1
+    db_session.commit()
+
+    existing_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=seed_data["session"].id,
+        status="active",
+    )
+    db_session.add(existing_booking)
+
+    second_session = SessionModel(
+        trainer_id=seed_data["trainer"].id,
+        start_time=seed_data["session"].start_time + timedelta(days=2),
+        end_time=seed_data["session"].end_time + timedelta(days=2),
+        capacity=8,
+        status="active",
+        class_name="Clase control cuota",
+    )
+    db_session.add(second_session)
+    db_session.commit()
+    db_session.refresh(second_session)
+
+    headers = auth_headers(seed_data["client"].email, "client1234")
+    response = client.post(
+        "/api/bookings/",
+        headers=headers,
+        json={"session_id": second_session.id},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Has alcanzado tu cupo mensual de reservas"
+
+
 def test_trainer_cannot_create_weekly_schedule(client, auth_headers, seed_data):
     """Test: Solo admins pueden crear horarios semanales.
     

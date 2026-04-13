@@ -110,6 +110,7 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     membership_active: bool
+    monthly_booking_quota: Optional[int] = Field(default=None, ge=1, le=60)
     phone: Optional[str] = None
     avatar_url: Optional[str] = None
 
@@ -135,3 +136,11 @@ class FixedStudentCandidateResponse(BaseModel):
     email: str
 
     model_config = {"from_attributes": True}
+
+
+class UserAdminUpdate(BaseModel):
+    """Campos administrativos para controlar acceso, membresía y cupo mensual."""
+
+    is_active: Optional[bool] = None
+    membership_active: Optional[bool] = None
+    monthly_booking_quota: Optional[int] = Field(default=None, ge=1, le=60)

@@ -499,7 +499,8 @@ body,
 
 .calendar-month-modal-wrapper.ion-modal-overlay,
 .calendar-hour-modal-wrapper.ion-modal-overlay,
-.calendar-bookings-modal-wrapper.ion-modal-overlay {
+.calendar-bookings-modal-wrapper.ion-modal-overlay,
+.calendar-delete-confirm-modal-wrapper.ion-modal-overlay {
   --backdrop-opacity: 0.42 !important;
 }
 
@@ -514,7 +515,11 @@ body,
 .calendar-bookings-modal-wrapper::part(backdrop),
 .calendar-bookings-modal-wrapper .ion-backdrop,
 .calendar-bookings-modal-wrapper .modal-backdrop,
-.calendar-bookings-modal-wrapper .ion-modal-backdrop {
+.calendar-bookings-modal-wrapper .ion-modal-backdrop,
+.calendar-delete-confirm-modal-wrapper::part(backdrop),
+.calendar-delete-confirm-modal-wrapper .ion-backdrop,
+.calendar-delete-confirm-modal-wrapper .modal-backdrop,
+.calendar-delete-confirm-modal-wrapper .ion-modal-backdrop {
   background: rgba(0, 0, 0, 0.48) !important;
   transition: opacity 180ms ease, background-color 180ms ease;
 }
@@ -1476,4 +1481,45 @@ body,
     padding: 0.34rem 0.72rem;
     font-size: 0.86rem;
   }
+}
+
+.calendar-delete-confirm-modal-wrapper {
+  --width: min(90vw, 420px);
+  --height: auto;
+  --border-radius: 20px;
+}
+
+.calendar-delete-confirm-modal-wrapper::part(content) {
+  width: min(90vw, 420px);
+  height: auto;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.calendar-delete-confirm-modal {
+  padding: 1.2rem 1rem 1rem;
+  background: linear-gradient(165deg, #ffffff 0%, #f4fbff 100%);
+  text-align: center;
+}
+
+.calendar-delete-confirm-modal h4 {
+  margin: 0;
+  color: #0b2d34;
+  font-size: 1.14rem;
+}
+
+.calendar-delete-confirm-modal p {
+  margin: 0.65rem 0 1rem;
+  color: #33545b;
+}
+
+.calendar-delete-confirm-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.calendar-delete-confirm-actions .app-btn-primary,
+.calendar-delete-confirm-actions .app-btn-danger {
+  color: #ffffff !important;
 }

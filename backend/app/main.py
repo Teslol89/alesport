@@ -17,6 +17,7 @@ from app.routers.session_router import router as session_router
 from app.routers.booking_router import router as booking_router
 from app.routers.auth_router import router as auth_router
 from app.routers.center_rules_router import router as center_rules_router
+from app.routers.realtime_router import router as realtime_router
 
 # ── Configuración de la aplicación ────────────────────────────────────────────
 from fastapi.openapi.models import APIKey, APIKeyIn, SecuritySchemeType
@@ -86,6 +87,7 @@ app.include_router(session_router, prefix="/api")
 app.include_router(booking_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(center_rules_router, prefix="/api")
+app.include_router(realtime_router, prefix="/api")
 
 # Crea tablas nuevas que falten (por ejemplo, configuración compartida) sin tocar las existentes.
 Base.metadata.create_all(bind=engine)

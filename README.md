@@ -1,518 +1,311 @@
-######################################################################
-# Alesport - Guía de desarrollo, despliegue y buenas prácticas (2026) #
-######################################################################
+# Alesport
 
-## Últimas novedades y mejoras (abril 2026)
+Aplicación de gestión de clases y reservas para gimnasio con backend en FastAPI y app móvil/web en Ionic React.
 
-- Unificación de estilos y comportamiento en todos los modales y selectores de fecha/hora (crear clase, editar, copiar semana, calendario).
-- Selección de fecha/hora más intuitiva: al elegir una fecha/hora, el modal se cierra automáticamente y se aplica el valor, sin botón "Aceptar".
-- Refuerzo visual en botones clave (ej. copiar semana) con colores destacados (verde para acciones positivas).
-- Validaciones en tiempo real y mensajes de error claros en todos los formularios.
-- Refactorización de componentes: CalendarForm y CrearForm ahora tienen CSS modular y lógica desacoplada.
-- Optimización de llamadas a backend y cacheo de reservas para mayor rendimiento.
-- Persistencia de sesión robusta en web y móvil (localStorage, JWT, roles).
-- Guía de despliegue profesional y troubleshooting ampliada.
+## Estado actual (abril 2026)
 
----
+Este README refleja el estado real del código en backend y mobile, incluyendo los cambios recientes:
 
-## 1. Estructura del proyecto
+- Roles consolidados con superadmin, admin, trainer y client.
+- Bloqueo de uso para usuarios inactivos o con membresía inactiva en flujos clave.
+- Restricciones de backend para reservas y alumnos fijos.
+- Auto-refresco en pantallas operativas (agenda, reservas y búsqueda) mediante polling.
+- Mejoras de UX/UI en formularios y mensajes traducidos ES/EN.
 
-- **Backend:** FastAPI, PostgreSQL, JWT, control de roles.
-- **Frontend:** React, Ionic, React Router, localStorage para sesión.
-- **Móvil:** Capacitor (sin Secure Storage por compatibilidad; solo localStorage).
+## Arquitectura
 
----
+- Backend: FastAPI + SQLAlchemy + PostgreSQL + JWT.
+- Frontend/móvil: Ionic React + Vite + Capacitor.
+- Autenticación: JWT Bearer en cada petición protegida.
+- Persistencia de sesión en frontend: AuthContext + localStorage.
 
-## 2. Experiencia de usuario y validaciones
-
-- Todos los formularios (registro, login, crear/editar clase) validan en tiempo real los campos obligatorios, rangos de horas y capacidad.
-- Los errores de campo se muestran bajo el input correspondiente, nunca en toast salvo errores globales.
-- Los modales de fecha/hora se cierran automáticamente al seleccionar valor.
-- Botones importantes (ej. copiar semana) usan colores destacados para guiar la acción del usuario.
-
----
-
-## 3. Autenticación y persistencia de sesión
-
-1. El usuario inicia sesión desde el formulario de login (`LoginForm.tsx`).
-2. Si las credenciales son correctas, el backend devuelve un JWT.
-3. El token se guarda en localStorage y en el contexto global (`AuthContext`).
-4. Mientras el token esté en localStorage, la sesión persiste aunque se cierre la app o el navegador.
-5. Al cerrar sesión, el token se elimina de ambos sitios.
-6. Si el token expira o es inválido, el backend responde 401 y la app fuerza logout.
-
-**Nota:** No se usa Secure Storage en móvil para evitar problemas de compatibilidad y build. Si en el futuro se requiere máxima seguridad, revisar la integración de plugins Cordova/Capacitor y asegurar que `cordova.js` esté presente y funcional.
-
----
-
-## 4. Control de acceso y rutas protegidas
-
-- El contexto `AuthContext` expone `isAuthenticated`, `token`, `setToken` y `logout`.
-- Las rutas privadas usan `PrivateRoute` y solo son accesibles si hay token válido.
-- El backend valida el token en cada petición y aplica control de roles.
-
----
-
-## 5. Componentes principales
-
-### CrearForm
-- Permite crear clases puntuales y recurrentes.
-- Todos los modales usan el mismo estilo y lógica de cierre.
-- Inputs y pickers validados y con UX consistente.
-
-### CalendarForm
-- Vista semanal de clases, con scroll horizontal de días.
-- Tarjetas de sesión con ocupación, detalles y acciones según rol.
-- Edición de sesiones y reservas desde modales rápidos.
-- Cacheo de reservas para evitar recargas innecesarias.
-
----
-
-## 6. Desarrollo, build y despliegue
-
-### Web y móvil (Ionic/React)
-
-1. Instala dependencias:
-   ```bash
-   cd mobile/alesport-app
-   npm install
-   ```
-2. Para desarrollo web:
-   ```bash
-   npm run dev
-   ```
-3. Para build de producción:
-   ```bash
-   npm run build
-   ```
-4. Para móvil (Android/iOS):
-   - Sincroniza con Capacitor:
-     ```bash
-     npx cap sync
-     ```
-   - Abre en Android Studio:
-     ```bash
-     npx cap open android
-     ```
-   - Compila y prueba en dispositivo/emulador.
-
-**Importante:**
-- Si necesitas almacenamiento seguro en móvil, revisa la integración de Secure Storage y asegúrate de que `<script src="cordova.js"></script>` esté en el index.html fuente (no solo en el build).
-- Si tienes problemas de sesión en móvil, primero prueba solo con localStorage (como está ahora) para máxima estabilidad.
-
----
-
-## 7. Troubleshooting y restauración
-
-- Si la sesión no persiste en móvil, revisa que localStorage esté disponible y que no haya restricciones del sistema.
-- Si el login o registro falla, revisa los logs del backend y los mensajes de error en frontend.
-- Si necesitas restaurar usuarios de prueba, ejecuta `seed.py` en el backend.
-- Si el build móvil no reconoce Cordova/Capacitor, revisa la presencia de `cordova.js` y la instalación de plugins.
-
----
-
-## 8. Despliegue profesional en producción (backend FastAPI/Uvicorn)
-
-### Objetivo
-El backend debe funcionar 24/7 en el VPS, sin depender de tu PC, iniciarse automáticamente al arrancar el servidor, reiniciarse si falla y estar protegido tras un proxy seguro (nginx). Este es el estándar profesional para aplicaciones web modernas.
-
-### Crear un servicio systemd para el backend
-1. Crea el archivo `/etc/systemd/system/alesport-backend.service` con el siguiente contenido (ajusta rutas según tu entorno):
-
-```ini
-[Unit]
-Description=Alesport FastAPI backend (Uvicorn)
-After=network.target
-
-[Service]
-User=ubuntu  # o el usuario que corresponda
-Group=ubuntu
-WorkingDirectory=/home/ubuntu/alesport/backend
-Environment="PATH=/home/ubuntu/alesport/backend/venv/bin"
-ExecStart=/home/ubuntu/alesport/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-```
-
-1.2. Recarga systemd y habilita el servicio:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable alesport-backend
-sudo systemctl start alesport-backend
-sudo systemctl status alesport-backend
-```
-
-El backend quedará corriendo en segundo plano, se reiniciará si falla y arrancará automáticamente con el VPS.
-
-### 2. Configuración de nginx como proxy inverso
-
-1. Instala nginx:
-   ```bash
-   sudo apt install nginx
-   ```
-2. Edita `/etc/nginx/sites-available/default` para añadir:
-   ```nginx
-   location / {
-      proxy_pass http://127.0.0.1:8000;
-      proxy_set_header Host $host;
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
-   }
-   location /docs {
-      proxy_pass http://127.0.0.1:8000/docs;
-   }
-   location /openapi.json {
-      proxy_pass http://127.0.0.1:8000/openapi.json;
-   }
-   ```
-3. Recarga nginx:
-   ```bash
-   sudo systemctl reload nginx
-   ```
-
-### 3. Seguridad y buenas prácticas
-
-- Usa HTTPS (puedes instalar Certbot para obtener SSL gratis de Let's Encrypt).
-- Limita el acceso a la base de datos solo a IPs necesarias.
-- Mantén el firewall activo (ufw) y solo abre los puertos requeridos (80, 443, 5432 si necesitas acceso remoto).
-- No uses `--reload` en producción.
-- El backend ya no depende de tu PC: el VPS lo ejecuta siempre, aunque apagues tu ordenador.
-
----
-
-### 1. Despliegue del backend FastAPI en VPS
-
-- Crear un VPS (IONOS en este caso) con Ubuntu.
-- Instalar Python 3, pip y git.
-- Clonar el repositorio en el VPS.
-- Crear y activar un entorno virtual:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-- Instalar dependencias:
-   ```bash
-   pip install -r backend/requirements.txt
-   ```
-
-### 2. Configuración y acceso remoto a PostgreSQL
-
-- Instalar PostgreSQL en el VPS:
-   ```bash
-   sudo apt update && sudo apt install postgresql postgresql-contrib
-   ```
-- Crear base de datos y usuario:
-   ```bash
-   sudo -u postgres psql
-   CREATE DATABASE alesportAPP;
-   CREATE USER postgres WITH PASSWORD 'TU_PASSWORD';
-   GRANT ALL PRIVILEGES ON DATABASE alesportAPP TO postgres;
-   \q
-   ```
-- Editar `/etc/postgresql/16/main/postgresql.conf`:
-   - Cambiar `listen_addresses = '*'`
-- Editar `/etc/postgresql/16/main/pg_hba.conf`:
-   - Añadir:
-      ```
-      host    all    all    0.0.0.0/0    md5
-      ```
-- Reiniciar PostgreSQL:
-   ```bash
-   sudo systemctl restart postgresql
-   ```
-
-### 3. Abrir el puerto 5432 en el firewall y en IONOS
-
-- En el VPS, abrir el puerto (si usas UFW):
-   ```bash
-   sudo ufw allow 5432/tcp
-   ```
-- En el panel de IONOS, añadir regla para permitir el puerto 5432 TCP para todas las IPs o solo tu IP pública.
-
-### 4. Probar acceso remoto con pgAdmin
-
-- Conectar desde tu PC usando pgAdmin:
-   - Host: IP pública del VPS
-   - Puerto: 5432
-   - Usuario: postgres
-   - Contraseña: TU_PASSWORD
-   - Base de datos: alesportAPP
-
-### 5. Poblar la base de datos con usuarios y datos de prueba
-
-- Editar `backend/seed.py` para que la cadena de conexión apunte a la IP pública del VPS:
-   ```python
-   DB_URL = "postgresql+psycopg://postgres:TU_PASSWORD@IP_VPS:5432/alesportAPP"
-   ```
-- Subir el archivo al VPS (por ejemplo, con FileZilla).
-- En el VPS, activar el entorno virtual y ejecutar:
-   ```bash
-   export SUPERADMIN_PASSWORD='TU_PASSWORD_SUPERADMIN'
-   source venv/bin/activate
-   python backend/seed.py
-   ```
-- Esto crea 3 usuarios de prueba:
-   - verdeguerlags@verdeguerlabs.es / SUPERADMIN_PASSWORD (rol: admin)
-   - trainer@demo.com / trainer123 (rol: trainer)
-   - cliente@demo.com / cliente123 (rol: client)
-
-### 6. Lanzar el backend en modo producción/desarrollo
-
-- Desde la carpeta backend:
-   ```bash
-   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-   ```
-- El backend queda accesible desde la IP pública del VPS en el puerto 8000.
-
-### 7. Configuración de la app móvil
-
-- Editar el archivo `.env` de la app móvil para que apunte a la URL del backend en producción:
-   ```env
-   VITE_API_BASE_URL=https://TU_DOMINIO_O_IP:8000
-   ```
-- Compilar y probar la app móvil. Ya puedes loguear con los usuarios de prueba y operar normalmente.
-
----
-
-
-**Resumen actualizado:**
-
-1. VPS con Ubuntu, Python, PostgreSQL y puertos abiertos.
-2. PostgreSQL configurado para acceso remoto y seguro.
-3. Backend desplegado y conectado a la base remota.
-4. Usuarios de prueba y datos insertados con seed.py.
-5. App móvil conectada y funcional.
-6. Backend corriendo como servicio profesional (systemd), gestionado por nginx, seguro y persistente.
-
-Si necesitas restaurar datos de prueba, vuelve a ejecutar `seed.py`.
-
----
-
-Booking and schedule management app for the Alesport gym.
-
-## Overview
-
-This repository contains:
-
-- A FastAPI backend with PostgreSQL
-- A mobile app (Ionic React + Capacitor)
-
-The backend now includes JWT authentication and role-based authorization across critical endpoints.
-
-## Roles and Access Model
-
-The API works with three roles:
-
-- `admin`: full operational control (users, weekly schedule creation, manual session generation, all bookings)
-- `trainer`: session management for owned sessions and trainer-scoped booking cancellation
-- `client`: booking creation/cancellation for own reservations
-
-## Project Structure
+## Estructura del repositorio
 
 ```text
 alesport/
 |-- backend/
 |   |-- app/
-|   |   |-- auth/          # JWT security (token creation + current_user dependency)
-|   |   |-- database/      # SQLAlchemy setup
-|   |   |-- models/        # ORM models
-|   |   |-- routers/       # FastAPI endpoints
-|   |   |-- schemas/       # Pydantic models
-|   |   `-- services/      # Business logic
+|   |   |-- auth/
+|   |   |-- database/
+|   |   |-- models/
+|   |   |-- routers/
+|   |   |-- schemas/
+|   |   |-- services/
+|   |   `-- utils/
 |   |-- database/
-|   |   `-- schema.sql     # SQL schema
+|   |   |-- schema.sql
+|   |   `-- migrations/
+|   |-- tests/
 |   `-- requirements.txt
-`-- mobile/
-      `-- alesport-app/
+|-- mobile/
+|   `-- alesport-app/
+|       |-- src/
+|       `-- package.json
+|-- CONTRIBUTING.md
+`-- README.md
 ```
 
-## Prerequisites
+## Modelo de roles y permisos
+
+### Roles disponibles
+
+- superadmin
+- admin
+- trainer
+- client
+
+En backend, superadmin hereda permisos administrativos (mismo grupo de permisos que admin para comprobaciones de administración).
+
+### Reglas principales de acceso
+
+- GET /bookings/: solo admin/superadmin.
+- GET /bookings/session/{session_id}: admin/superadmin o trainer dueño de la sesión.
+- GET /bookings/user/{user_id}: admin/superadmin o el propio usuario.
+- POST /bookings/: solo client.
+- Gestión de sesiones (crear/editar/borrado/copia semanal): trainer o admin/superadmin según endpoint y contexto.
+
+Nota: el usuario autenticado debe estar activo. Si no está activo, el backend devuelve 403.
+
+## Reglas de negocio de reservas y membresía
+
+### Backend
+
+En creación de reservas:
+
+- Solo puede reservar un usuario con role=client.
+- No se permite reservar sesiones canceladas o pasadas.
+- Si membership_active=false, devuelve 403.
+- Se respeta cupo mensual si monthly_booking_quota está definido.
+
+En asignación de alumnos fijos en sesiones:
+
+- Solo se aceptan alumnos client + is_active=true + membership_active=true.
+- Si se envía un alumno no válido, devuelve 422.
+
+### Frontend
+
+Se bloquea acceso funcional (mensaje claro) cuando user.is_active=false o user.membership_active=false en:
+
+- Crear clases (CrearForm)
+- Reservas de cliente (ReservasForm)
+- Buscar reservas (BuscarForm), excepto usuarios admin/superadmin
+
+Mensajes traducidos en ES/EN:
+
+- auth.inactiveUserBlocked
+- auth.membershipInactiveBlocked
+
+## Auto-refresco (polling) en la app
+
+Hay refresco automático cada 10 segundos (10000 ms) en componentes operativos:
+
+- Agenda/Calendario: constante AGENDA_AUTO_REFRESH_MS
+- Buscar reservas: constante SEARCH_AUTO_REFRESH_MS
+- Mis reservas (cliente): constante BOOKINGS_AUTO_REFRESH_MS
+
+Además del intervalo, también se refresca al:
+
+- recuperar foco de ventana
+- volver la pestaña a visible
+
+Esto es útil para operación casi en tiempo real, pero incrementa el volumen de GET si hay muchos usuarios conectados.
+
+## Convenciones UI recientes
+
+Para mantener consistencia visual y mantenimiento sencillo en los formularios clave:
+
+- Los mensajes de bloqueo por usuario inactivo o membresía inactiva usan clases CSS dedicadas (sin estilos inline).
+- Los archivos CSS de formularios principales están ordenados por índice de secciones comentado.
+- Se mantiene tipografía y estilo homogéneos en mensajes de estado y carga.
+- Las traducciones de bloqueo están centralizadas en LanguageContext (ES/EN).
+
+## Configuración local
+
+### Requisitos
 
 - Python 3.10+
 - PostgreSQL
-- Node.js 18+ (for mobile)
-- Ionic CLI (optional): `npm install -g @ionic/cli`
+- Node.js 18+
 
-## Backend Setup (Windows)
+### Variables de entorno
 
-1. Create database:
+Crear archivo .env en la raíz del repositorio con mínimo:
 
-```sql
-CREATE DATABASE alesport;
+```env
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/alesport
+JWT_SECRET_KEY=tu_clave_larga_y_segura
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=60
 ```
 
-2. Load schema:
+Opcionales (correo y enlaces):
+
+```env
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
+FRONTEND_URL=https://www.verdeguerlabs.es
+REDIS_URL=redis://127.0.0.1:6379/0
+```
+
+## Backend: instalación y arranque
+
+```bash
+cd backend
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# Linux/macOS
+# source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+Crear base de datos y esquema:
 
 ```bash
 psql -U postgres -d alesport -f backend/database/schema.sql
 ```
 
-3. Create `.env` at repository root and define at least:
-
-```env
-DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/alesport
-JWT_SECRET_KEY=change_me_in_production
-JWT_ALGORITHM=HS256
-JWT_EXPIRE_MINUTES=60
-```
-
-4. Install dependencies and run API:
+Lanzar API:
 
 ```bash
 cd backend
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-API docs:
+Documentación de API:
 
-- Swagger: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+- http://localhost:8000/docs
+- http://localhost:8000/redoc
 
-## Authentication
-
-- Login endpoint: `POST /auth/login`
-- User profile endpoint: `GET /auth/me`
-- Auth scheme: Bearer token (JWT)
-
-Login request body:
-
-```json
-{
-   "email": "user@example.com",
-   "password": "your_password"
-}
-```
-
-Use returned token as:
-
-```http
-Authorization: Bearer <access_token>
-```
-
-## Authorization Matrix (Current)
-
-- `GET /users/`: admin only
-- `GET /sessions/`: authenticated user
-- `PATCH /sessions/{session_id}`: trainer (own session) or admin (any)
-- `PATCH /sessions/week`: trainer (own week) or admin (requires `trainer_id` in body)
-- `GET /schedule/`: authenticated user
-- `POST /schedule/`: admin only
-- `POST /schedule/generate-sessions`: admin only
-- `GET /bookings/`: admin only
-- `GET /bookings/user/{user_id}`: admin or same user
-- `POST /bookings/`: client only
-- `PATCH /bookings/{booking_id}/cancel`: admin, owner client, or owning trainer
-
-## Important Booking Rule
-
-`POST /bookings/` no longer accepts `user_id` from request body.
-The backend always uses `current_user.id` from JWT to prevent impersonation.
-
-Request example:
-
-```json
-{
-   "session_id": 1
-}
-```
-
-## Manual Smoke Test (Quick)
-
-1. Login as client -> `POST /auth/login`
-2. Create booking with `POST /bookings/` -> expected `201` if first time
-3. Repeat same booking -> expected `409`
-4. Login as trainer and try `POST /bookings/` -> expected `403`
-5. Login as admin and run `POST /schedule/generate-sessions` -> expected `200`
-
-
-
-## Registro de usuario: experiencia y validaciones profesionales
-
-El proceso de creación de usuario en Alesport está diseñado para ser robusto, claro y profesional, tanto en la app móvil como en la web. A continuación se detallan los aspectos clave del flujo de registro:
-
-### 1. Validaciones frontend (Ionic React)
-
-- **Validación secuencial:** El usuario solo puede avanzar al siguiente campo si el anterior es válido. Por ejemplo, no puede escribir el email si el nombre no es correcto.
-- **Mensajes de error claros y específicos:** Cada campo muestra mensajes de error dinámicos y detallados justo debajo del input, indicando exactamente qué falta o es incorrecto (ej: "Debe tener al menos 2 caracteres").
-- **Animación shake:** Si el usuario intenta avanzar con un campo inválido, el input correspondiente vibra (shake) para llamar la atención de forma visual y profesional.
-- **Toasts solo para errores globales:** Los mensajes emergentes (IonToast) solo aparecen para errores esenciales (formulario incompleto, email ya registrado, términos no aceptados, registro exitoso). Los errores de validación de campos nunca se muestran en toast, solo bajo el input.
-- **Aceptación de términos:** El toast "Debes aceptar los términos y condiciones" solo aparece si todos los campos previos son válidos.
-
-### 2. Interacción con el backend (FastAPI)
-
-- El formulario envía los datos solo si todas las validaciones frontend pasan.
-- Si el backend responde con errores de validación (por ejemplo, email ya registrado), estos se muestran de forma priorizada y clara en el frontend, siguiendo el mismo patrón de mensajes específicos.
-- El mensaje de éxito "¡Bienvenido!" se muestra en un toast solo si el registro es correcto.
-
-### 3. Experiencia de usuario (UX) y accesibilidad
-
-- El flujo evita frustraciones: nunca se bloquea al usuario sin explicar el motivo.
-- Los mensajes son siempre accionables y ayudan a corregir el error.
-- El botón de registro se desactiva durante el envío para evitar dobles envíos.
-- El enlace "¿Ya tienes una cuenta? Inicia sesión" usa navegación interna (React Router) para evitar recargas y problemas de splash.
-
-### 4. Detalles técnicos importantes
-
-- El formulario está implementado en `src/components/RegisterForm.tsx`.
-- Las animaciones y estilos de error están en `src/components/RegisterForm.css`.
-- Se usa React, Ionic y React Router para la navegación y experiencia fluida.
-- El backend FastAPI valida de nuevo todos los datos y responde con detalles claros en caso de error.
-- El código sigue buenas prácticas de separación de responsabilidades y feedback inmediato al usuario.
-
-### 5. Pruebas y mantenimiento
-
-- El flujo ha sido probado manualmente y cubre los casos de error más comunes (campos vacíos, email inválido, contraseña corta, email duplicado, términos no aceptados).
-- El código está preparado para ser extendido con tests automáticos y nuevas validaciones si se requieren.
-
----
-
-### Autenticación y Seguridad (Frontend)
-
-- El login se realiza vía `/auth/login` y el token JWT se almacena en memoria (contexto) y localStorage.
-- El contexto global (`AuthContext`) gestiona el estado de sesión y el token.
-- Logout seguro: elimina el token y limpia el estado de usuario.
-- Rutas privadas protegidas con `PrivateRoute`: solo accesibles si hay token válido.
-- Todas las peticiones autenticadas usan el helper `fetchWithAuth`, que agrega el header `Authorization: Bearer <token>` automáticamente.
-- Si el backend responde 401 (token expirado/inválido), la app cierra sesión y redirige a login.
-- El botón de logout solo aparece si el usuario está autenticado.
-- Ejemplo de consumo seguro de API:
-
-```ts
-import { getUserProfile } from './api/user';
-const { logout } = useAuth();
-useEffect(() => {
-   getUserProfile(logout)
-      .then(user => setUser(user))
-      .catch(err => {/* manejar error */});
-}, []);
-```
-
-**Recomendaciones:**
-- Usa tokens de corta duración y refresh tokens en backend para máxima seguridad.
-- No expongas datos sensibles en el frontend si el usuario no está autenticado.
-- Documenta el flujo de autenticación para nuevos desarrolladores.
-
+## Frontend/mobile: instalación y arranque
 
 ```bash
 cd mobile/alesport-app
 npm install
-npx ionic serve
+npm run dev
 ```
 
-## Notes for Production
+Build:
 
-- Restrict CORS origins (do not keep `*`)
-- Use a long random `JWT_SECR3. Documentación
-README completo: Explica cómo instalar, correr, testear y desplegar el proyecto. Incluye ejemplos de uso de la API.
-CONTRIBUTING.md: Guía para colaboradores sobre ramas, PRs, convenciones de código, etc.
-OpenAPI/Swagger: Aprovecha la autogeneración de docs de FastAPI y añade descripciones detalladas a los endpoints.ET_KEY`
-- Rotate secrets and use environment-specific config
-- Protect or remove maintenance/debug endpoints before release
+```bash
+npm run build
+```
+
+Tests frontend:
+
+```bash
+npm run test.unit
+npm run test.e2e
+```
+
+Lint frontend:
+
+```bash
+npm run lint
+```
+
+Capacitor:
+
+```bash
+npx cap sync
+npx cap open android
+```
+
+## Seeds y usuarios de prueba
+
+Puedes poblar datos de prueba con:
+
+```bash
+cd backend
+python seed.py
+```
+
+Antes de ejecutar, exporta variables requeridas por el script si aplica (por ejemplo contraseñas de seed).
+
+## Tests backend
+
+```bash
+cd backend
+pytest tests/
+```
+
+## Despliegue recomendado (resumen)
+
+Producción backend en VPS:
+
+- Ejecutar FastAPI con uvicorn bajo systemd.
+- Poner nginx como reverse proxy.
+- Activar HTTPS (Let's Encrypt/Certbot).
+- No usar --reload en producción.
+- Restringir CORS y puertos expuestos.
+
+### Configuración Nginx para WebSocket (tiempo real en UI de Álex)
+
+Si usas el canal en tiempo real de reservas (`/api/realtime/ws`), añade soporte Upgrade en nginx:
+
+```nginx
+location /api/realtime/ws {
+	proxy_pass http://127.0.0.1:8000;
+	proxy_http_version 1.1;
+	proxy_set_header Upgrade $http_upgrade;
+	proxy_set_header Connection "upgrade";
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	proxy_set_header X-Forwarded-Proto $scheme;
+	proxy_read_timeout 3600;
+}
+```
+
+Después de editar nginx:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Nota de operación sobre workers
+
+El realtime usa dos modos:
+
+- Con `REDIS_URL` configurado: usa Redis Pub/Sub (válido para varios workers/instancias).
+- Sin `REDIS_URL`: fallback en memoria de proceso (válido para 1 worker o entorno local).
+
+Para producción con varias réplicas/workers, deja siempre `REDIS_URL` configurado.
+
+## Troubleshooting
+
+### 403 inesperado en endpoints de reservas
+
+Revisar, en este orden:
+
+1. Token JWT vigente (logout/login para renovar cache local).
+2. Rol del usuario real en BD (superadmin/admin/trainer/client).
+3. Estado de usuario: is_active=true.
+4. Para reservar como cliente: membership_active=true.
+5. Para GET /bookings/session/{id}: ser admin/superadmin o trainer dueño de la sesión.
+
+### Muchas peticiones GET repetidas en logs
+
+Comportamiento esperado si hay polling activo en pantallas abiertas.
+
+- Ajustar constantes de refresco en frontend (valor actual: 10000 ms, rango recomendado: 10000-30000 ms), o
+- pasar a refresco manual + foco/visibilidad.
+
+### No se ven clientes/alumnos en ciertas acciones
+
+Verificar que los alumnos cumplen requisitos de negocio (activos y con membresía activa), especialmente para asignación de alumnos fijos.
+
+## Documentación de colaboración
+
+Para flujo de ramas, PRs y convenciones:
+
+- Ver CONTRIBUTING.md
+
+## Notas finales
+
+Este README prioriza precisión operativa sobre teoría. Si cambias reglas de permisos, membresía o refresco automático, actualiza este documento en el mismo PR para evitar divergencia entre código y documentación.

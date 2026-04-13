@@ -70,6 +70,32 @@ def _count_reserved_slots(db: Session, session_id: int) -> int:
     )
 
 
+def _month_boundaries(reference: datetime) -> tuple[datetime, datetime]:
+    """Devuelve [inicio_mes, inicio_mes_siguiente] en UTC para filtrar sesiones."""
+    current_month_start = datetime(reference.year, reference.month, 1, tzinfo=timezone.utc)
+    if reference.month == 12:
+        next_month_start = datetime(reference.year + 1, 1, 1, tzinfo=timezone.utc)
+    else:
+        next_month_start = datetime(reference.year, reference.month + 1, 1, tzinfo=timezone.utc)
+    return current_month_start, next_month_start
+
+
+def _count_user_monthly_active_bookings(db: Session, user_id: int, session_start_time: datetime) -> int:
+    """Cuenta reservas activas de un cliente dentro del mes de la sesión a reservar."""
+    month_start, next_month_start = _month_boundaries(session_start_time)
+    return (
+        db.query(Booking)
+        .join(SessionModel, SessionModel.id == Booking.session_id)
+        .filter(
+            Booking.user_id == user_id,
+            Booking.status == ACTIVE_BOOKING_STATUS,
+            SessionModel.start_time >= month_start,
+            SessionModel.start_time < next_month_start,
+        )
+        .count()
+    )
+
+
 def _sync_session_status_with_capacity(
     session: SessionModel, active_bookings_count: int
 ) -> None:
@@ -378,6 +404,22 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
             status_code=status.HTTP_409_CONFLICT,
             detail="No se puede reservar una sesión cancelada",
         )
+
+    if not current_user.membership_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Membresía inactiva. Contacta con administración.",
+        )
+
+    if current_user.monthly_booking_quota is not None:
+        session_start = _as_utc(session.start_time)
+        if session_start is not None:
+            used_slots = _count_user_monthly_active_bookings(db, current_user.id, session_start)
+            if used_slots >= current_user.monthly_booking_quota:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Has alcanzado tu cupo mensual de reservas",
+                )
 
     _process_waitlist_for_session(db, session)
 

@@ -20,8 +20,15 @@ export type UserProfile = {
   role: string;
   is_active: boolean;
   membership_active: boolean;
+  monthly_booking_quota?: number | null;
   phone?: string | null;
   avatar_url?: string | null;
+};
+
+type AdminUserUpdatePayload = {
+  is_active?: boolean;
+  membership_active?: boolean;
+  monthly_booking_quota?: number | null;
 };
 
 type UserProfileUpdatePayload = {
@@ -134,4 +141,55 @@ export async function getAssignableTrainers(): Promise<AssignableTrainer[]> {
       role: user.role as "admin" | "trainer",
     }))
     .filter((user: AssignableTrainer) => Number.isFinite(user.id) && user.id > 0 && user.name.length > 0);
+}
+
+export async function getUsersForAdmin(): Promise<UserProfile[]> {
+  const response = await fetchWithAuth(`${baseApiUrl}/users/`);
+
+  if (!response.ok) {
+    throw new Error("No se pudo cargar la lista de usuarios");
+  }
+
+  const users = await response.json();
+  if (!Array.isArray(users)) {
+    return [];
+  }
+
+  return users.map((user: any) => ({
+    id: Number(user.id),
+    name: String(user.name ?? "").trim(),
+    email: String(user.email ?? "").trim(),
+    role: String(user.role ?? "").trim(),
+    is_active: Boolean(user.is_active),
+    membership_active: Boolean(user.membership_active),
+    monthly_booking_quota:
+      typeof user.monthly_booking_quota === "number" ? user.monthly_booking_quota : null,
+    phone: typeof user.phone === "string" ? user.phone : null,
+    avatar_url: typeof user.avatar_url === "string" ? user.avatar_url : null,
+  }));
+}
+
+export async function updateUserAdminSettings(userId: number, payload: AdminUserUpdatePayload): Promise<UserProfile> {
+  const response = await fetchWithAuth(`${baseApiUrl}/users/${userId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    try {
+      const data = await response.json();
+      if (typeof data?.detail === "string" && data.detail.trim().length > 0) {
+        throw new Error(data.detail);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+    }
+
+    throw new Error("No se pudieron guardar los cambios del usuario");
+  }
+
+  return await response.json();
 }

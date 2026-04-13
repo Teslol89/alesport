@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
     fcm_token TEXT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     membership_active BOOLEAN NOT NULL DEFAULT TRUE,
+    monthly_booking_quota INTEGER CHECK (monthly_booking_quota IS NULL OR monthly_booking_quota BETWEEN 1 AND 60),
     is_verified BOOLEAN NOT NULL DEFAULT FALSE,
     verification_code VARCHAR(12),
     last_login TIMESTAMPTZ,

@@ -36,6 +36,8 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     # Indica si la membresía está vigente (false = no puede reservar)
     membership_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # Límite mensual de reservas activas del cliente (None = sin límite)
+    monthly_booking_quota: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     # Indica si el email ha sido verificado
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # Código de verificación de email (puede ser nulo tras verificar)

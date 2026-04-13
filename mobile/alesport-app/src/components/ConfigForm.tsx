@@ -11,7 +11,8 @@ import politicaPrivMenuIcon from '../icons/politicaPriv.svg';
 import whatsappMenuIcon from '../icons/whatsapp.svg';
 import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
-import { getUserProfile, type UserProfile, updateUserProfile } from '../api/user';
+import { getUserProfile, getUsersForAdmin, type UserProfile, updateUserAdminSettings, updateUserProfile } from '../api/user';
+import { getAllBookings, type BookingItem } from '../api/bookings';
 import { getCenterRules, updateCenterRules } from '../api/centerRules';
 import { useLanguage } from '../i18n/LanguageContext';
 import { getNotificationsEnabled, setNotificationsEnabled as updateNotificationsEnabled } from '../services/fcm';
@@ -28,6 +29,16 @@ const SUPPORT_WEBSITE = 'https://www.verdeguerlabs.es';
 const PHONE_COMPACT_REGEX = /^(?:\+34)?[6789]\d{8}$/;
 const MAX_AVATAR_FILE_SIZE = 2 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const CLIENT_PLAN_OPTIONS: Array<{ value: number | null; label: string }> = [
+  { value: null, label: 'Sin límite' },
+  { value: 8, label: 'Plan 8 clases' },
+  { value: 12, label: 'Plan 12 clases' },
+];
+
+type ClientUsageSummary = {
+  used: number;
+  remaining: number | null;
+};
 
 const formatVersionLabel = (version: string, build?: string): string => {
   if (!build || build.trim().length === 0) {
@@ -129,6 +140,48 @@ const readStoredCenterRules = (): string[] | null => {
   }
 };
 
+const asDate = (value: string | null | undefined): Date | null => {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const isDateInsideCurrentMonth = (date: Date): boolean => {
+  const now = new Date();
+  return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+};
+
+const buildClientUsageMap = (clients: UserProfile[], bookings: BookingItem[]): Record<number, ClientUsageSummary> => {
+  const activeBookingsThisMonth = bookings.filter((booking) => {
+    if (booking.status !== 'active') {
+      return false;
+    }
+
+    const sessionDate = asDate(booking.session_start_time ?? booking.created_at);
+    return sessionDate ? isDateInsideCurrentMonth(sessionDate) : false;
+  });
+
+  const usageByClientId: Record<number, number> = {};
+  activeBookingsThisMonth.forEach((booking) => {
+    usageByClientId[booking.user_id] = (usageByClientId[booking.user_id] ?? 0) + 1;
+  });
+
+  const usageMap: Record<number, ClientUsageSummary> = {};
+  clients.forEach((client) => {
+    const used = usageByClientId[client.id] ?? 0;
+    const quota = client.monthly_booking_quota ?? null;
+    usageMap[client.id] = {
+      used,
+      remaining: quota === null ? null : Math.max(quota - used, 0),
+    };
+  });
+
+  return usageMap;
+};
+
 const ConfigForm: React.FC = () => {
   const { logout, role } = useAuth();
   const { language, setLanguage, t } = useLanguage();
@@ -149,6 +202,11 @@ const ConfigForm: React.FC = () => {
   const [centerRules, setCenterRules] = useState<string[]>([]);
   const [appVersionLabel, setAppVersionLabel] = useState(() => formatVersionLabel(APP_VERSION));
   const [showRuleEditorModal, setShowRuleEditorModal] = useState(false);
+  const [showClientPlansModal, setShowClientPlansModal] = useState(false);
+  const [managedClients, setManagedClients] = useState<UserProfile[]>([]);
+  const [clientUsageMap, setClientUsageMap] = useState<Record<number, ClientUsageSummary>>({});
+  const [isLoadingManagedClients, setIsLoadingManagedClients] = useState(false);
+  const [savingClientId, setSavingClientId] = useState<number | null>(null);
   const [ruleDraft, setRuleDraft] = useState('');
   const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' }>({
@@ -161,6 +219,7 @@ const ConfigForm: React.FC = () => {
   const canShowAlexWhatsapp = resolvedRole === 'client';
   const canShowSupportWhatsapp = !canShowAlexWhatsapp;
   const canManageCenterRules = resolvedRole === 'admin' || resolvedRole === 'superadmin';
+  const canManageClientPlans = canManageCenterRules;
   const defaultCenterRules = useMemo(
     () => [
       t('config.centerRule1'),
@@ -275,6 +334,34 @@ const ConfigForm: React.FC = () => {
       void loadCenterRules();
     }
   }, [showRulesModal, loadCenterRules]);
+
+  const loadManagedClients = useCallback(async () => {
+    if (!canManageClientPlans) {
+      return;
+    }
+
+    setIsLoadingManagedClients(true);
+    try {
+      const [users, bookings] = await Promise.all([getUsersForAdmin(), getAllBookings()]);
+      const clients = users
+        .filter((user) => user.role === 'client')
+        .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+
+      setManagedClients(clients);
+      setClientUsageMap(buildClientUsageMap(clients, bookings));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('config.clientPlansLoadError');
+      setToast({ show: true, message, type: 'danger' });
+    } finally {
+      setIsLoadingManagedClients(false);
+    }
+  }, [canManageClientPlans, t]);
+
+  useEffect(() => {
+    if (showClientPlansModal) {
+      void loadManagedClients();
+    }
+  }, [showClientPlansModal, loadManagedClients]);
 
   const openEditProfileModal = () => {
     setEditName(profile.name || '');
@@ -529,13 +616,44 @@ const ConfigForm: React.FC = () => {
     window.open(SUPPORT_WEBSITE, '_blank', 'noopener,noreferrer');
   };
 
+  const handlePatchClient = async (userId: number, payload: { is_active?: boolean; membership_active?: boolean; monthly_booking_quota?: number | null; }) => {
+    setSavingClientId(userId);
+    try {
+      const updatedUser = await updateUserAdminSettings(userId, payload);
+      setManagedClients((prev) => {
+        const nextUsers = prev.map((user) => (user.id === userId ? updatedUser : user));
+        setClientUsageMap((prevUsage) => {
+          const used = prevUsage[userId]?.used ?? 0;
+          const quota = updatedUser.monthly_booking_quota ?? null;
+          return {
+            ...prevUsage,
+            [userId]: {
+              used,
+              remaining: quota === null ? null : Math.max(quota - used, 0),
+            },
+          };
+        });
+        return nextUsers;
+      });
+      if (profile.id === updatedUser.id) {
+        syncProfileState(updatedUser);
+      }
+      setToast({ show: true, message: t('config.clientPlansSaved'), type: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('config.clientPlansSaveError');
+      setToast({ show: true, message, type: 'danger' });
+    } finally {
+      setSavingClientId(null);
+    }
+  };
+
   const handleLogout = () => {
     if (logout) logout();
     else alert(t('config.loggedOut'));
   };
 
   return (
-    <div className={`config-form-container app-blur-target ${(showEditProfileModal || showSupportModal || showPrivacyModal || showRulesModal || showAvatarSourceAlert || showRuleEditorModal) ? 'app-blur-target--modal-open' : ''}`}>
+    <div className={`config-form-container app-blur-target ${(showEditProfileModal || showSupportModal || showPrivacyModal || showRulesModal || showAvatarSourceAlert || showRuleEditorModal || showClientPlansModal) ? 'app-blur-target--modal-open' : ''}`}>
       <div className="config-top-bar">
         <img src={logoIcon} alt="Logo gimnasio" className="config-top-logo" />
         <div className="config-top-title config-top-title-absolute">{t('config.title')}</div>
@@ -608,6 +726,12 @@ const ConfigForm: React.FC = () => {
             <img src={normasMenuIcon} alt="" className="config-item-icon" slot="start" />
             <IonLabel>{t('config.centerRules')}</IonLabel>
           </IonItem>
+          {canManageClientPlans ? (
+            <IonItem button detail={false} lines="none" onClick={() => setShowClientPlansModal(true)}>
+              <img src={editMenuIcon} alt="" className="config-item-icon" slot="start" />
+              <IonLabel>{t('config.clientPlansTitle')}</IonLabel>
+            </IonItem>
+          ) : null}
           {canShowAlexWhatsapp ? (
             <IonItem button detail={false} lines="none" onClick={handleContactAlex}>
               <img src={whatsappMenuIcon} alt="" className="config-item-icon" slot="start" />
@@ -702,6 +826,103 @@ const ConfigForm: React.FC = () => {
               disabled={isSavingProfile}
             >
               {isSavingProfile ? t('common.loading') : t('common.save')}
+            </button>
+          </div>
+        </div>
+      </IonModal>
+
+      <IonModal
+        className="config-edit-modal-wrapper"
+        isOpen={showClientPlansModal}
+        onDidDismiss={() => setShowClientPlansModal(false)}
+      >
+        <div className="config-edit-modal">
+          <div className="config-edit-modal-header">
+            <h3>{t('config.clientPlansTitle')}</h3>
+            <p>{t('config.clientPlansSubtitle')}</p>
+          </div>
+
+          <div className="config-legal-scroll">
+            {isLoadingManagedClients ? (
+              <p className="config-rules-empty">{t('common.loading')}</p>
+            ) : managedClients.length === 0 ? (
+              <p className="config-rules-empty">{t('config.clientPlansEmpty')}</p>
+            ) : (
+              <div className="config-client-plans-list">
+                {managedClients.map((clientUser) => {
+                  const isSavingThisClient = savingClientId === clientUser.id;
+                  const usageSummary = clientUsageMap[clientUser.id] ?? { used: 0, remaining: clientUser.monthly_booking_quota ?? null };
+                  const usageText = clientUser.monthly_booking_quota === null || clientUser.monthly_booking_quota === undefined
+                    ? `${t('config.clientPlansUsedLabel')}: ${usageSummary.used} · ${t('config.clientPlansUnlimitedLabel')}`
+                    : `${t('config.clientPlansUsedLabel')}: ${usageSummary.used} · ${t('config.clientPlansQuotaLabel')}: ${clientUser.monthly_booking_quota} · ${t('config.clientPlansRemainingLabel')}: ${usageSummary.remaining ?? 0}`;
+
+                  return (
+                    <div key={clientUser.id} className="config-client-plan-card">
+                      <div className="config-client-plan-header">
+                        <strong>{clientUser.name}</strong>
+                        <span>{clientUser.email}</span>
+                      </div>
+                      <div className="config-client-plan-usage">
+                        {usageText}
+                      </div>
+
+                      <label className="config-client-plan-row" htmlFor={`plan-active-${clientUser.id}`}>
+                        <span>{t('config.clientPlansAccess')}</span>
+                        <IonToggle
+                          id={`plan-active-${clientUser.id}`}
+                          checked={clientUser.is_active}
+                          disabled={isSavingThisClient}
+                          onIonChange={(event) => {
+                            void handlePatchClient(clientUser.id, { is_active: event.detail.checked });
+                          }}
+                        />
+                      </label>
+
+                      <label className="config-client-plan-row" htmlFor={`plan-membership-${clientUser.id}`}>
+                        <span>{t('config.clientPlansMembership')}</span>
+                        <IonToggle
+                          id={`plan-membership-${clientUser.id}`}
+                          checked={clientUser.membership_active}
+                          disabled={isSavingThisClient}
+                          onIonChange={(event) => {
+                            void handlePatchClient(clientUser.id, { membership_active: event.detail.checked });
+                          }}
+                        />
+                      </label>
+
+                      <label className="config-client-plan-row config-client-plan-row--quota" htmlFor={`plan-quota-${clientUser.id}`}>
+                        <span>{t('config.clientPlansQuota')}</span>
+                        <select
+                          id={`plan-quota-${clientUser.id}`}
+                          className="config-client-plan-select"
+                          value={clientUser.monthly_booking_quota ?? 'none'}
+                          disabled={isSavingThisClient}
+                          onChange={(event) => {
+                            const nextValue = event.target.value === 'none' ? null : Number(event.target.value);
+                            void handlePatchClient(clientUser.id, { monthly_booking_quota: Number.isFinite(nextValue as number) ? (nextValue as number) : null });
+                          }}
+                        >
+                          {CLIENT_PLAN_OPTIONS.map((option) => (
+                            <option key={option.label} value={option.value ?? 'none'}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="config-edit-actions">
+            <button
+              type="button"
+              className="app-btn-danger config-edit-action-btn"
+              onClick={() => setShowClientPlansModal(false)}
+            >
+              {t('common.close')}
             </button>
           </div>
         </div>

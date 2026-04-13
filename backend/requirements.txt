@@ -28,3 +28,4 @@ black==23.3.0
 isort==5.13.2
 flake8==7.0.0
 pre-commit==3.3.3
+redis==5.0.8

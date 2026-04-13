@@ -32,6 +32,8 @@ class Settings:
         self.SMTP_FROM = os.environ.get("SMTP_FROM")
         # Frontend URL base para enlaces de verificación
         self.FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://www.verdeguerlabs.es")
+        # Realtime bus distribuido (opcional). Si no existe, se usa bus local en memoria.
+        self.REDIS_URL = os.environ.get("REDIS_URL")
 
 
 settings = Settings()

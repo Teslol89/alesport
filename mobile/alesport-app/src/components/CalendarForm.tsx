@@ -115,6 +115,9 @@ const Calendar: React.FC = () => {
   const bookingsCacheRef = useRef<Record<number, BookingItem[]>>({});
   const handledPushNavigationRef = useRef<string | null>(null);
   const bookingsInFlightRef = useRef<Record<number, Promise<BookingItem[]>>>({});
+  const realtimeSocketRef = useRef<WebSocket | null>(null);
+  const realtimeReconnectTimerRef = useRef<number | null>(null);
+  const realtimeRefreshCooldownRef = useRef(0);
   const isClient = userRole === 'client';
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
   const canManageSessionBookings = userRole === 'admin' || userRole === 'superadmin' || userRole === 'trainer';
@@ -301,6 +304,109 @@ const Calendar: React.FC = () => {
       document.removeEventListener('visibilitychange', refreshAgendaState);
     };
   }, [canManageSessionBookings, detailsSession, fetchSessions, getSessionBookingsCached, isClient, refreshMyBookings, showDetailsModal]);
+
+  useEffect(() => {
+    if (!canManageSessionBookings) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const buildWsUrl = () => {
+      const base = import.meta.env.VITE_API_BASE_URL || 'https://api.verdeguerlabs.es/api';
+      const wsBase = base.replace(/^http:/i, 'ws:').replace(/^https:/i, 'wss:');
+      return `${wsBase}/realtime/ws?token=${encodeURIComponent(token)}`;
+    };
+
+    const closeSocket = () => {
+      if (realtimeSocketRef.current) {
+        realtimeSocketRef.current.close();
+        realtimeSocketRef.current = null;
+      }
+    };
+
+    const scheduleReconnect = () => {
+      if (cancelled || realtimeReconnectTimerRef.current !== null) {
+        return;
+      }
+      realtimeReconnectTimerRef.current = window.setTimeout(() => {
+        realtimeReconnectTimerRef.current = null;
+        connect();
+      }, 2500);
+    };
+
+    const handleRealtimeRefresh = (sessionId?: number) => {
+      const now = Date.now();
+      if (now - realtimeRefreshCooldownRef.current < 500) {
+        return;
+      }
+      realtimeRefreshCooldownRef.current = now;
+
+      if (!showDetailsModal) {
+        fetchSessions({ silent: true });
+      }
+
+      if (typeof sessionId === 'number' && detailsSession?.id === sessionId) {
+        void getSessionBookingsCached(sessionId, { forceRefresh: true })
+          .then((data) => setBookings(data))
+          .catch(() => {
+            // Ignorar errores de reconexión/eventos transitorios.
+          });
+      }
+    };
+
+    const connect = () => {
+      if (cancelled) {
+        return;
+      }
+
+      closeSocket();
+
+      try {
+        const socket = new WebSocket(buildWsUrl());
+        realtimeSocketRef.current = socket;
+
+        socket.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data) as { type?: string; session_id?: number };
+            if (payload.type === 'booking_changed') {
+              handleRealtimeRefresh(payload.session_id);
+            }
+          } catch {
+            // Ignorar mensajes no JSON.
+          }
+        };
+
+        socket.onerror = () => {
+          closeSocket();
+          scheduleReconnect();
+        };
+
+        socket.onclose = () => {
+          closeSocket();
+          scheduleReconnect();
+        };
+      } catch {
+        scheduleReconnect();
+      }
+    };
+
+    connect();
+
+    return () => {
+      cancelled = true;
+      closeSocket();
+      if (realtimeReconnectTimerRef.current !== null) {
+        window.clearTimeout(realtimeReconnectTimerRef.current);
+        realtimeReconnectTimerRef.current = null;
+      }
+    };
+  }, [canManageSessionBookings, detailsSession?.id, fetchSessions, getSessionBookingsCached, showDetailsModal]);
 
   // Filtra y ordena sesiones por fecha seleccionada y hora de inicio
   const sessionsForDate = useMemo(

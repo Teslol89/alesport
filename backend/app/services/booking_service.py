@@ -9,6 +9,7 @@ from app.models.booking import Booking
 from app.models.session import SessionModel
 from app.models.user import User
 from app.services.notification_service import send_push_notification
+from app.services.realtime_events import publish_booking_change
 from app.utils.utils import is_past_session_datetime, to_local_datetime
 
 
@@ -489,6 +490,7 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
         )
 
     db.refresh(booking)
+    publish_booking_change(session.id, "created")
     return booking
 
 
@@ -567,6 +569,7 @@ def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
     user = db.query(User).filter(User.id == booking.user_id).first()
     setattr(booking, "user_name", user.name if user else None)
     setattr(booking, "user_email", user.email if user else None)
+    publish_booking_change(session.id, "cancelled")
     return booking
 
 
@@ -678,4 +681,5 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
     user = db.query(User).filter(User.id == booking.user_id).first()
     setattr(booking, "user_name", user.name if user else None)
     setattr(booking, "user_email", user.email if user else None)
+    publish_booking_change(session.id, "reactivated")
     return booking

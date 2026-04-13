@@ -12,6 +12,12 @@ type PeriodFilter = 'all' | 'today' | 'week' | 'month';
 
 const SEARCH_AUTO_REFRESH_MS = 3000;
 
+const getBookingReferenceDate = (booking: BookingItem): Date | null => {
+    const referenceDateStr = booking.session_start_time || booking.created_at;
+    const referenceDate = new Date(referenceDateStr);
+    return Number.isNaN(referenceDate.getTime()) ? null : referenceDate;
+};
+
 const BuscarForm: React.FC = () => {
     const { t, dateLocale } = useLanguage();
     const { role: userRole, isLoadingProfile } = useAuth();
@@ -140,32 +146,45 @@ const BuscarForm: React.FC = () => {
     }, [bookings, query, t]);
 
     const periodFilteredBookings = useMemo(() => {
-        if (periodFilter === 'all') {
-            return filteredBookings;
+        let periodFiltered = filteredBookings;
+
+        if (periodFilter !== 'all') {
+            const effectivePeriodDate = periodFilter === 'today' ? todayIso : periodDate;
+            const base = new Date(`${effectivePeriodDate}T00:00:00`);
+            if (isNaN(base.getTime())) {
+                periodFiltered = filteredBookings;
+            } else {
+                periodFiltered = filteredBookings.filter((booking) => {
+                    const referenceDate = getBookingReferenceDate(booking);
+                    if (!referenceDate) {
+                        return false;
+                    }
+
+                    if (periodFilter === 'month') {
+                        return referenceDate.getFullYear() === base.getFullYear() && referenceDate.getMonth() === base.getMonth();
+                    }
+
+                    if (periodFilter === 'today') {
+                        return isSameDay(base, referenceDate);
+                    }
+
+                    return isSameWeek(base, referenceDate);
+                });
+            }
         }
 
-        const effectivePeriodDate = periodFilter === 'today' ? todayIso : periodDate;
-        const base = new Date(`${effectivePeriodDate}T00:00:00`);
-        if (isNaN(base.getTime())) {
-            return filteredBookings;
-        }
+        return [...periodFiltered].sort((a, b) => {
+            const dateA = getBookingReferenceDate(a);
+            const dateB = getBookingReferenceDate(b);
 
-        return filteredBookings.filter((booking) => {
-            const referenceDateStr = booking.session_start_time || booking.created_at;
-            const referenceDate = new Date(referenceDateStr);
-            if (isNaN(referenceDate.getTime())) {
-                return false;
-            }
+            if (!dateA && !dateB) return a.id - b.id;
+            if (!dateA) return 1;
+            if (!dateB) return -1;
 
-            if (periodFilter === 'month') {
-                return referenceDate.getFullYear() === base.getFullYear() && referenceDate.getMonth() === base.getMonth();
-            }
+            const byDate = dateA.getTime() - dateB.getTime();
+            if (byDate !== 0) return byDate;
 
-            if (periodFilter === 'today') {
-                return isSameDay(base, referenceDate);
-            }
-
-            return isSameWeek(base, referenceDate);
+            return a.id - b.id;
         });
     }, [filteredBookings, periodFilter, periodDate]);
 

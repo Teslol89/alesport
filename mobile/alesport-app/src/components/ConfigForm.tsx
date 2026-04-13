@@ -5,10 +5,12 @@ import { cameraOutline, moonOutline, personCircleOutline, sunnyOutline } from 'i
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import logoIcon from '../icons/icon.png';
 import editMenuIcon from '../icons/edit.svg';
-import helpMenuIcon from '../icons/help.svg';
 import normasMenuIcon from '../icons/normas.svg';
+import helpMenuIcon from '../icons/help.svg';
+import payMenuIcon from '../icons/pagar.svg';
 import politicaPrivMenuIcon from '../icons/politicaPriv.svg';
 import whatsappMenuIcon from '../icons/whatsapp.svg';
+import refreshIcon from '../icons/refresh.svg';
 import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
 import { getUserProfile, getUsersForAdmin, type UserProfile, updateUserAdminSettings, updateUserProfile } from '../api/user';
@@ -29,11 +31,16 @@ const SUPPORT_WEBSITE = 'https://www.verdeguerlabs.es';
 const PHONE_COMPACT_REGEX = /^(?:\+34)?[6789]\d{8}$/;
 const MAX_AVATAR_FILE_SIZE = 2 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const CLIENT_PLAN_OPTIONS: Array<{ value: number | null; label: string }> = [
-  { value: null, label: 'Sin límite' },
+const CLIENT_PLAN_OPTIONS: Array<{ value: number | 'custom' | 'none'; label: string }> = [
+  { value: 'none', label: 'Sin Plan' },
   { value: 8, label: 'Plan 8 clases' },
   { value: 12, label: 'Plan 12 clases' },
+  { value: 'custom', label: 'Personalizado' },
 ];
+const FIXED_PLAN_VALUES = [8, 12];
+
+const PICKER_ITEM_HEIGHT = 44;
+const PICKER_VALUES = Array.from({ length: 60 }, (_, i) => i + 1);
 
 type ClientUsageSummary = {
   used: number;
@@ -204,9 +211,14 @@ const ConfigForm: React.FC = () => {
   const [showRuleEditorModal, setShowRuleEditorModal] = useState(false);
   const [showClientPlansModal, setShowClientPlansModal] = useState(false);
   const [managedClients, setManagedClients] = useState<UserProfile[]>([]);
+  const [clientPlansSearch, setClientPlansSearch] = useState('');
   const [clientUsageMap, setClientUsageMap] = useState<Record<number, ClientUsageSummary>>({});
   const [isLoadingManagedClients, setIsLoadingManagedClients] = useState(false);
+  const [isRefreshingManagedClients, setIsRefreshingManagedClients] = useState(false);
   const [savingClientId, setSavingClientId] = useState<number | null>(null);
+  const [customQuotaTarget, setCustomQuotaTarget] = useState<{ userId: number; name: string } | null>(null);
+  const [customQuotaDraft, setCustomQuotaDraft] = useState('');
+  const pickerRef = useRef<HTMLDivElement>(null);
   const [ruleDraft, setRuleDraft] = useState('');
   const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' }>({
@@ -230,6 +242,19 @@ const ConfigForm: React.FC = () => {
     ],
     [t]
   );
+
+  const filteredManagedClients = useMemo(() => {
+    const term = clientPlansSearch.trim().toLowerCase();
+    if (!term) {
+      return managedClients;
+    }
+
+    return managedClients.filter((clientUser) => {
+      const name = (clientUser.name || '').toLowerCase();
+      const email = (clientUser.email || '').toLowerCase();
+      return name.includes(term) || email.includes(term);
+    });
+  }, [managedClients, clientPlansSearch]);
 
   const syncProfileState = (nextProfile: Partial<UserProfile>) => {
     setProfile(nextProfile);
@@ -335,12 +360,17 @@ const ConfigForm: React.FC = () => {
     }
   }, [showRulesModal, loadCenterRules]);
 
-  const loadManagedClients = useCallback(async () => {
+  const loadManagedClients = useCallback(async (mode: 'initial' | 'refresh' = 'initial') => {
     if (!canManageClientPlans) {
       return;
     }
 
-    setIsLoadingManagedClients(true);
+    if (mode === 'initial') {
+      setIsLoadingManagedClients(true);
+    } else {
+      setIsRefreshingManagedClients(true);
+    }
+
     try {
       const [users, bookings] = await Promise.all([getUsersForAdmin(), getAllBookings()]);
       const clients = users
@@ -353,7 +383,11 @@ const ConfigForm: React.FC = () => {
       const message = error instanceof Error ? error.message : t('config.clientPlansLoadError');
       setToast({ show: true, message, type: 'danger' });
     } finally {
-      setIsLoadingManagedClients(false);
+      if (mode === 'initial') {
+        setIsLoadingManagedClients(false);
+      } else {
+        setIsRefreshingManagedClients(false);
+      }
     }
   }, [canManageClientPlans, t]);
 
@@ -623,6 +657,47 @@ const ConfigForm: React.FC = () => {
     window.open(SUPPORT_WEBSITE, '_blank', 'noopener,noreferrer');
   };
 
+  const handleOpenCustomQuota = (userId: number, name: string, currentQuota: number | null | undefined) => {
+    const isAlreadyCustom = currentQuota !== null && currentQuota !== undefined && !FIXED_PLAN_VALUES.includes(currentQuota);
+    setCustomQuotaDraft(isAlreadyCustom ? String(currentQuota) : '8');
+    setCustomQuotaTarget({ userId, name });
+  };
+
+  useEffect(() => {
+    if (!customQuotaTarget || !pickerRef.current) {
+      return;
+    }
+    const val = parseInt(customQuotaDraft, 10);
+    const idx = Number.isFinite(val) && val >= 1 && val <= 60 ? val - 1 : 7;
+    pickerRef.current.scrollTop = idx * PICKER_ITEM_HEIGHT;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customQuotaTarget]);
+
+  const handlePickerScroll = () => {
+    if (!pickerRef.current) {
+      return;
+    }
+    const idx = Math.round(pickerRef.current.scrollTop / PICKER_ITEM_HEIGHT);
+    setCustomQuotaDraft(String(Math.min(60, Math.max(1, idx + 1))));
+  };
+
+  const handleConfirmCustomQuota = async () => {
+    if (!customQuotaTarget) {
+      return;
+    }
+
+    const parsed = parseInt(customQuotaDraft, 10);
+    if (!Number.isFinite(parsed) || parsed < 1 || parsed > 60) {
+      setToast({ show: true, message: t('config.clientPlansCustomQuotaInvalid'), type: 'danger' });
+      return;
+    }
+
+    const { userId } = customQuotaTarget;
+    setCustomQuotaTarget(null);
+    setCustomQuotaDraft('');
+    await handlePatchClient(userId, { monthly_booking_quota: parsed });
+  };
+
   const handlePatchClient = async (userId: number, payload: { is_active?: boolean; membership_active?: boolean; monthly_booking_quota?: number | null; }) => {
     setSavingClientId(userId);
     try {
@@ -729,16 +804,16 @@ const ConfigForm: React.FC = () => {
             <img src={editMenuIcon} alt="" className="config-item-icon" slot="start" />
             <IonLabel>{t('config.editProfile')}</IonLabel>
           </IonItem>
+          {canManageClientPlans ? (
+            <IonItem button detail={false} lines="none" onClick={() => setShowClientPlansModal(true)}>
+              <img src={payMenuIcon} alt="" className="config-item-icon" slot="start" />
+              <IonLabel>{t('config.clientPlansTitle')}</IonLabel>
+            </IonItem>
+          ) : null}
           <IonItem button detail={false} lines="none" onClick={() => setShowRulesModal(true)}>
             <img src={normasMenuIcon} alt="" className="config-item-icon" slot="start" />
             <IonLabel>{t('config.centerRules')}</IonLabel>
           </IonItem>
-          {canManageClientPlans ? (
-            <IonItem button detail={false} lines="none" onClick={() => setShowClientPlansModal(true)}>
-              <img src={editMenuIcon} alt="" className="config-item-icon" slot="start" />
-              <IonLabel>{t('config.clientPlansTitle')}</IonLabel>
-            </IonItem>
-          ) : null}
           {canShowAlexWhatsapp ? (
             <IonItem button detail={false} lines="none" onClick={handleContactAlex}>
               <img src={whatsappMenuIcon} alt="" className="config-item-icon" slot="start" />
@@ -843,9 +918,65 @@ const ConfigForm: React.FC = () => {
         isOpen={showClientPlansModal}
         onDidDismiss={() => setShowClientPlansModal(false)}
       >
-        <div className="config-edit-modal">
+        <div className="config-edit-modal" style={{ position: 'relative' }}>
+          {customQuotaTarget ? (
+            <div className="config-custom-quota-overlay" role="dialog" aria-modal="true">
+              <div className="config-custom-quota-modal">
+                <h4 className="config-custom-quota-title">{t('config.clientPlansCustomQuotaTitle')}</h4>
+                <p className="config-custom-quota-subtitle">{customQuotaTarget.name}</p>
+                <div className="config-quota-picker-wrapper">
+                  <div className="config-quota-picker-highlight" aria-hidden="true" />
+                  <div
+                    className="config-quota-picker-scroll"
+                    ref={pickerRef}
+                    onScroll={handlePickerScroll}
+                  >
+                    {PICKER_VALUES.map((n) => (
+                      <div
+                        key={n}
+                        className={`config-quota-picker-item${String(n) === customQuotaDraft ? ' config-quota-picker-item--selected' : ''}`}
+                      >
+                        {n}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="config-custom-quota-actions">
+                  <button
+                    type="button"
+                    className="app-btn-danger"
+                    onClick={() => { setCustomQuotaTarget(null); setCustomQuotaDraft(''); }}
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    className="app-btn-primary"
+                    onClick={() => { void handleConfirmCustomQuota(); }}
+                  >
+                    {t('common.save')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="config-edit-modal-header">
-            <h3>{t('config.clientPlansTitle')}</h3>
+            <div className="config-client-plans-header-top">
+              <h3>{t('config.clientPlansTitle')}</h3>
+              <button
+                type="button"
+                className="config-client-plans-refresh-btn"
+                onClick={() => { void loadManagedClients('refresh'); }}
+                disabled={isLoadingManagedClients || isRefreshingManagedClients}
+              >
+                <img
+                  src={refreshIcon}
+                  alt=""
+                  className={`config-client-plans-refresh-icon ${isRefreshingManagedClients ? 'config-client-plans-refresh-icon--spinning' : ''}`}
+                />
+                <span>{isRefreshingManagedClients ? t('common.loading') : t('common.refresh')}</span>
+              </button>
+            </div>
             <p>{t('config.clientPlansSubtitle')}</p>
           </div>
 
@@ -856,7 +987,17 @@ const ConfigForm: React.FC = () => {
               <p className="config-rules-empty">{t('config.clientPlansEmpty')}</p>
             ) : (
               <div className="config-client-plans-list">
-                {managedClients.map((clientUser) => {
+                <input
+                  type="search"
+                  className="app-input config-client-plans-search"
+                  placeholder={t('config.clientPlansSearchPlaceholder')}
+                  value={clientPlansSearch}
+                  onChange={(event) => setClientPlansSearch(event.target.value)}
+                />
+
+                {filteredManagedClients.length === 0 ? (
+                  <p className="config-rules-empty">{t('config.clientPlansNoMatches')}</p>
+                ) : filteredManagedClients.map((clientUser) => {
                   const isSavingThisClient = savingClientId === clientUser.id;
                   const usageSummary = clientUsageMap[clientUser.id] ?? { used: 0, remaining: clientUser.monthly_booking_quota ?? null };
                   const usageText = clientUser.monthly_booking_quota === null || clientUser.monthly_booking_quota === undefined
@@ -902,16 +1043,27 @@ const ConfigForm: React.FC = () => {
                         <select
                           id={`plan-quota-${clientUser.id}`}
                           className="config-client-plan-select"
-                          value={clientUser.monthly_booking_quota ?? 'none'}
+                          value={clientUser.monthly_booking_quota === null || clientUser.monthly_booking_quota === undefined
+                            ? 'none'
+                            : FIXED_PLAN_VALUES.includes(clientUser.monthly_booking_quota)
+                              ? clientUser.monthly_booking_quota
+                              : 'custom'}
                           disabled={isSavingThisClient}
                           onChange={(event) => {
-                            const nextValue = event.target.value === 'none' ? null : Number(event.target.value);
-                            void handlePatchClient(clientUser.id, { monthly_booking_quota: Number.isFinite(nextValue as number) ? (nextValue as number) : null });
+                            if (event.target.value === 'custom') {
+                              handleOpenCustomQuota(clientUser.id, clientUser.name, clientUser.monthly_booking_quota);
+                            } else if (event.target.value === 'none') {
+                              void handlePatchClient(clientUser.id, { monthly_booking_quota: null });
+                            } else {
+                              void handlePatchClient(clientUser.id, { monthly_booking_quota: Number(event.target.value) });
+                            }
                           }}
                         >
                           {CLIENT_PLAN_OPTIONS.map((option) => (
-                            <option key={option.label} value={option.value ?? 'none'}>
-                              {option.label}
+                            <option key={option.label} value={option.value}>
+                              {option.value === 'custom' && !FIXED_PLAN_VALUES.includes(clientUser.monthly_booking_quota ?? -1) && clientUser.monthly_booking_quota !== null && clientUser.monthly_booking_quota !== undefined
+                                ? `${t('config.clientPlansCustomLabel')} (${clientUser.monthly_booking_quota})`
+                                : option.label}
                             </option>
                           ))}
                         </select>

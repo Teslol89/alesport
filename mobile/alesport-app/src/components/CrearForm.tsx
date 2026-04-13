@@ -8,6 +8,7 @@ import { copyWeekSessions } from '../api/sessions';
 import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso, getMondayOfWeek, getSundayOfWeek } from '../utils/funcionesGeneral';
 import CustomToast from './CustomStyles';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useAuth } from './AuthContext';
 import './CrearForm.css';
 
 /* =================== TIPOS Y CONSTANTES =================== */
@@ -45,10 +46,30 @@ Se usará una fecha fija y se ignorará al aplicar la hora seleccionada. */
 const TIME_PICKER_BASE_DATE = '1970-01-01';
 
 /* Componente principal para el formulario de creación,
- que incluye la elección entre clase puntual o recurrente,
-  y el formulario específico para clase puntual en un modal. */
+que incluye la elección entre clase puntual o recurrente,
+y el formulario específico para clase puntual en un modal. */
 const CrearForm: React.FC = () => {
-    const { t, dateLocale } = useLanguage();
+    const { t, dateLocale, } = useLanguage();
+    const { user } = useAuth();
+    // Bloqueo por membresía inactiva o sin plan
+    if (user && (!user.is_active || !user.membership_active)) {
+        return (
+            <div className="crear-form-container app-blur-target">
+                <div className="crear-top-bar">
+                    <img src={logoIcon} alt="Logo gimnasio" className="crear-top-logo" />
+                    <div className="crear-top-title crear-top-title-absolute">{t('create.title')}</div>
+                </div>
+                <div className="crear-form-content">
+                    <p className="crear-form-blocked">
+                        { !user.is_active
+                            ? t('auth.inactiveUserBlocked')
+                            : t('auth.membershipInactiveBlocked') }
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     // Estado y refs para el time picker recurrente semanal
     const [showRecurringTimePicker, setShowRecurringTimePicker] = useState(false);
     const [recurringTimePickerTarget, setRecurringTimePickerTarget] = useState<'start' | 'end' | null>(null);
@@ -244,7 +265,7 @@ const CrearForm: React.FC = () => {
         setRecurringDraft((prev) => ({ ...prev, trainerId: trainer.id, trainerName: trainer.name }));
         setShowRecurringTrainerPicker(false);
     }
-    
+
     function openRecurringFixedStudentsModal() {
         closeAllRecurringSubmodals();
         setRecurringFixedStudentsDraftIds([...recurringDraft.fixedStudentIds]);

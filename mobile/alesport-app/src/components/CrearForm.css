@@ -1,3 +1,32 @@
+/* --------------------------------------- */
+/* Estilos para el componente CrearForm    */
+/* --------------------------------------- */
+
+/* Índice rápido de secciones
+ * 1) Contenedor principal
+ * 2) Top bar y cabecera
+ * 3) Cuerpo del formulario
+ * 4) Inputs y campos
+ * 5) Estados de carga y mensajes (.crear-form-blocked)
+ * 6) Modales y overlays
+ * 7) Botones y acciones
+ * 8) Otros estilos
+ */
+
+/* ------------------------------- */
+/* 5) Estados de carga y mensajes  */
+/* ------------------------------- */
+.crear-form-blocked {
+  color: #b43434;
+  font-weight: 600;
+  text-align: center;
+  font-size: 1rem;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+}
+
+/* ------------------------------- */
+/* 6) Modales y overlays           */
+/* ------------------------------- */
 /* Fondo oscuro suave para los modales personalizados */
 .crear-single-modal-wrapper.ion-modal-overlay,
 .crear-fixed-students-modal-wrapper.ion-modal-overlay {

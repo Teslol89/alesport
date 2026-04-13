@@ -9,7 +9,7 @@ export const LegalText: React.FC = () => (
       <li>
         <strong>Propiedad y Licencia de Uso</strong><br />
         La aplicación Alesport es propiedad exclusiva de Verdeguer Labs. El usuario final accede a la aplicación mediante una licencia de uso temporal y no adquiere en ningún caso la propiedad intelectual ni los derechos de explotación de la misma.<br />
-        El acceso y uso de la aplicación están sujetos al pago de la cuota acordada entre Verdeguer Labs y el "Alesport training center".
+        El acceso y uso de la aplicación están sujetos al pago de la cuota acordada entre Verdeguer Labs y "Alesport training center".
       </li>
       <li>
         <strong>Responsabilidad y Soporte</strong><br />
@@ -26,7 +26,7 @@ export const LegalText: React.FC = () => (
       </li>
       <li>
         <strong>Condiciones de Uso</strong><br />
-        El usuario se compromete a utilizar la aplicación de forma lícita y conforme a las instrucciones de Verdeguer Labs<br />
+        El usuario se compromete a utilizar la aplicación de forma lícita y conforme a las instrucciones de Verdeguer Labs.<br />
         Queda prohibido el uso fraudulento, la ingeniería inversa, la copia o distribución no autorizada de la aplicación.
       </li>
       <li>

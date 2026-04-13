@@ -26,7 +26,7 @@ const Calendar: React.FC = () => {
   const { role: userRole, user } = useAuth();
   const location = useLocation();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
-  const AGENDA_AUTO_REFRESH_MS = 3000;
+  const AGENDA_AUTO_REFRESH_MS = 10000;
 
   type SessionItem = {
     id: number;
@@ -272,9 +272,13 @@ const Calendar: React.FC = () => {
         return;
       }
 
-      fetchSessions({ silent: true });
+      const shouldPauseGlobalRefresh = showDetailsModal;
 
-      if (isClient) {
+      if (!shouldPauseGlobalRefresh) {
+        fetchSessions({ silent: true });
+      }
+
+      if (isClient && !shouldPauseGlobalRefresh) {
         void refreshMyBookings();
       }
 
@@ -296,7 +300,7 @@ const Calendar: React.FC = () => {
       window.removeEventListener('focus', refreshAgendaState);
       document.removeEventListener('visibilitychange', refreshAgendaState);
     };
-  }, [canManageSessionBookings, detailsSession, fetchSessions, getSessionBookingsCached, isClient, refreshMyBookings]);
+  }, [canManageSessionBookings, detailsSession, fetchSessions, getSessionBookingsCached, isClient, refreshMyBookings, showDetailsModal]);
 
   // Filtra y ordena sesiones por fecha seleccionada y hora de inicio
   const sessionsForDate = useMemo(
@@ -696,6 +700,10 @@ const Calendar: React.FC = () => {
       return;
     }
 
+    if (showDetailsModal) {
+      return;
+    }
+
     let cancelled = false;
 
     const loadOccupancy = async () => {
@@ -733,7 +741,7 @@ const Calendar: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [canManageSessionBookings, sessionsForDate, getSessionBookingsCached]);
+  }, [canManageSessionBookings, getSessionBookingsCached, sessionsForDate, showDetailsModal]);
 
   useEffect(() => {
     if (!detailsSession) {

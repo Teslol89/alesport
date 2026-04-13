@@ -10,7 +10,7 @@ import './BuscarForm.css';
 
 type PeriodFilter = 'all' | 'today' | 'week' | 'month';
 
-const SEARCH_AUTO_REFRESH_MS = 3000;
+const SEARCH_AUTO_REFRESH_MS = 10000;
 
 const getBookingReferenceDate = (booking: BookingItem): Date | null => {
     const referenceDateStr = booking.session_start_time || booking.created_at;
@@ -20,7 +20,7 @@ const getBookingReferenceDate = (booking: BookingItem): Date | null => {
 
 const BuscarForm: React.FC = () => {
     const { t, dateLocale } = useLanguage();
-    const { role: userRole, isLoadingProfile } = useAuth();
+    const { role: userRole, isLoadingProfile, user } = useAuth();
     const isAdmin = userRole === 'admin' || userRole === 'superadmin';
     const todayIso = toLocalISODate(new Date());
     const [bookings, setBookings] = useState<BookingItem[]>([]);
@@ -197,6 +197,25 @@ const BuscarForm: React.FC = () => {
             inactive,
         };
     }, [periodFilteredBookings]);
+
+    // Bloqueo por membresía inactiva o sin plan (solo para usuarios no admin)
+    if (user && (!user.is_active || !user.membership_active) && !isAdmin) {
+        return (
+            <div className={`search-form-container app-blur-target`}>
+                <div className="search-top-bar">
+                    <img src={logoIcon} alt="Logo gimnasio" className="search-top-logo" />
+                    <div className="search-top-title search-top-title-absolute">{t('search.title')}</div>
+                </div>
+                <div className="search-form-content">
+                    <p className="search-form-blocked">
+                        { !user.is_active
+                            ? t('auth.inactiveUserBlocked')
+                            : t('auth.membershipInactiveBlocked') }
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={`search-form-container app-blur-target ${(showPeriodCalendar || showPeriodFilterModal) ? 'app-blur-target--modal-open' : ''}`}>

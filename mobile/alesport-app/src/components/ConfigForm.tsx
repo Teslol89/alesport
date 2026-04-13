@@ -358,10 +358,17 @@ const ConfigForm: React.FC = () => {
   }, [canManageClientPlans, t]);
 
   useEffect(() => {
-    if (showClientPlansModal) {
+    if (canManageClientPlans && managedClients.length === 0) {
       void loadManagedClients();
     }
-  }, [showClientPlansModal, loadManagedClients]);
+  }, [canManageClientPlans, loadManagedClients, managedClients.length]);
+
+  // When modal opens, data is already loaded (no spinner on first open)
+  useEffect(() => {
+    if (showClientPlansModal && managedClients.length === 0 && !isLoadingManagedClients) {
+      void loadManagedClients();
+    }
+  }, [showClientPlansModal, loadManagedClients, managedClients.length, isLoadingManagedClients]);
 
   const openEditProfileModal = () => {
     setEditName(profile.name || '');

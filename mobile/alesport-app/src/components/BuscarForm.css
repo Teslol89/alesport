@@ -270,6 +270,15 @@
 /* ------------------------------ */
 /* 5) Estados de carga y mensajes */
 /* ------------------------------ */
+.search-form-blocked {
+	color: #b43434;
+	font-weight: 600;
+	text-align: center;
+	margin: 2.5rem 0 2rem 0;
+	font-size: 1.1rem;
+	font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+}
+
 .search-form-loading {
 	display: flex;
 	justify-content: center;
@@ -277,7 +286,7 @@
 }
 
 .search-form-error {
-	color: #b43434;
+	color: #b43434;	
 	margin: 0.2rem 0 0;
 }
 

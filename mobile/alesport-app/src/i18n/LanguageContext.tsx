@@ -13,6 +13,10 @@ const LANGUAGE_STORAGE_KEY = 'alesport-language';
 
 const translations: Record<Language, Record<string, unknown>> = {
     es: {
+        auth: {
+            membershipInactiveBlocked: 'Tu membresía está inactiva o sin plan. No puedes reservar ni acceder a clases.',
+            inactiveUserBlocked: 'Tu usuario está inactivo. No tienes acceso a la app. Contacta con el centro.',
+        },
         tabs: {
             agenda: 'Agenda',
             search: 'Buscar',
@@ -268,6 +272,10 @@ const translations: Record<Language, Record<string, unknown>> = {
         },
     },
     en: {
+        auth: {
+            membershipInactiveBlocked: 'Your membership is inactive or you have no plan. You cannot book or access classes.',
+            inactiveUserBlocked: 'Your user is inactive. You do not have access to the app. Contact the center.',
+        },
         tabs: {
             agenda: 'Diary',
             search: 'Search',

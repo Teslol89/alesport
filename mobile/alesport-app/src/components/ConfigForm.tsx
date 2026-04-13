@@ -47,6 +47,7 @@ type ClientUsageSummary = {
   remaining: number | null;
 };
 
+/* Función para formatear la etiqueta de versión, incluyendo el número de build si está disponible */
 const formatVersionLabel = (version: string, build?: string): string => {
   if (!build || build.trim().length === 0) {
     return version;
@@ -121,6 +122,7 @@ const handleContactAlex = () => {
   window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
 };
 
+/* Función para leer las reglas del centro desde el almacenamiento local, con validación y normalización */
 const readStoredCenterRules = (): string[] | null => {
   if (typeof window === 'undefined') {
     return null;
@@ -147,6 +149,7 @@ const readStoredCenterRules = (): string[] | null => {
   }
 };
 
+/* Función para convertir una cadena de texto en un número entero, con validación y manejo de casos especiales */
 const asDate = (value: string | null | undefined): Date | null => {
   if (!value) {
     return null;
@@ -156,11 +159,13 @@ const asDate = (value: string | null | undefined): Date | null => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+/* Función para determinar si una fecha dada está dentro del mes actual, comparando año y mes con la fecha actual */
 const isDateInsideCurrentMonth = (date: Date): boolean => {
   const now = new Date();
   return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
 };
 
+/* Función para construir un mapa de uso de clases por cliente, contando las reservas activas del mes actual y comparándolas con la cuota mensual */
 const buildClientUsageMap = (clients: UserProfile[], bookings: BookingItem[]): Record<number, ClientUsageSummary> => {
   const activeBookingsThisMonth = bookings.filter((booking) => {
     if (booking.status !== 'active') {
@@ -189,6 +194,9 @@ const buildClientUsageMap = (clients: UserProfile[], bookings: BookingItem[]): R
   return usageMap;
 };
 
+/* ConfigForm es el componente principal para la pantalla de configuración,
+donde los usuarios pueden editar su perfil, cambiar idioma, gestionar reglas del centro
+y planes de clientes (si tienen permisos), etc. */
 const ConfigForm: React.FC = () => {
   const { logout, role } = useAuth();
   const { language, setLanguage, t } = useLanguage();

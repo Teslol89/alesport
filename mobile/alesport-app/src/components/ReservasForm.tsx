@@ -26,7 +26,7 @@ type ReservasFormProps = {
 
 const LOOKBACK_DAYS = 14;
 const LOOKAHEAD_DAYS = 120;
-const BOOKINGS_AUTO_REFRESH_MS = 3000;
+const BOOKINGS_AUTO_REFRESH_MS = 10000;
 
 function shiftDays(base: Date, amount: number) {
   const next = new Date(base);
@@ -281,6 +281,28 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     } finally {
       setBusyBookingId(null);
     }
+  }
+
+
+  // Bloqueo por membresía inactiva o sin plan
+  if (user && (!user.is_active || !user.membership_active)) {
+    return (
+      <div className="bookings-form-container app-blur-target">
+        <div className="bookings-top-bar">
+          <img src={logoIcon} alt="Logo gimnasio" className="bookings-top-logo" />
+          <div className="bookings-top-title bookings-top-title-absolute">{t('myBookings.title')}</div>
+        </div>
+        <div className="bookings-form-wrapper">
+          <div className="bookings-empty app-surface-card">
+            <p className="bookings-form-blocked">
+              { !user.is_active
+                ? t('auth.inactiveUserBlocked')
+                : t('auth.membershipInactiveBlocked') }
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

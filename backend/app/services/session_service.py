@@ -66,6 +66,28 @@ def _attach_fixed_students_to_new_session(db: Session, session: SessionModel, st
         session.status = "completed"
 
 
+def _get_copyable_active_students_for_session(db: Session, session_id: int) -> list[User]:
+    active_students = (
+        db.query(User)
+        .join(Booking, Booking.user_id == User.id)
+        .filter(
+            Booking.session_id == session_id,
+            Booking.status == "active",
+            User.role == "client",
+            User.is_active.is_(True),
+            User.membership_active.is_(True),
+        )
+        .order_by(Booking.id.asc())
+        .all()
+    )
+
+    unique_students_by_id: dict[int, User] = {}
+    for student in active_students:
+        unique_students_by_id.setdefault(student.id, student)
+
+    return list(unique_students_by_id.values())
+
+
 # --- Función para convertir hora con tz a hora local sin tzinfo --- #
 def _to_local_naive_time(value: time) -> time:
     """Convierte una hora con tz (si viene) a hora local y la devuelve sin tzinfo."""
@@ -614,6 +636,8 @@ def copy_week_sessions(
         )
     new_sessions = []
     try:
+        students_by_source_session: dict[int, list[User]] = {}
+
         for session in sessions_to_copy:
             # Calcular el desfase de días entre origen y destino
             day_offset = (session.start_time.date() - source_week_start).days
@@ -644,11 +668,22 @@ def copy_week_sessions(
                 status="active",
             )
             new_sessions.append(new_session)
+            students_by_source_session[session.id] = _get_copyable_active_students_for_session(db, session.id)
         for s in new_sessions:
             db.add(s)
         db.commit()
         for s in new_sessions:
             db.refresh(s)
+
+        for source_session, copied_session in zip(sessions_to_copy, new_sessions):
+            copied_students = students_by_source_session.get(source_session.id, [])
+            if copied_students:
+                _attach_fixed_students_to_new_session(db, copied_session, copied_students)
+
+        db.commit()
+        for s in new_sessions:
+            db.refresh(s)
+
         # Añadir trainer_name dinámicamente
         for s in new_sessions:
             trainer = db.query(User).filter(User.id == s.trainer_id).first()

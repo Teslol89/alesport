@@ -283,3 +283,65 @@ def test_admin_can_create_recurring_sessions_with_fixed_students(client, auth_he
         .all()
     )
     assert len(created_bookings) == 2
+
+
+def test_admin_can_copy_week_sessions_with_fixed_students(client, auth_headers, seed_data, db_session):
+    """Al copiar una semana, las reservas activas de clientes también se duplican en la semana destino."""
+    from app.models.booking import Booking
+
+    headers = auth_headers(seed_data["admin"].email, "admin1234")
+
+    create_response = client.post(
+        "/api/sessions/recurring",
+        headers=headers,
+        json={
+            "sessions": [
+                {
+                    "session_date": "2030-04-15",
+                    "start_time": "10:00",
+                    "end_time": "11:00",
+                    "capacity": 5,
+                    "class_name": "Grupo fijo lunes",
+                    "trainer_id": seed_data["trainer"].id,
+                    "fixed_student_ids": [seed_data["client"].id],
+                },
+                {
+                    "session_date": "2030-04-17",
+                    "start_time": "10:00",
+                    "end_time": "11:00",
+                    "capacity": 5,
+                    "class_name": "Grupo fijo miércoles",
+                    "trainer_id": seed_data["trainer"].id,
+                    "fixed_student_ids": [seed_data["client"].id],
+                },
+            ]
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    copy_response = client.post(
+        "/api/sessions/copy-week",
+        headers=headers,
+        json={
+            "source_week_start_date": "2030-04-15",
+            "target_week_start_date": "2030-04-22",
+            "trainer_id": seed_data["trainer"].id,
+        },
+    )
+
+    assert copy_response.status_code == 201
+    copied_sessions = copy_response.json()
+    assert len(copied_sessions) == 2
+
+    copied_session_ids = [item["id"] for item in copied_sessions]
+    copied_bookings = (
+        db_session.query(Booking)
+        .filter(
+            Booking.user_id == seed_data["client"].id,
+            Booking.session_id.in_(copied_session_ids),
+            Booking.status == "active",
+        )
+        .all()
+    )
+    assert len(copied_bookings) == 2

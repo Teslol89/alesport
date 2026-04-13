@@ -353,6 +353,161 @@
   line-height: 1.4;
 }
 
+.config-client-plans-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.config-client-plans-refresh-btn {
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: #f5f7fa;
+  color: #153138;
+  border-radius: 10px;
+  min-height: 34px;
+  padding: 0.35rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.config-client-plans-refresh-btn:disabled {
+  opacity: 0.65;
+}
+
+.config-custom-quota-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.48);
+  border-radius: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.config-custom-quota-modal {
+  background: #fff;
+  border-radius: 18px;
+  padding: 1.4rem;
+  width: 100%;
+  max-width: 340px;
+  display: grid;
+  gap: 0.85rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+}
+
+.config-custom-quota-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f3037;
+}
+
+.config-custom-quota-subtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #4c6970;
+}
+
+.config-custom-quota-input {
+  width: 100%;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.config-custom-quota-actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.config-custom-quota-actions > button {
+  flex: 1;
+  min-height: 36px;
+}
+
+/* Picker wheel */
+.config-quota-picker-wrapper {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f0f3f5;
+}
+
+.config-quota-picker-highlight {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 44px;
+  transform: translateY(-50%);
+  background: rgba(0, 137, 166, 0.12);
+  border-top: 1.5px solid rgba(0, 137, 166, 0.35);
+  border-bottom: 1.5px solid rgba(0, 137, 166, 0.35);
+  pointer-events: none;
+  z-index: 1;
+  border-radius: 8px;
+}
+
+.config-quota-picker-scroll {
+  height: 220px;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 88px 0;
+  scrollbar-width: none;
+}
+
+.config-quota-picker-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.config-quota-picker-item {
+  height: 44px;
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #7a9099;
+  font-weight: 500;
+  transition: color 0.15s, font-size 0.15s, font-weight 0.15s;
+}
+
+.config-quota-picker-item--selected {
+  color: #0f3037;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.config-client-plans-refresh-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.config-client-plans-refresh-icon--spinning {
+  animation: config-refresh-spin 0.9s linear infinite;
+}
+
+@keyframes config-refresh-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .config-edit-form {
   display: flex;
   flex-direction: column;
@@ -554,6 +709,11 @@
   gap: 0.7rem;
 }
 
+.config-client-plans-search {
+  width: 100%;
+  min-height: 38px;
+}
+
 .config-client-plan-card {
   background: #f5f7fa;
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -739,6 +899,48 @@ ion-toggle {
   background: #161b22;
   color: var(--app-text-primary, #f5f7fa);
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ion-palette-dark .config-client-plans-search {
+  background: #161b22;
+  color: var(--app-text-primary, #f5f7fa);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ion-palette-dark .config-client-plans-refresh-btn {
+  background: #222a36;
+  color: var(--app-text-primary, #f5f7fa);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ion-palette-dark .config-custom-quota-modal {
+  background: #1b212c;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+}
+
+.ion-palette-dark .config-quota-picker-wrapper {
+  background: #222a36;
+}
+
+.ion-palette-dark .config-quota-picker-highlight {
+  background: rgba(118, 209, 225, 0.12);
+  border-color: rgba(118, 209, 225, 0.3);
+}
+
+.ion-palette-dark .config-quota-picker-item {
+  color: #5a7a85;
+}
+
+.ion-palette-dark .config-quota-picker-item--selected {
+  color: var(--app-text-primary, #f5f7fa);
+}
+
+.ion-palette-dark .config-custom-quota-title {
+  color: var(--app-text-primary, #f5f7fa);
+}
+
+.ion-palette-dark .config-custom-quota-subtitle {
+  color: var(--app-text-secondary, #aeb6c2);
 }
 
 .ion-palette-dark ion-toggle {

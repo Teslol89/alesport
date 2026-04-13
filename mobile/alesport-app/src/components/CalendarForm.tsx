@@ -77,6 +77,8 @@ const Calendar: React.FC = () => {
 
   // Estado modal edición de hora
   const [showHourModal, setShowHourModal] = useState(false);
+  const [showDeleteSessionConfirmModal, setShowDeleteSessionConfirmModal] = useState(false);
+  const [pendingDeleteSession, setPendingDeleteSession] = useState<SessionItem | null>(null);
   const [editingSession, setEditingSession] = useState<SessionItem | null>(null);
   const [newStartTime, setNewStartTime] = useState('');
   const [newEndTime, setNewEndTime] = useState('');
@@ -474,13 +476,22 @@ const Calendar: React.FC = () => {
     }
   }
 
-  async function handleDeleteSession(sessionToDelete?: SessionItem | null) {
+  function requestDeleteSession(sessionToDelete?: SessionItem | null) {
     const session = sessionToDelete ?? detailsSession;
     if (!session) return;
 
-    if (!window.confirm('¿Seguro que deseas eliminar esta sesión? No se puede deshacer.')) {
+    setPendingDeleteSession(session);
+    setShowDeleteSessionConfirmModal(true);
+  }
+
+  async function handleDeleteSession() {
+    const session = pendingDeleteSession ?? detailsSession;
+    if (!session) {
+      setShowDeleteSessionConfirmModal(false);
       return;
     }
+
+    setShowDeleteSessionConfirmModal(false);
 
     try {
       await cancelSession(session.id);
@@ -494,6 +505,7 @@ const Calendar: React.FC = () => {
       delete bookingsInFlightRef.current[session.id];
       setDetailsSession(prev => (prev?.id === session.id ? null : prev));
       setEditingSession(prev => (prev?.id === session.id ? null : prev));
+      setPendingDeleteSession((prev) => (prev?.id === session.id ? null : prev));
       setShowHourModal(false);
       setShowDetailsModal(false);
       setToast({ show: true, message: 'Sesión eliminada correctamente', type: 'success' });
@@ -998,7 +1010,7 @@ const Calendar: React.FC = () => {
         setShowCapacityPicker(false);
         setIsTimePickerPresented(false);
       }}>
-        <div className={`calendar-hour-modal ${isTimePickerPresented ? 'calendar-hour-modal--dimmed' : ''}`}>
+        <div className={`calendar-hour-modal ${(isTimePickerPresented || showDeleteSessionConfirmModal) ? 'calendar-hour-modal--dimmed' : ''}`}>
           <h3>{t('calendar.editSession')}</h3>
           <p className="calendar-hour-modal-subtitle">{t('calendar.editSubtitle')}</p>
           {isAdmin ? (
@@ -1115,9 +1127,38 @@ const Calendar: React.FC = () => {
           </div>
           {editingSession ? (
             <div className="calendar-modal-danger-zone">
-              <button onClick={() => handleDeleteSession(editingSession)} className="calendar-hour-modal-delete">{t('calendar.deleteSession')}</button>
+              <button onClick={() => requestDeleteSession(editingSession)} className="calendar-hour-modal-delete">{t('calendar.deleteSession')}</button>
             </div>
           ) : null}
+        </div>
+      </IonModal>
+
+      <IonModal
+        className="calendar-delete-confirm-modal-wrapper"
+        isOpen={showDeleteSessionConfirmModal}
+        onDidDismiss={() => {
+          setShowDeleteSessionConfirmModal(false);
+          setPendingDeleteSession(null);
+        }}
+      >
+        <div className="calendar-delete-confirm-modal">
+          <h4>{t('calendar.deleteSession')}</h4>
+          <p>¿Seguro que deseas eliminar esta sesión? No se puede deshacer.</p>
+          <div className="calendar-delete-confirm-actions">
+            <button type="button" className="app-btn-primary" onClick={handleDeleteSession}>
+              {t('common.accept')}
+            </button>
+            <button
+              type="button"
+              className="app-btn-danger"
+              onClick={() => {
+                setShowDeleteSessionConfirmModal(false);
+                setPendingDeleteSession(null);
+              }}
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
         </div>
       </IonModal>
 

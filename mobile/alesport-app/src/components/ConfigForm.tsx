@@ -10,7 +10,6 @@ import helpMenuIcon from '../icons/help.svg';
 import payMenuIcon from '../icons/pagar.svg';
 import politicaPrivMenuIcon from '../icons/politicaPriv.svg';
 import whatsappMenuIcon from '../icons/whatsapp.svg';
-import refreshIcon from '../icons/refresh.svg';
 import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
 import { getUserProfile, getUsersForAdmin, type UserProfile, updateUserAdminSettings, updateUserProfile } from '../api/user';
@@ -1108,19 +1107,6 @@ const ConfigForm: React.FC = () => {
           <div className="config-edit-modal-header">
             <div className="config-client-plans-header-top">
               <h3>{t('config.clientPlansTitle')}</h3>
-              <button
-                type="button"
-                className="config-client-plans-refresh-btn"
-                onClick={() => { void loadManagedClients('refresh'); }}
-                disabled={isLoadingManagedClients || isRefreshingManagedClients}
-              >
-                <img
-                  src={refreshIcon}
-                  alt=""
-                  className={`config-client-plans-refresh-icon ${isRefreshingManagedClients ? 'config-client-plans-refresh-icon--spinning' : ''}`}
-                />
-                <span>{isRefreshingManagedClients ? t('common.loading') : t('common.refresh')}</span>
-              </button>
             </div>
             <p>{t('config.clientPlansSubtitle')}</p>
           </div>

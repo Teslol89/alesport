@@ -221,6 +221,11 @@ const translations: Record<Language, Record<string, unknown>> = {
         calendar: {
             viewMonth: 'Mes',
             noClassesToday: 'No hay clases para hoy.',
+            monthlyQuotaTitle: 'Tus clases del mes',
+            monthlyPlan: 'Plan',
+            monthlyUsed: 'Usadas',
+            monthlyRemaining: 'Disponibles',
+            monthlyNoPlan: 'Sin plan',
             selectDate: 'Seleccionar fecha',
             selectMonth: 'Seleccionar mes',
             editSession: 'Editar sesión',
@@ -480,6 +485,11 @@ const translations: Record<Language, Record<string, unknown>> = {
         calendar: {
             viewMonth: 'Month',
             noClassesToday: 'There are no classes for today.',
+            monthlyQuotaTitle: 'Your monthly classes',
+            monthlyPlan: 'Plan',
+            monthlyUsed: 'Used',
+            monthlyRemaining: 'Available',
+            monthlyNoPlan: 'No plan',
             selectDate: 'Select date',
             selectMonth: 'Select month',
             editSession: 'Edit session',

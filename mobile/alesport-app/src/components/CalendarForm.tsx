@@ -16,6 +16,7 @@ import {
 } from '../utils/funcionesGeneral';
 import { getSessionsByDateRange, updateSession, cancelSession } from '../api/sessions';
 import { BookingItem, cancelBooking, createBooking, getBookingsBySession, getBookingsByUser, reactivateBooking } from '../api/bookings';
+import { getRealtimeWsTicket } from '../api/realtime';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
 import { useLanguage } from '../i18n/LanguageContext';
 import { clearPendingPushNavigation } from '../services/fcm';
@@ -310,17 +311,12 @@ const Calendar: React.FC = () => {
       return;
     }
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return;
-    }
-
     let cancelled = false;
 
-    const buildWsUrl = () => {
+    const buildWsUrl = (ticket: string) => {
       const base = import.meta.env.VITE_API_BASE_URL || 'https://api.verdeguerlabs.es/api';
       const wsBase = base.replace(/^http:/i, 'ws:').replace(/^https:/i, 'wss:');
-      return `${wsBase}/realtime/ws?token=${encodeURIComponent(token)}`;
+      return `${wsBase}/realtime/ws?ticket=${encodeURIComponent(ticket)}`;
     };
 
     const closeSocket = () => {
@@ -360,7 +356,7 @@ const Calendar: React.FC = () => {
       }
     };
 
-    const connect = () => {
+    const connect = async () => {
       if (cancelled) {
         return;
       }
@@ -368,7 +364,12 @@ const Calendar: React.FC = () => {
       closeSocket();
 
       try {
-        const socket = new WebSocket(buildWsUrl());
+        const wsTicket = await getRealtimeWsTicket();
+        if (cancelled) {
+          return;
+        }
+
+        const socket = new WebSocket(buildWsUrl(wsTicket));
         realtimeSocketRef.current = socket;
 
         socket.onmessage = (event) => {
@@ -396,7 +397,7 @@ const Calendar: React.FC = () => {
       }
     };
 
-    connect();
+    void connect();
 
     return () => {
       cancelled = true;

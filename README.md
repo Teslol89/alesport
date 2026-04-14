@@ -311,6 +311,8 @@ sudo nginx -T | grep -nE "location /api/realtime/ws|proxy_http_version|Upgrade|C
 - Abrir DevTools > Network > WS.
 - Debe aparecer `wss://api.verdeguerlabs.es/api/realtime/ws?...`.
 - Debe conectar (101) y al reservar/cancelar desde cliente entrar evento `booking_changed`.
+- La app obtiene primero un ticket efímero por `POST /api/realtime/ws-ticket` y usa ese ticket para abrir el WebSocket.
+- No se usa JWT directamente en la URL del WS, reduciendo exposición de credenciales en logs.
 
 ### Rollback realtime (incidencia en producción)
 

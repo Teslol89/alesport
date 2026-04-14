@@ -1,6 +1,6 @@
 /* =================== TIPOS Y CONSTANTES =================== */
 import logoIcon from '../icons/icon.png';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, getEligibleFixedStudents, type AssignableTrainer, type FixedStudentCandidate } from '../api/user';
 import { createSingleSession } from '../api/sessions';
@@ -223,6 +223,39 @@ const CrearForm: React.FC = () => {
         ));
     }, [fixedStudentOptions, recurringFixedStudentsSearch]);
 
+    const loadTrainers = useCallback(async () => {
+        setIsLoadingTrainers(true);
+        setTrainersError(null);
+        try {
+            const trainers = await getAssignableTrainers();
+            setTrainerOptions(trainers);
+        } catch {
+            setTrainerOptions([]);
+            setTrainersError('No se pudieron cargar los entrenadores.');
+        } finally {
+            setIsLoadingTrainers(false);
+        }
+    }, []);
+
+    const loadEligibleFixedStudents = useCallback(async () => {
+        setIsLoadingFixedStudents(true);
+        setFixedStudentsError(null);
+        try {
+            const students = await getEligibleFixedStudents();
+            setFixedStudentOptions(students);
+            setRecurringFixedStudentsDraftIds((currentIds) => currentIds.filter((id) => students.some((student) => student.id === id)));
+            setRecurringDraft((currentDraft) => ({
+                ...currentDraft,
+                fixedStudentIds: currentDraft.fixedStudentIds.filter((id) => students.some((student) => student.id === id)),
+            }));
+        } catch {
+            setFixedStudentOptions([]);
+            setFixedStudentsError('No se pudieron cargar los alumnos activos.');
+        } finally {
+            setIsLoadingFixedStudents(false);
+        }
+    }, []);
+
     // Estado para mostrar/ocultar el date picker y capacity picker recurrente semanal
     const [showRecurringDatePicker, setShowRecurringDatePicker] = useState(false);
     const [showRecurringCapacityPicker, setShowRecurringCapacityPicker] = useState(false);
@@ -272,6 +305,7 @@ const CrearForm: React.FC = () => {
         setRecurringFixedStudentsDraftIds([...recurringDraft.fixedStudentIds]);
         setRecurringFixedStudentsSearch('');
         setShowRecurringFixedStudentsModal(true);
+        void loadEligibleFixedStudents();
     }
 
     function closeRecurringFixedStudentsModal() {
@@ -374,36 +408,11 @@ const CrearForm: React.FC = () => {
         let cancelled = false;
 
         async function loadPickerData() {
-            setIsLoadingTrainers(true);
-            setIsLoadingFixedStudents(true);
-            setTrainersError(null);
-            setFixedStudentsError(null);
-
-            const [trainersResult, fixedStudentsResult] = await Promise.allSettled([
-                getAssignableTrainers(),
-                getEligibleFixedStudents(),
-            ]);
+            await Promise.all([loadTrainers(), loadEligibleFixedStudents()]);
 
             if (cancelled) {
                 return;
             }
-
-            if (trainersResult.status === 'fulfilled') {
-                setTrainerOptions(trainersResult.value);
-            } else {
-                setTrainerOptions([]);
-                setTrainersError('No se pudieron cargar los entrenadores.');
-            }
-
-            if (fixedStudentsResult.status === 'fulfilled') {
-                setFixedStudentOptions(fixedStudentsResult.value);
-            } else {
-                setFixedStudentOptions([]);
-                setFixedStudentsError('No se pudieron cargar los alumnos activos.');
-            }
-
-            setIsLoadingTrainers(false);
-            setIsLoadingFixedStudents(false);
         }
 
         void loadPickerData();
@@ -411,7 +420,13 @@ const CrearForm: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [loadEligibleFixedStudents, loadTrainers]);
+
+    useEffect(() => {
+        if (showRecurringModal) {
+            void loadEligibleFixedStudents();
+        }
+    }, [showRecurringModal, loadEligibleFixedStudents]);
 
     function handleSingleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();

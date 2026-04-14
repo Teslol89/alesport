@@ -69,9 +69,12 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     message: '',
     type: 'info',
   });
+  const isUserBlockedByAccessOrPlan = Boolean(
+    user && (!user.is_active || !user.membership_active || user.monthly_booking_quota == null)
+  );
 
   const loadBookings = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
-    if (user && (!user.is_active || !user.membership_active)) {
+    if (isUserBlockedByAccessOrPlan) {
       setBookings([]);
       setSessionsById({});
       setLoading(false);
@@ -117,10 +120,10 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
         setLoading(false);
       }
     }
-  }, [t, user?.id]);
+  }, [isUserBlockedByAccessOrPlan, t, user?.id]);
 
   useEffect(() => {
-    if (user && (!user.is_active || !user.membership_active)) {
+    if (isUserBlockedByAccessOrPlan) {
       const now = Date.now();
       if (now - blockedProfileRefreshAtRef.current >= BLOCKED_PROFILE_REFRESH_COOLDOWN_MS) {
         blockedProfileRefreshAtRef.current = now;
@@ -131,7 +134,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     }
 
     void loadBookings({ silent: hasLoadedBookingsRef.current });
-  }, [loadBookings, refreshProfile, refreshSignal, user]);
+  }, [isUserBlockedByAccessOrPlan, loadBookings, refreshProfile, refreshSignal]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -143,7 +146,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
         return;
       }
 
-      if (!user.is_active || !user.membership_active) {
+      if (!user.is_active || !user.membership_active || user.monthly_booking_quota == null) {
         const now = Date.now();
         if (now - blockedProfileRefreshAtRef.current >= BLOCKED_PROFILE_REFRESH_COOLDOWN_MS) {
           blockedProfileRefreshAtRef.current = now;
@@ -164,10 +167,10 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
       window.removeEventListener('focus', refreshBookingsState);
       document.removeEventListener('visibilitychange', refreshBookingsState);
     };
-  }, [loadBookings, refreshProfile, user?.id, user?.is_active, user?.membership_active]);
+  }, [loadBookings, refreshProfile, user?.id, user?.is_active, user?.membership_active, user?.monthly_booking_quota]);
 
   useIonViewWillEnter(() => {
-    if (user && (!user.is_active || !user.membership_active)) {
+    if (isUserBlockedByAccessOrPlan) {
       const now = Date.now();
       if (now - blockedProfileRefreshAtRef.current >= BLOCKED_PROFILE_REFRESH_COOLDOWN_MS) {
         blockedProfileRefreshAtRef.current = now;
@@ -176,7 +179,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
       return;
     }
     void loadBookings({ silent: true });
-  }, [loadBookings, refreshProfile, user]);
+  }, [isUserBlockedByAccessOrPlan, loadBookings, refreshProfile]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => setOfferClockMs(Date.now()), 1000);

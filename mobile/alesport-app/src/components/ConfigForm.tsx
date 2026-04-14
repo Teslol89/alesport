@@ -41,6 +41,7 @@ const FIXED_PLAN_VALUES = [8, 12];
 
 const PICKER_ITEM_HEIGHT = 44;
 const PICKER_VALUES = Array.from({ length: 60 }, (_, i) => i + 1);
+const CLIENT_PLANS_AUTO_REFRESH_MS = 10000;
 
 type ClientUsageSummary = {
   used: number;
@@ -411,6 +412,40 @@ const ConfigForm: React.FC = () => {
       void loadManagedClients();
     }
   }, [showClientPlansModal, loadManagedClients, managedClients.length, isLoadingManagedClients]);
+
+  useEffect(() => {
+    if (!showClientPlansModal || !canManageClientPlans) {
+      return;
+    }
+
+    const refreshClientPlansState = () => {
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+
+      if (isLoadingManagedClients || isRefreshingManagedClients) {
+        return;
+      }
+
+      void loadManagedClients('refresh');
+    };
+
+    const intervalId = window.setInterval(refreshClientPlansState, CLIENT_PLANS_AUTO_REFRESH_MS);
+    window.addEventListener('focus', refreshClientPlansState);
+    document.addEventListener('visibilitychange', refreshClientPlansState);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshClientPlansState);
+      document.removeEventListener('visibilitychange', refreshClientPlansState);
+    };
+  }, [
+    canManageClientPlans,
+    isLoadingManagedClients,
+    isRefreshingManagedClients,
+    loadManagedClients,
+    showClientPlansModal,
+  ]);
 
   const openEditProfileModal = () => {
     setEditName(profile.name || '');

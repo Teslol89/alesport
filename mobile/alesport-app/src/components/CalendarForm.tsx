@@ -881,6 +881,37 @@ const Calendar: React.FC = () => {
     }, {});
   }, [myBookings]);
 
+  const clientMonthlyQuotaSummary = useMemo(() => {
+    if (!isClient || !user) {
+      return null;
+    }
+
+    const now = new Date();
+    const usedThisMonth = myBookings.reduce((count, booking) => {
+      if (booking.status !== 'active') {
+        return count;
+      }
+
+      const dateSource = booking.session_start_time ?? booking.created_at;
+      const bookingDate = dateSource ? new Date(dateSource) : null;
+      if (!bookingDate || Number.isNaN(bookingDate.getTime())) {
+        return count;
+      }
+
+      const isCurrentMonth =
+        bookingDate.getFullYear() === now.getFullYear() && bookingDate.getMonth() === now.getMonth();
+
+      return isCurrentMonth ? count + 1 : count;
+    }, 0);
+
+    const quota = user.monthly_booking_quota ?? null;
+    return {
+      quota,
+      used: usedThisMonth,
+      remaining: quota === null ? null : Math.max(quota - usedThisMonth, 0),
+    };
+  }, [isClient, myBookings, user]);
+
   const activeBookingsCount = bookings.filter(b => b.status === 'active').length;
   const isPastSession = (session: SessionItem) => {
     const formattedStart = formatHour(session.start_time, session.session_date, '00:00');
@@ -966,6 +997,16 @@ const Calendar: React.FC = () => {
           </button>
         ))}
       </div>
+      {isClient && clientMonthlyQuotaSummary ? (
+        <div className="calendar-client-quota-panel" role="status" aria-live="polite">
+          <p className="calendar-client-quota-title">{t('calendar.monthlyQuotaTitle')}</p>
+          <p className="calendar-client-quota-text">
+            {clientMonthlyQuotaSummary.quota === null
+              ? `${t('calendar.monthlyUsed')}: ${clientMonthlyQuotaSummary.used} · ${t('calendar.monthlyNoPlan')}`
+              : `${t('calendar.monthlyPlan')}: ${clientMonthlyQuotaSummary.quota} · ${t('calendar.monthlyUsed')}: ${clientMonthlyQuotaSummary.used} · ${t('calendar.monthlyRemaining')}: ${clientMonthlyQuotaSummary.remaining ?? 0}`}
+          </p>
+        </div>
+      ) : null}
       {/* Bloque independiente para las sesiones */}
       <div className="calendar-sessions-section">
         {loading ? (

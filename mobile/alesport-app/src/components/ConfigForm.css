@@ -360,24 +360,6 @@
   gap: 0.7rem;
 }
 
-.config-client-plans-refresh-btn {
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  background: #f5f7fa;
-  color: #153138;
-  border-radius: 10px;
-  min-height: 34px;
-  padding: 0.35rem 0.7rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
-.config-client-plans-refresh-btn:disabled {
-  opacity: 0.65;
-}
-
 .config-custom-quota-overlay {
   position: absolute;
   inset: 0;
@@ -485,27 +467,6 @@
   color: #0f3037;
   font-size: 1.3rem;
   font-weight: 700;
-}
-
-.config-client-plans-refresh-icon {
-  width: 14px;
-  height: 14px;
-  display: block;
-  flex: 0 0 auto;
-}
-
-.config-client-plans-refresh-icon--spinning {
-  animation: config-refresh-spin 0.9s linear infinite;
-}
-
-@keyframes config-refresh-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .config-edit-form {
@@ -903,12 +864,6 @@ ion-toggle {
 
 .ion-palette-dark .config-client-plans-search {
   background: #161b22;
-  color: var(--app-text-primary, #f5f7fa);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.ion-palette-dark .config-client-plans-refresh-btn {
-  background: #222a36;
   color: var(--app-text-primary, #f5f7fa);
   border-color: rgba(255, 255, 255, 0.2);
 }

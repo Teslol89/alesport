@@ -268,6 +268,106 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
+### Checklist rápido de deploy realtime (VPS)
+
+Usa este checklist cuando hagas deploy para evitar que el realtime vuelva a quedar en fallback o en 404:
+
+1. Dependencias backend instaladas:
+
+```bash
+cd backend
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+2. Confirmar soporte WebSocket en entorno Python:
+
+```bash
+python -c "import uvicorn, websockets, wsproto; print('ok', uvicorn.__version__)"
+```
+
+3. Variable de entorno para modo distribuido:
+
+```bash
+cat /home/teslol/alesport/backend/.env
+# Debe incluir: REDIS_URL=redis://127.0.0.1:6379/0
+```
+
+4. Reinicio de backend y validación:
+
+```bash
+sudo systemctl restart alesport-backend
+sudo systemctl status alesport-backend --no-pager
+```
+
+5. Validar websocket en nginx cargado:
+
+```bash
+sudo nginx -T | grep -nE "location /api/realtime/ws|proxy_http_version|Upgrade|Connection"
+```
+
+6. Prueba funcional en navegador (Alex UI):
+
+- Abrir DevTools > Network > WS.
+- Debe aparecer `wss://api.verdeguerlabs.es/api/realtime/ws?...`.
+- Debe conectar (101) y al reservar/cancelar desde cliente entrar evento `booking_changed`.
+
+### Rollback realtime (incidencia en producción)
+
+Si el canal WS falla tras un deploy, aplica este rollback para mantener operación sin bloquear reservas:
+
+1. Mantener polling frontend (fallback ya activo a 10000 ms).
+2. Desactivar temporalmente el bloque `location /api/realtime/ws` en nginx y recargar:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+3. Reiniciar backend en versión estable:
+
+```bash
+sudo systemctl restart alesport-backend
+sudo systemctl status alesport-backend --no-pager
+```
+
+4. Validar continuidad funcional (sin realtime):
+
+- `GET /api/sessions` responde 200.
+- `GET /api/bookings/session/{id}` responde 200 para roles permitidos.
+- Reserva/cancelación de cliente sigue operativa.
+
+5. Rehabilitar realtime solo cuando se cumpla:
+
+- `uvicorn[standard]` instalado en entorno activo.
+- Bloque WS de nginx cargado con `Upgrade`/`Connection`.
+- Handshake WS con `101 Switching Protocols`.
+- Evento `booking_changed` visible en DevTools (Network > WS).
+
+#### Comandos rápidos (copy-paste)
+
+Rollback rápido (dejar la app operativa con polling):
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+sudo systemctl restart alesport-backend
+sudo systemctl status alesport-backend --no-pager
+```
+
+Recovery realtime (reactivar WS con validación):
+
+```bash
+cd /home/teslol/alesport/backend
+source venv/bin/activate
+pip install -r requirements.txt
+python -c "import uvicorn, websockets, wsproto; print('ok', uvicorn.__version__)"
+sudo systemctl restart alesport-backend
+sudo nginx -t
+sudo systemctl reload nginx
+sudo nginx -T | grep -nE "location /api/realtime/ws|proxy_http_version|Upgrade|Connection"
+```
+
 ### Nota de operación sobre workers
 
 El realtime usa dos modos:

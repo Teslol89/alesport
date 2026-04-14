@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { IonModal, IonSpinner } from '@ionic/react';
+import { IonModal, IonSpinner, useIonViewWillEnter } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import logoIcon from '../icons/icon.png';
 import { BookingItem, cancelBooking, getBookingsByUser, reactivateBooking } from '../api/bookings';
@@ -52,7 +52,7 @@ function hasMinimumCancellationNotice(session?: SessionSummary) {
 }
 
 const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const { t, dateLocale } = useLanguage();
   const history = useHistory();
   const [bookings, setBookings] = useState<BookingItem[]>([]);
@@ -124,6 +124,10 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
         return;
       }
 
+      if (!user.is_active || !user.membership_active) {
+        void refreshProfile();
+      }
+
       void loadBookings({ silent: true });
     };
 
@@ -136,7 +140,14 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
       window.removeEventListener('focus', refreshBookingsState);
       document.removeEventListener('visibilitychange', refreshBookingsState);
     };
-  }, [loadBookings, user?.id]);
+  }, [loadBookings, refreshProfile, user?.id, user?.is_active, user?.membership_active]);
+
+  useIonViewWillEnter(() => {
+    if (user && (!user.is_active || !user.membership_active)) {
+      void refreshProfile();
+    }
+    void loadBookings({ silent: true });
+  }, [loadBookings, refreshProfile, user]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => setOfferClockMs(Date.now()), 1000);
@@ -176,7 +187,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
 
     if (!rawDate) {
       return {
-        dateText: `${t('myBookings.sessionLabel')} #${booking.session_id}`,
+        dateText: t('myBookings.sessionLabel'),
         timeText: '',
       };
     }
@@ -184,7 +195,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     const parsed = new Date(rawDate);
     if (Number.isNaN(parsed.getTime())) {
       return {
-        dateText: `${t('myBookings.sessionLabel')} #${booking.session_id}`,
+        dateText: t('myBookings.sessionLabel'),
         timeText: '',
       };
     }
@@ -329,12 +340,13 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
               const isWaitlist = booking.status === 'waitlist';
               const isOffered = booking.status === 'offered';
               const { dateText, timeText } = getBookingDateParts(booking);
+              const className = session?.class_name?.trim() || 'Clase sin nombre';
 
               return (
                 <article key={booking.id} className="bookings-item app-surface-card">
                   <div className="bookings-item-main">
                     <div className="bookings-item-header">
-                      <h2>{session?.class_name || `${t('myBookings.sessionLabel')} #${booking.session_id}`}</h2>
+                      <h2>{className}</h2>
                       <span className={`bookings-badge${isWaitlist ? ' bookings-badge--waitlist' : isOffered ? ' bookings-badge--offered' : ''}`}>
                         {isWaitlist ? t('calendar.waitlist') : isOffered ? t('calendar.offered') : t('calendar.bookedByYou')}
                       </span>

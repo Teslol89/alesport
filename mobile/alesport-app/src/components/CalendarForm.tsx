@@ -954,6 +954,18 @@ const Calendar: React.FC = () => {
     setWeekAnchorDate(today);
   }
 
+  const hasNoRemainingMonthlySlots = Boolean(
+    isClient
+    && clientMonthlyQuotaSummary
+    && clientMonthlyQuotaSummary.quota !== null
+    && (clientMonthlyQuotaSummary.remaining ?? 0) <= 0
+  );
+  const hasNoMonthlyPlan = Boolean(
+    isClient
+    && clientMonthlyQuotaSummary
+    && clientMonthlyQuotaSummary.quota === null
+  );
+
   return (
     <div className={`calendar-container app-blur-target ${(showMonthModal || showHourModal || showDetailsModal) ? 'app-blur-target--modal-open' : ''}`}>
       {/* Top bar fija con fecha y botón */}
@@ -998,7 +1010,11 @@ const Calendar: React.FC = () => {
         ))}
       </div>
       {isClient && clientMonthlyQuotaSummary ? (
-        <div className="calendar-client-quota-panel" role="status" aria-live="polite">
+        <div
+          className={`calendar-client-quota-panel${hasNoRemainingMonthlySlots ? ' calendar-client-quota-panel--danger' : ''}${hasNoMonthlyPlan ? ' calendar-client-quota-panel--warning' : ''}`}
+          role="status"
+          aria-live="polite"
+        >
           <p className="calendar-client-quota-title">{t('calendar.monthlyQuotaTitle')}</p>
           <p className="calendar-client-quota-text">
             {clientMonthlyQuotaSummary.quota === null

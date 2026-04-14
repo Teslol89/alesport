@@ -198,8 +198,8 @@ const BuscarForm: React.FC = () => {
         };
     }, [periodFilteredBookings]);
 
-    // Bloqueo por membresía inactiva o sin plan (solo para usuarios no admin)
-    if (user && (!user.is_active || !user.membership_active) && !isAdmin) {
+    // Bloqueo por cuenta inactiva, membresía inactiva o sin plan (solo para usuarios no admin)
+    if (user && (!user.is_active || !user.membership_active || user.monthly_booking_quota == null) && !isAdmin) {
         return (
             <div className={`search-form-container app-blur-target`}>
                 <div className="search-top-bar">

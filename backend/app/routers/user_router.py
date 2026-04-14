@@ -75,7 +75,7 @@ def list_eligible_fixed_students(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Devuelve clientes activos y con membresía vigente para preasignarlos como alumnos fijos."""
+    """Devuelve clientes activos con membresía y plan vigente para preasignarlos como alumnos fijos."""
     if not can_manage_sessions_role(current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

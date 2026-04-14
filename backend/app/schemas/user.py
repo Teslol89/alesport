@@ -129,7 +129,7 @@ class AssignableTrainerResponse(BaseModel):
 
 
 class FixedStudentCandidateResponse(BaseModel):
-    """Cliente activo y con membresía vigente que puede seleccionarse como alumno fijo."""
+    """Cliente activo con membresía y plan vigente que puede seleccionarse como alumno fijo."""
 
     id: int
     name: str

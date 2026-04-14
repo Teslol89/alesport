@@ -216,6 +216,8 @@ def resolve_manager_trainer_id(role: str, user_id: int | None, sessions: list[di
 
     for session in sessions:
         trainer_id = session.get("trainer_id")
+        if not isinstance(trainer_id, (int, str)):
+            continue
         try:
             numeric_trainer_id = int(trainer_id)
         except (TypeError, ValueError):

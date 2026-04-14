@@ -57,11 +57,19 @@ with engine.begin() as conn:
     end = time(11, 0)
     res = conn.execute(
         text("""
-        INSERT INTO weekly_schedule (trainer_id, day_of_week, start_time, end_time, capacity, is_active)
-        VALUES (:trainer_id, :day_of_week, :start_time, :end_time, :capacity, true)
+        INSERT INTO weekly_schedule (trainer_id, day_of_week, start_time, end_time, capacity, class_name, notes, is_active)
+        VALUES (:trainer_id, :day_of_week, :start_time, :end_time, :capacity, :class_name, :notes, true)
         RETURNING id
         """),
-        dict(trainer_id=trainer_id, day_of_week=day_of_week, start_time=start, end_time=end, capacity=5)
+        dict(
+            trainer_id=trainer_id,
+            day_of_week=day_of_week,
+            start_time=start,
+            end_time=end,
+            capacity=5,
+            class_name="Horario demo trainer",
+            notes="Plantilla semanal generada por seed local",
+        )
     )
     schedule_id = res.scalar()
 

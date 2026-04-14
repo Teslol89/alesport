@@ -22,6 +22,12 @@ class SessionModel(Base):
     # Entrenador que imparte la sesión
     # ON DELETE RESTRICT: no se puede eliminar un entrenador que tenga sesiones
     trainer_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
+    # Plantilla semanal de origen (si la sesión fue generada automáticamente)
+    weekly_schedule_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("weekly_schedule.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     # Fecha y hora de inicio de la sesión (con zona horaria)
     start_time: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     # Fecha y hora de fin de la sesión (con zona horaria)

@@ -1132,7 +1132,7 @@ const ConfigForm: React.FC = () => {
                   const isSavingThisClient = savingClientId === clientUser.id;
                   const usageSummary = clientUsageMap[clientUser.id] ?? { used: 0, remaining: clientUser.monthly_booking_quota ?? null };
                   const usageText = clientUser.monthly_booking_quota === null || clientUser.monthly_booking_quota === undefined
-                    ? `${t('config.clientPlansUsedLabel')}: ${usageSummary.used} · ${t('config.clientPlansNoPlan')}`
+                    ? t('config.clientPlansNoPlan')
                     : `${t('config.clientPlansUsedLabel')}: ${usageSummary.used} · ${t('config.clientPlansQuotaLabel')}: ${clientUser.monthly_booking_quota} · ${t('config.clientPlansRemainingLabel')}: ${usageSummary.remaining ?? 0}`;
 
                   return (

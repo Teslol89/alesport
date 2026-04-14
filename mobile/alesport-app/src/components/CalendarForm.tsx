@@ -24,7 +24,7 @@ import { useAuth } from './AuthContext';
 
 const Calendar: React.FC = () => {
   const { t, dateLocale } = useLanguage();
-  const { role: userRole, user } = useAuth();
+  const { role: userRole, user, refreshProfile } = useAuth();
   const location = useLocation();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
   const AGENDA_AUTO_REFRESH_MS = 10000;
@@ -307,7 +307,7 @@ const Calendar: React.FC = () => {
   }, [canManageSessionBookings, detailsSession, fetchSessions, getSessionBookingsCached, isClient, refreshMyBookings, showDetailsModal]);
 
   useEffect(() => {
-    if (!canManageSessionBookings) {
+    if (!canManageSessionBookings && !isClient) {
       return;
     }
 
@@ -354,6 +354,10 @@ const Calendar: React.FC = () => {
             // Ignorar errores de reconexión/eventos transitorios.
           });
       }
+
+      if (isClient) {
+        void refreshMyBookings();
+      }
     };
 
     const connect = async () => {
@@ -374,9 +378,12 @@ const Calendar: React.FC = () => {
 
         socket.onmessage = (event) => {
           try {
-            const payload = JSON.parse(event.data) as { type?: string; session_id?: number };
+            const payload = JSON.parse(event.data) as { type?: string; session_id?: number; user_id?: number };
             if (payload.type === 'booking_changed') {
               handleRealtimeRefresh(payload.session_id);
+            }
+            if (payload.type === 'user_profile_changed' && payload.user_id === user?.id) {
+              void refreshProfile();
             }
           } catch {
             // Ignorar mensajes no JSON.
@@ -407,7 +414,7 @@ const Calendar: React.FC = () => {
         realtimeReconnectTimerRef.current = null;
       }
     };
-  }, [canManageSessionBookings, detailsSession?.id, fetchSessions, getSessionBookingsCached, showDetailsModal]);
+  }, [canManageSessionBookings, detailsSession?.id, fetchSessions, getSessionBookingsCached, isClient, refreshMyBookings, refreshProfile, showDetailsModal, user?.id]);
 
   // Filtra y ordena sesiones por fecha seleccionada y hora de inicio
   const sessionsForDate = useMemo(
@@ -1018,7 +1025,7 @@ const Calendar: React.FC = () => {
           <p className="calendar-client-quota-title">{t('calendar.monthlyQuotaTitle')}</p>
           <p className="calendar-client-quota-text">
             {clientMonthlyQuotaSummary.quota === null
-              ? `${t('calendar.monthlyUsed')}: ${clientMonthlyQuotaSummary.used} · ${t('calendar.monthlyNoPlan')}`
+              ? t('calendar.monthlyNoPlan')
               : `${t('calendar.monthlyPlan')}: ${clientMonthlyQuotaSummary.quota} · ${t('calendar.monthlyUsed')}: ${clientMonthlyQuotaSummary.used} · ${t('calendar.monthlyRemaining')}: ${clientMonthlyQuotaSummary.remaining ?? 0}`}
           </p>
         </div>

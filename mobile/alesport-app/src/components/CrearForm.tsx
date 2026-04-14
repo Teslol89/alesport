@@ -1471,11 +1471,14 @@ const CrearForm: React.FC = () => {
                                         }
 
                                         // Backend usa 0=lunes ... 6=domingo, mientras la UI usa 0=domingo ... 6=sábado.
-                                        const backendDays = recurringDraft.daysOfWeek.map((day) => (day === 0 ? 6 : day - 1));
+                                        const backendDays = Array.from(
+                                            new Set(recurringDraft.daysOfWeek.map((day) => (day === 0 ? 6 : day - 1)))
+                                        );
 
                                         try {
-                                            await Promise.all(
-                                                backendDays.map((backendDay) => createWeeklySchedule({
+                                            // Crear en serie evita carreras entre generadores que pueden provocar falsos solapes.
+                                            for (const backendDay of backendDays) {
+                                                await createWeeklySchedule({
                                                     trainer_id: recurringDraft.trainerId as number,
                                                     day_of_week: backendDay,
                                                     start_time: recurringDraft.startTime,
@@ -1486,8 +1489,8 @@ const CrearForm: React.FC = () => {
                                                     fixed_student_ids: recurringDraft.fixedStudentIds,
                                                     weeks_ahead: Math.max(1, weeksAhead),
                                                     start_date: recurringDraft.startDate,
-                                                }))
-                                            );
+                                                });
+                                            }
                                             setToast({
                                                 show: true,
                                                 message: '✓ Clases recurrentes creadas exitosamente',

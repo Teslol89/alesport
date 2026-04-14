@@ -660,6 +660,7 @@ def copy_week_sessions(
             _ensure_no_session_overlap(db, new_start_dt, new_end_dt)
             new_session = SessionModel(
                 trainer_id=session.trainer_id,
+                weekly_schedule_id=session.weekly_schedule_id,
                 start_time=new_start_dt,
                 end_time=new_end_dt,
                 capacity=session.capacity,

@@ -116,6 +116,7 @@ def seed_data(db_session):
         role="admin",
         is_active=True,
         membership_active=True,
+        monthly_booking_quota=12,
         is_verified=True,
     )
     trainer = User(
@@ -125,6 +126,7 @@ def seed_data(db_session):
         role="trainer",
         is_active=True,
         membership_active=True,
+        monthly_booking_quota=12,
         is_verified=True,
     )
     client = User(
@@ -134,6 +136,7 @@ def seed_data(db_session):
         role="client",
         is_active=True,
         membership_active=True,
+        monthly_booking_quota=12,
         is_verified=True,
     )
 

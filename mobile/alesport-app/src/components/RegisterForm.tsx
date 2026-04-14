@@ -264,10 +264,10 @@ const RegisterForm: React.FC = () => {
     <div className="register-container">
       <h2 className="register-title">Crear cuenta</h2>
       <p className="register-description">Introduce tu nombre, correo electrónico y contraseña para crear una cuenta.</p>
-      <div className="login-divider">
-        <span className="divider-line"></span>
-        <span className="divider-text">o</span>
-        <span className="divider-line"></span>
+      <div className="register-divider" aria-hidden="true">
+        <span className="register-divider-line"></span>
+        <span className="register-divider-text">o</span>
+        <span className="register-divider-line"></span>
       </div>
       <p className="register-return">¿Ya tienes una cuenta? <Link to="/login">Inicia sesión</Link></p>
 

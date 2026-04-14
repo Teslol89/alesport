@@ -28,6 +28,7 @@ def test_full_session_creates_waitlist_booking(client, seed_data, db_session):
         role="client",
         is_active=True,
         membership_active=True,
+        monthly_booking_quota=12,
         is_verified=True,
     )
     existing_booking = Booking(

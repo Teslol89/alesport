@@ -77,6 +77,30 @@
     cursor: pointer;
 }
 
+/* ------------------------------ */
+/* Separador con "o" centrada     */
+/* ------------------------------ */
+.register-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 0 14px 0;
+}
+
+.register-divider-line {
+    flex: 1;
+    height: 1px;
+    background: #e6eaee;
+}
+
+.register-divider-text {
+    color: #7b8890;
+    font-size: 0.9rem;
+    line-height: 1;
+    background: #fff;
+    padding: 0 4px;
+}
+
 /* ------------------------------------------- */
 /* Input de texto (nombre, correo, contraseña) */
 /* ------------------------------------------- */

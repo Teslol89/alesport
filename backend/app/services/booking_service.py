@@ -412,6 +412,12 @@ def create_booking(db: Session, current_user: User, booking_data) -> Booking:
             detail="Membresía inactiva. Contacta con administración.",
         )
 
+    if current_user.monthly_booking_quota is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sin plan activo. Contacta con administración.",
+        )
+
     if current_user.monthly_booking_quota is not None:
         session_start = _as_utc(session.start_time)
         if session_start is not None:
@@ -591,6 +597,13 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
             detail="Sesión no encontrada",
         )
 
+    booking_user = db.query(User).filter(User.id == booking.user_id).first()
+    if booking_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario de la reserva no encontrado",
+        )
+
     if is_past_session_datetime(session.start_time):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -600,6 +613,16 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
     if is_admin_role(current_user.role):
         pass
     elif current_user.role == "client":
+        if not current_user.membership_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Membresía inactiva. Contacta con administración.",
+            )
+        if current_user.monthly_booking_quota is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Sin plan activo. Contacta con administración.",
+            )
         if booking.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -615,6 +638,12 @@ def reactivate_booking(db: Session, booking_id: int, current_user: User) -> Book
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Rol no autorizado para reactivar reservas",
+        )
+
+    if booking_user.role == "client" and booking_user.monthly_booking_quota is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="El cliente no tiene plan activo para reservar.",
         )
 
     _process_waitlist_for_session(db, session)

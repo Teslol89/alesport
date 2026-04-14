@@ -325,8 +325,8 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   }
 
 
-  // Bloqueo por membresía inactiva o sin plan
-  if (user && (!user.is_active || !user.membership_active)) {
+  // Bloqueo por cuenta inactiva, membresía inactiva o sin plan
+  if (user && (!user.is_active || !user.membership_active || user.monthly_booking_quota == null)) {
     return (
       <div className="bookings-form-container app-blur-target">
         <div className="bookings-top-bar">

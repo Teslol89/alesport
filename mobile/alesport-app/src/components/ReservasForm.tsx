@@ -27,6 +27,7 @@ type ReservasFormProps = {
 const LOOKBACK_DAYS = 14;
 const LOOKAHEAD_DAYS = 120;
 const BOOKINGS_AUTO_REFRESH_MS = 10000;
+const BLOCKED_PROFILE_REFRESH_COOLDOWN_MS = 5000;
 
 function shiftDays(base: Date, amount: number) {
   const next = new Date(base);
@@ -62,6 +63,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   const [pendingCancelBooking, setPendingCancelBooking] = useState<BookingItem | null>(null);
   const [offerClockMs, setOfferClockMs] = useState(() => Date.now());
   const hasLoadedBookingsRef = useRef(false);
+  const blockedProfileRefreshAtRef = useRef(0);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' | 'info' }>({
     show: false,
     message: '',
@@ -69,6 +71,13 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   });
 
   const loadBookings = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (user && (!user.is_active || !user.membership_active)) {
+      setBookings([]);
+      setSessionsById({});
+      setLoading(false);
+      return;
+    }
+
     if (!user?.id) {
       setBookings([]);
       setSessionsById({});
@@ -112,8 +121,18 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   }, [t, user?.id]);
 
   useEffect(() => {
+    if (user && (!user.is_active || !user.membership_active)) {
+      const now = Date.now();
+      if (now - blockedProfileRefreshAtRef.current >= BLOCKED_PROFILE_REFRESH_COOLDOWN_MS) {
+        blockedProfileRefreshAtRef.current = now;
+        void refreshProfile();
+      }
+      setLoading(false);
+      return;
+    }
+
     void loadBookings({ silent: hasLoadedBookingsRef.current });
-  }, [loadBookings, refreshSignal]);
+  }, [loadBookings, refreshProfile, refreshSignal, user]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -126,7 +145,12 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
       }
 
       if (!user.is_active || !user.membership_active) {
-        void refreshProfile();
+        const now = Date.now();
+        if (now - blockedProfileRefreshAtRef.current >= BLOCKED_PROFILE_REFRESH_COOLDOWN_MS) {
+          blockedProfileRefreshAtRef.current = now;
+          void refreshProfile();
+        }
+        return;
       }
 
       void loadBookings({ silent: true });
@@ -145,7 +169,12 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
 
   useIonViewWillEnter(() => {
     if (user && (!user.is_active || !user.membership_active)) {
-      void refreshProfile();
+      const now = Date.now();
+      if (now - blockedProfileRefreshAtRef.current >= BLOCKED_PROFILE_REFRESH_COOLDOWN_MS) {
+        blockedProfileRefreshAtRef.current = now;
+        void refreshProfile();
+      }
+      return;
     }
     void loadBookings({ silent: true });
   }, [loadBookings, refreshProfile, user]);

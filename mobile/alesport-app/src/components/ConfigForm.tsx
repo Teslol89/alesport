@@ -43,6 +43,7 @@ const PICKER_ITEM_HEIGHT = 44;
 const PICKER_VALUES = Array.from({ length: 60 }, (_, i) => i + 1);
 const CLIENT_PLANS_AUTO_REFRESH_MS = 10000;
 const CLIENT_PLANS_REALTIME_COOLDOWN_MS = 700;
+const CLIENT_PLANS_REFRESH_PAUSE_AFTER_MUTATION_MS = 1400;
 
 type ClientUsageSummary = {
   used: number;
@@ -232,6 +233,7 @@ const ConfigForm: React.FC = () => {
   const clientPlansRealtimeSocketRef = useRef<WebSocket | null>(null);
   const clientPlansRealtimeReconnectTimerRef = useRef<number | null>(null);
   const clientPlansRealtimeRefreshAtRef = useRef(0);
+  const clientPlansMutationAtRef = useRef(0);
   const [ruleDraft, setRuleDraft] = useState('');
   const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' }>({
@@ -422,12 +424,21 @@ const ConfigForm: React.FC = () => {
       return;
     }
 
+    const shouldSkipBackgroundRefresh = () => {
+      if (savingClientId !== null || isLoadingManagedClients || isRefreshingManagedClients) {
+        return true;
+      }
+
+      const elapsedSinceMutation = Date.now() - clientPlansMutationAtRef.current;
+      return elapsedSinceMutation < CLIENT_PLANS_REFRESH_PAUSE_AFTER_MUTATION_MS;
+    };
+
     const refreshClientPlansState = () => {
       if (document.visibilityState !== 'visible') {
         return;
       }
 
-      if (isLoadingManagedClients || isRefreshingManagedClients) {
+      if (shouldSkipBackgroundRefresh()) {
         return;
       }
 
@@ -448,6 +459,7 @@ const ConfigForm: React.FC = () => {
     isLoadingManagedClients,
     isRefreshingManagedClients,
     loadManagedClients,
+    savingClientId,
     showClientPlansModal,
   ]);
 
@@ -483,6 +495,15 @@ const ConfigForm: React.FC = () => {
 
     const triggerRealtimeRefresh = () => {
       if (document.visibilityState !== 'visible') {
+        return;
+      }
+
+      if (savingClientId !== null || isLoadingManagedClients || isRefreshingManagedClients) {
+        return;
+      }
+
+      const elapsedSinceMutation = Date.now() - clientPlansMutationAtRef.current;
+      if (elapsedSinceMutation < CLIENT_PLANS_REFRESH_PAUSE_AFTER_MUTATION_MS) {
         return;
       }
 
@@ -861,6 +882,7 @@ const ConfigForm: React.FC = () => {
         });
         return nextUsers;
       });
+      clientPlansMutationAtRef.current = Date.now();
       if (profile.id === updatedUser.id) {
         syncProfileState(updatedUser);
       }

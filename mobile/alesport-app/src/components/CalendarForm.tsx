@@ -383,7 +383,7 @@ const Calendar: React.FC = () => {
               handleRealtimeRefresh(payload.session_id);
             }
             if (payload.type === 'user_profile_changed' && payload.user_id === user?.id) {
-              void refreshProfile();
+              void refreshProfile({ showLoading: false });
             }
           } catch {
             // Ignorar mensajes no JSON.

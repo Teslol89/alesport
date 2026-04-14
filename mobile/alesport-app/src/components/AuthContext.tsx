@@ -10,7 +10,7 @@ interface AuthContextType {
   setToken: (token: string | null) => void;
   isAuthenticated: boolean;
   isLoadingProfile: boolean;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (options?: { showLoading?: boolean }) => Promise<void>;
   logout: () => void;
 }
 
@@ -57,7 +57,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     history.replace('/login');
   }, [clearAuthState, history]);
 
-  const refreshProfile = useCallback(async () => {
+  const refreshProfile = useCallback(async (options?: { showLoading?: boolean }) => {
+    const showLoading = options?.showLoading ?? false;
+
     if (!token) {
       setUser(null);
       setIsLoadingProfile(false);
@@ -77,7 +79,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     lastProfileRefreshAtRef.current = now;
 
     const refreshPromise = (async () => {
-      setIsLoadingProfile(true);
+      if (showLoading) {
+        setIsLoadingProfile(true);
+      }
       try {
         const profile = await getUserProfile(handleUnauthorized);
         setUser(profile);
@@ -87,7 +91,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.error('[AuthContext] No se pudo cargar el perfil:', error);
         }
       } finally {
-        setIsLoadingProfile(false);
+        if (showLoading) {
+          setIsLoadingProfile(false);
+        }
       }
     })();
 
@@ -117,7 +123,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     localStorage.setItem('token', token);
     registerFcmToken();
-    void refreshProfile();
+    void refreshProfile({ showLoading: true });
   }, [refreshProfile, token]);
 
   const setToken = useCallback((nextToken: string | null) => {

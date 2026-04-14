@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { useHistory } from "react-router-dom";
 import { getUserProfile, type UserProfile } from "../api/user";
 import { registerFcmToken } from "../services/fcm";
@@ -13,6 +13,8 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   logout: () => void;
 }
+
+const PROFILE_REFRESH_MIN_INTERVAL_MS = 3000;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -39,6 +41,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setTokenState] = useState<string | null>(() => localStorage.getItem('token'));
   const [user, setUser] = useState<UserProfile | null>(() => readStoredUser());
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(() => !!localStorage.getItem('token'));
+  const profileRefreshInFlightRef = useRef<Promise<void> | null>(null);
+  const lastProfileRefreshAtRef = useRef(0);
 
   const clearAuthState = useCallback(() => {
     setTokenState(null);
@@ -60,17 +64,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return;
     }
 
-    setIsLoadingProfile(true);
-    try {
-      const profile = await getUserProfile(handleUnauthorized);
-      setUser(profile);
-      localStorage.setItem('userProfile', JSON.stringify(profile));
-    } catch (error) {
-      if (!(error instanceof Error && error.message === 'UNAUTHORIZED')) {
-        console.error('[AuthContext] No se pudo cargar el perfil:', error);
+    const now = Date.now();
+    if (profileRefreshInFlightRef.current) {
+      await profileRefreshInFlightRef.current;
+      return;
+    }
+
+    if (now - lastProfileRefreshAtRef.current < PROFILE_REFRESH_MIN_INTERVAL_MS) {
+      return;
+    }
+
+    lastProfileRefreshAtRef.current = now;
+
+    const refreshPromise = (async () => {
+      setIsLoadingProfile(true);
+      try {
+        const profile = await getUserProfile(handleUnauthorized);
+        setUser(profile);
+        localStorage.setItem('userProfile', JSON.stringify(profile));
+      } catch (error) {
+        if (!(error instanceof Error && error.message === 'UNAUTHORIZED')) {
+          console.error('[AuthContext] No se pudo cargar el perfil:', error);
+        }
+      } finally {
+        setIsLoadingProfile(false);
       }
+    })();
+
+    profileRefreshInFlightRef.current = refreshPromise;
+    try {
+      await refreshPromise;
     } finally {
-      setIsLoadingProfile(false);
+      profileRefreshInFlightRef.current = null;
     }
   }, [handleUnauthorized, token]);
 

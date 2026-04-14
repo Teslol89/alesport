@@ -251,7 +251,28 @@ body,
   padding: 0.65rem 0.8rem;
   border-radius: 14px;
   background: linear-gradient(160deg, rgba(0, 137, 166, 0.12), rgba(0, 88, 116, 0.08));
+
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.calendar-client-quota-panel--danger {
+  background: linear-gradient(160deg, rgba(235, 68, 90, 0.2), rgba(171, 35, 52, 0.12));
+  border-color: rgba(171, 35, 52, 0.44);
+}
+
+.calendar-client-quota-panel--warning {
+  background: linear-gradient(160deg, rgba(255, 196, 0, 0.26), rgba(208, 136, 0, 0.14));
+  border-color: rgba(176, 117, 0, 0.46);
+}
+
+.calendar-client-quota-panel--danger .calendar-client-quota-title,
+.calendar-client-quota-panel--danger .calendar-client-quota-text {
+  color: #731521;
+}
+
+.calendar-client-quota-panel--warning .calendar-client-quota-title,
+.calendar-client-quota-panel--warning .calendar-client-quota-text {
+  color: #6b4700;
 }
 
 .calendar-client-quota-title {

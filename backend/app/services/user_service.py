@@ -156,6 +156,7 @@ def get_eligible_fixed_students(db: Session) -> list[User]:
             User.role == "client",
             User.is_active.is_(True),
             User.membership_active.is_(True),
+            User.monthly_booking_quota.is_not(None),
         )
         .order_by(User.name.asc(), User.email.asc())
         .all()

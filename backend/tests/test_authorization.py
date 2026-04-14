@@ -462,3 +462,58 @@ def test_admin_can_copy_week_sessions_with_fixed_students(client, auth_headers, 
         .all()
     )
     assert len(copied_bookings) == 2
+
+
+def test_copy_week_excludes_fixed_students_without_active_plan(client, auth_headers, seed_data, db_session):
+    """Si un alumno fijo se queda sin plan antes de copiar semana, no debe copiarse su reserva."""
+    from app.models.booking import Booking
+
+    headers = auth_headers(seed_data["admin"].email, "admin1234")
+
+    create_response = client.post(
+        "/api/sessions/recurring",
+        headers=headers,
+        json={
+            "sessions": [
+                {
+                    "session_date": "2030-04-15",
+                    "start_time": "10:00",
+                    "end_time": "11:00",
+                    "capacity": 5,
+                    "class_name": "Grupo fijo lunes",
+                    "trainer_id": seed_data["trainer"].id,
+                    "fixed_student_ids": [seed_data["client"].id],
+                }
+            ]
+        },
+    )
+    assert create_response.status_code == 201
+
+    seed_data["client"].monthly_booking_quota = None
+    db_session.commit()
+
+    copy_response = client.post(
+        "/api/sessions/copy-week",
+        headers=headers,
+        json={
+            "source_week_start_date": "2030-04-15",
+            "target_week_start_date": "2030-04-22",
+            "trainer_id": seed_data["trainer"].id,
+        },
+    )
+
+    assert copy_response.status_code == 201
+    copied_sessions = copy_response.json()
+    assert len(copied_sessions) == 1
+
+    copied_session_id = copied_sessions[0]["id"]
+    copied_booking_count = (
+        db_session.query(Booking)
+        .filter(
+            Booking.user_id == seed_data["client"].id,
+            Booking.session_id == copied_session_id,
+            Booking.status == "active",
+        )
+        .count()
+    )
+    assert copied_booking_count == 0

@@ -155,6 +155,7 @@ def test_trainer_cannot_create_weekly_schedule(client, auth_headers, seed_data):
             "start_time": "09:00",
             "end_time": "10:00",
             "capacity": 8,
+            "class_name": "Clase test trainer",
             "weeks_ahead": 1,
         },
     )
@@ -188,6 +189,7 @@ def test_admin_can_create_weekly_schedule(client, auth_headers, seed_data):
             "start_time": "11:00",
             "end_time": "12:00",
             "capacity": 8,
+            "class_name": "Clase test admin",
             "weeks_ahead": 1,
         },
     )
@@ -244,6 +246,7 @@ def test_admin_can_create_weekly_schedule_with_fixed_students(client, auth_heade
             "start_time": "11:00",
             "end_time": "12:00",
             "capacity": 8,
+            "class_name": "Clase fija admin",
             "weeks_ahead": 1,
             "fixed_student_ids": [seed_data["client"].id],
         },

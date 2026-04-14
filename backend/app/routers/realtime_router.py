@@ -3,7 +3,6 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from sqlalchemy.orm import Session
 
-from app.auth.roles import can_manage_sessions_role
 from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.user import User
@@ -16,7 +15,7 @@ router = APIRouter(prefix="/realtime", tags=["realtime"])
 
 @router.post("/ws-ticket")
 def create_realtime_ws_ticket(current_user: User = Depends(get_current_user)):
-    if not can_manage_sessions_role(current_user.role):
+    if not current_user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado")
 
     ticket = realtime_ticket_service.issue_ticket(current_user)
@@ -44,11 +43,6 @@ async def realtime_ws_endpoint(
 
     user = db.query(User).filter(User.email == user_email).first()
     if user is None or not user.is_active:
-        await websocket.close(code=1008)
-        return
-
-    # The Alex management UI lives under trainer/admin capabilities.
-    if not can_manage_sessions_role(user.role):
         await websocket.close(code=1008)
         return
 

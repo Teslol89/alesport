@@ -251,7 +251,6 @@ body,
   padding: 0.65rem 0.8rem;
   border-radius: 14px;
   background: linear-gradient(160deg, rgba(0, 137, 166, 0.12), rgba(0, 88, 116, 0.08));
-
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
@@ -347,8 +346,8 @@ body,
 }
 
 .session-card-client.ion-color-medium {
-  background: rgba(0, 137, 166, 0.15);
-  border-left: 4px solid #0089a6;
+  background: rgba(146, 148, 156, 0.20);
+  border-left: 4px solid var(--ion-color-medium, #92949c);
 }
 
 .session-card .ion-card-title {
@@ -1098,8 +1097,8 @@ body,
   justify-content: center;
 }
 
-.calendar-hour-modal-actions > .calendar-hour-modal-save,
-.calendar-hour-modal-actions > .calendar-hour-modal-cancel {
+.calendar-hour-modal-actions>.calendar-hour-modal-save,
+.calendar-hour-modal-actions>.calendar-hour-modal-cancel {
   min-width: 170px;
 }
 

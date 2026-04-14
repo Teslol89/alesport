@@ -149,3 +149,13 @@ def publish_booking_change(session_id: int, action: str) -> None:
             "action": action,
         }
     )
+
+
+def publish_user_profile_change(user_id: int, action: str = "updated") -> None:
+    realtime_event_bus.publish(
+        {
+            "type": "user_profile_changed",
+            "user_id": user_id,
+            "action": action,
+        }
+    )

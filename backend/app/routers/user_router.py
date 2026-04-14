@@ -7,6 +7,7 @@ from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.user import User, User as UserModel
 from app.schemas.user import AssignableTrainerResponse, FixedStudentCandidateResponse, UserAdminUpdate, UserResponse, UserProfileUpdate
+from app.services.realtime_events import publish_user_profile_change
 from app.services.user_service import get_all_users, get_assignable_trainers, get_eligible_fixed_students
 
 
@@ -109,6 +110,7 @@ def update_my_profile(
 
     db.commit()
     db.refresh(current_user)
+    publish_user_profile_change(current_user.id)
     return current_user
 
 
@@ -165,4 +167,5 @@ def patch_user_is_active(
 
     db.commit()
     db.refresh(user)
+    publish_user_profile_change(user.id)
     return user

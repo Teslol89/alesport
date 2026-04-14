@@ -86,6 +86,34 @@ def _get_valid_fixed_students(db: Session, student_ids: list[int] | None) -> lis
     return [students_by_id[student_id] for student_id in normalized_ids]
 
 
+def _times_overlap(start_a: time, end_a: time, start_b: time, end_b: time) -> bool:
+    return start_a < end_b and start_b < end_a
+
+
+def _ensure_no_global_weekly_overlap(
+    db: Session,
+    *,
+    day_of_week: int,
+    start_time: time,
+    end_time: time,
+) -> None:
+    active_slots = (
+        db.query(WeeklySchedule)
+        .filter(
+            WeeklySchedule.is_active.is_(True),
+            WeeklySchedule.day_of_week == day_of_week,
+        )
+        .all()
+    )
+
+    for slot in active_slots:
+        if _times_overlap(start_time, end_time, slot.start_time, slot.end_time):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe otra clase activa en esa franja horaria",
+            )
+
+
 def _ensure_fixed_bookings_for_session(
     db: Session, session: SessionModel, student_ids: list[int]
 ) -> int:
@@ -158,6 +186,12 @@ def create_weekly_schedule(db: Session, schedule_data) -> WeeklySchedule:
         )
 
     fixed_students = _get_valid_fixed_students(db, schedule_data.fixed_student_ids)
+    _ensure_no_global_weekly_overlap(
+        db,
+        day_of_week=schedule_data.day_of_week,
+        start_time=schedule_data.start_time,
+        end_time=schedule_data.end_time,
+    )
 
     # Extraer weeks_ahead antes de crear el ORM (no es columna de la tabla)
     weeks_ahead = schedule_data.weeks_ahead

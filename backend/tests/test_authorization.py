@@ -298,6 +298,60 @@ def test_admin_can_create_weekly_schedule_with_fixed_students(client, auth_heade
     assert booking_count_after_regeneration == len(generated_sessions)
 
 
+def test_admin_cannot_create_overlapping_weekly_schedule_for_other_trainer(client, auth_headers, seed_data, db_session):
+    """No debe permitirse la misma franja horaria semanal aunque sea otro entrenador."""
+    from app.models.user import User
+    from app.auth.security import hash_password
+
+    second_trainer = User(
+        name="Trainer 2",
+        email="trainer2@example.com",
+        password_hash=hash_password("trainer2234"),
+        role="trainer",
+        is_active=True,
+        membership_active=True,
+        monthly_booking_quota=12,
+        is_verified=True,
+    )
+    db_session.add(second_trainer)
+    db_session.commit()
+    db_session.refresh(second_trainer)
+
+    headers = auth_headers(seed_data["admin"].email, "admin1234")
+
+    first_response = client.post(
+        "/api/schedule/",
+        headers=headers,
+        json={
+            "trainer_id": seed_data["trainer"].id,
+            "day_of_week": 2,
+            "start_time": "11:00",
+            "end_time": "12:00",
+            "capacity": 8,
+            "class_name": "Slot base",
+            "weeks_ahead": 1,
+        },
+    )
+    assert first_response.status_code == 200
+
+    overlap_response = client.post(
+        "/api/schedule/",
+        headers=headers,
+        json={
+            "trainer_id": second_trainer.id,
+            "day_of_week": 2,
+            "start_time": "11:00",
+            "end_time": "12:00",
+            "capacity": 8,
+            "class_name": "Slot solapado",
+            "weeks_ahead": 1,
+        },
+    )
+
+    assert overlap_response.status_code == 409
+    assert overlap_response.json()["detail"] == "Ya existe otra clase activa en esa franja horaria"
+
+
 def test_admin_can_create_recurring_sessions_with_fixed_students(client, auth_headers, seed_data, db_session):
     """La creación recurrente desde /sessions/recurring preasigna clientes fijos a cada sesión nueva."""
     from app.models.booking import Booking

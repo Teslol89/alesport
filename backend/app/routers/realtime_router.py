@@ -55,9 +55,13 @@ async def realtime_ws_endpoint(
     try:
         await websocket.send_json({"type": "connected"})
         while True:
-            event = await asyncio.to_thread(subscription.get)
+            event = await asyncio.to_thread(subscription.get, 1.0)
+            if event is None:
+                continue
             await websocket.send_json(event)
     except WebSocketDisconnect:
         pass
+    except asyncio.CancelledError:
+        raise
     finally:
         subscription.close()

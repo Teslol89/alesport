@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 import json
-from queue import Queue
+from queue import Empty, Queue
 from threading import Event, Lock, Thread
 from typing import Any, Protocol
 
@@ -18,7 +18,7 @@ REDIS_CHANNEL = "alesport:realtime"
 
 
 class RealtimeSubscription(Protocol):
-    def get(self) -> dict[str, Any]:
+    def get(self, timeout: float | None = None) -> dict[str, Any] | None:
         ...
 
     def close(self) -> None:
@@ -31,8 +31,11 @@ class LocalSubscription:
         self._subscriber_id = subscriber_id
         self._queue = queue
 
-    def get(self) -> dict[str, Any]:
-        return self._queue.get()
+    def get(self, timeout: float | None = None) -> dict[str, Any] | None:
+        try:
+            return self._queue.get(timeout=timeout)
+        except Empty:
+            return None
 
     def close(self) -> None:
         self._bus._unsubscribe_local(self._subscriber_id)
@@ -71,8 +74,11 @@ class RedisSubscription:
             except Exception:
                 pass
 
-    def get(self) -> dict[str, Any]:
-        return self._queue.get()
+    def get(self, timeout: float | None = None) -> dict[str, Any] | None:
+        try:
+            return self._queue.get(timeout=timeout)
+        except Empty:
+            return None
 
     def close(self) -> None:
         self._stop_event.set()

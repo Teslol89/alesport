@@ -15,6 +15,7 @@ import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
 import { getUserProfile, getUsersForAdmin, type UserProfile, updateUserAdminSettings, updateUserProfile } from '../api/user';
 import { getAllBookings, type BookingItem } from '../api/bookings';
+import { getRealtimeWsTicket } from '../api/realtime';
 import { getCenterRules, updateCenterRules } from '../api/centerRules';
 import { useLanguage } from '../i18n/LanguageContext';
 import { getNotificationsEnabled, setNotificationsEnabled as updateNotificationsEnabled } from '../services/fcm';
@@ -42,6 +43,7 @@ const FIXED_PLAN_VALUES = [8, 12];
 const PICKER_ITEM_HEIGHT = 44;
 const PICKER_VALUES = Array.from({ length: 60 }, (_, i) => i + 1);
 const CLIENT_PLANS_AUTO_REFRESH_MS = 10000;
+const CLIENT_PLANS_REALTIME_COOLDOWN_MS = 700;
 
 type ClientUsageSummary = {
   used: number;
@@ -228,6 +230,9 @@ const ConfigForm: React.FC = () => {
   const [customQuotaTarget, setCustomQuotaTarget] = useState<{ userId: number; name: string } | null>(null);
   const [customQuotaDraft, setCustomQuotaDraft] = useState('');
   const pickerRef = useRef<HTMLDivElement>(null);
+  const clientPlansRealtimeSocketRef = useRef<WebSocket | null>(null);
+  const clientPlansRealtimeReconnectTimerRef = useRef<number | null>(null);
+  const clientPlansRealtimeRefreshAtRef = useRef(0);
   const [ruleDraft, setRuleDraft] = useState('');
   const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' }>({
@@ -446,6 +451,103 @@ const ConfigForm: React.FC = () => {
     loadManagedClients,
     showClientPlansModal,
   ]);
+
+  useEffect(() => {
+    if (!showClientPlansModal || !canManageClientPlans) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const buildWsUrl = (ticket: string) => {
+      const base = import.meta.env.VITE_API_BASE_URL || 'https://api.verdeguerlabs.es/api';
+      const wsBase = base.replace(/^http:/i, 'ws:').replace(/^https:/i, 'wss:');
+      return `${wsBase}/realtime/ws?ticket=${encodeURIComponent(ticket)}`;
+    };
+
+    const closeSocket = () => {
+      if (clientPlansRealtimeSocketRef.current) {
+        clientPlansRealtimeSocketRef.current.close();
+        clientPlansRealtimeSocketRef.current = null;
+      }
+    };
+
+    const scheduleReconnect = () => {
+      if (cancelled || clientPlansRealtimeReconnectTimerRef.current !== null) {
+        return;
+      }
+      clientPlansRealtimeReconnectTimerRef.current = window.setTimeout(() => {
+        clientPlansRealtimeReconnectTimerRef.current = null;
+        void connect();
+      }, 2500);
+    };
+
+    const triggerRealtimeRefresh = () => {
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - clientPlansRealtimeRefreshAtRef.current < CLIENT_PLANS_REALTIME_COOLDOWN_MS) {
+        return;
+      }
+
+      clientPlansRealtimeRefreshAtRef.current = now;
+      void loadManagedClients('refresh');
+    };
+
+    const connect = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      closeSocket();
+
+      try {
+        const wsTicket = await getRealtimeWsTicket();
+        if (cancelled) {
+          return;
+        }
+
+        const socket = new WebSocket(buildWsUrl(wsTicket));
+        clientPlansRealtimeSocketRef.current = socket;
+
+        socket.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data) as { type?: string };
+            if (payload.type === 'booking_changed') {
+              triggerRealtimeRefresh();
+            }
+          } catch {
+            // Ignorar mensajes no JSON.
+          }
+        };
+
+        socket.onerror = () => {
+          closeSocket();
+          scheduleReconnect();
+        };
+
+        socket.onclose = () => {
+          closeSocket();
+          scheduleReconnect();
+        };
+      } catch {
+        scheduleReconnect();
+      }
+    };
+
+    void connect();
+
+    return () => {
+      cancelled = true;
+      closeSocket();
+      if (clientPlansRealtimeReconnectTimerRef.current !== null) {
+        window.clearTimeout(clientPlansRealtimeReconnectTimerRef.current);
+        clientPlansRealtimeReconnectTimerRef.current = null;
+      }
+    };
+  }, [canManageClientPlans, loadManagedClients, showClientPlansModal]);
 
   const openEditProfileModal = () => {
     setEditName(profile.name || '');

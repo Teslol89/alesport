@@ -491,14 +491,34 @@ def run_role_specific_checks(token: str, role: str, user_id: int | None, session
         print(f"    ✓ Client bloqueado de crear sesión")
 
         # ========== TEST: Cliente puede hacer reserva ==========
+        # Tras hardening de negocio, también es válido un 403 si el cliente
+        # no tiene plan activo o la membresía está inactiva.
         booking = request_and_check(
             "POST",
             "/bookings/",
-            {200, 201, 409},
+            {200, 201, 403, 409},
             headers=headers,
             json={"session_id": session["id"]},
         )
         print(f"  [TEST] Reserva creada/existente: {booking.status_code}")
+
+        if booking.status_code == 403:
+            detail = ""
+            try:
+                detail = str(booking.json().get("detail") or "")
+            except Exception:
+                detail = booking.text or ""
+
+            known_forbidden_reasons = (
+                "Sin plan activo",
+                "Membresía inactiva",
+                "no tiene plan activo",
+            )
+            if any(reason in detail for reason in known_forbidden_reasons):
+                print(f"    ✓ Cliente sin plan/membresía: reserva bloqueada correctamente ({detail})")
+                return
+
+            raise AssertionError(f"403 inesperado en reserva de cliente. Body: {booking.text}")
 
         # Segundo intento debe devolver conflicto por reserva duplicada o reglas de negocio.
         request_and_check(

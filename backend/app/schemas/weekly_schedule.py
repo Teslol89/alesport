@@ -12,6 +12,8 @@ class WeeklyScheduleResponse(BaseModel):
     start_time: time
     end_time: time
     capacity: int
+    class_name: str
+    notes: str | None = None
     is_active: bool
     fixed_student_ids: list[int] = Field(default_factory=list)
     created_at: datetime
@@ -31,10 +33,14 @@ class WeeklyScheduleCreate(BaseModel):
     start_time: time
     end_time: time
     capacity: int = Field(gt=0, le=10)
+    class_name: str = Field(min_length=1, max_length=120)
+    notes: str | None = None
     # Clientes que deben quedar apuntados automáticamente a todas las sesiones generadas por este horario.
     fixed_student_ids: list[int] = Field(default_factory=list)
     # Número de semanas futuras para las que se generan sesiones automáticamente
     weeks_ahead: int = Field(default=4, ge=1, le=12)
+    # Fecha de inicio de la ventana para generar sesiones (si no se envía, usa hoy)
+    start_date: date | None = None
 
     @model_validator(mode="after")
     def validate_times(self):
@@ -46,6 +52,14 @@ class WeeklyScheduleCreate(BaseModel):
                 )
         if self.start_time >= self.end_time:
             raise ValueError("start_time debe ser anterior a end_time")
+
+        self.class_name = self.class_name.strip()
+        if not self.class_name:
+            raise ValueError("class_name es obligatorio")
+
+        if self.notes is not None:
+            normalized_notes = self.notes.strip()
+            self.notes = normalized_notes or None
 
         unique_ids = list(dict.fromkeys(self.fixed_student_ids))
         self.fixed_student_ids = unique_ids

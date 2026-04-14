@@ -161,8 +161,9 @@ def create_weekly_schedule(db: Session, schedule_data) -> WeeklySchedule:
 
     # Extraer weeks_ahead antes de crear el ORM (no es columna de la tabla)
     weeks_ahead = schedule_data.weeks_ahead
+    start_date = schedule_data.start_date
     schedule = WeeklySchedule(
-        **schedule_data.model_dump(exclude={"weeks_ahead", "fixed_student_ids"})
+        **schedule_data.model_dump(exclude={"weeks_ahead", "fixed_student_ids", "start_date"})
     )
     db.add(schedule)
     try:
@@ -195,14 +196,14 @@ def create_weekly_schedule(db: Session, schedule_data) -> WeeklySchedule:
         db.refresh(schedule)
 
     # Generar sesiones automáticamente para las próximas N semanas
-    _generate_for_new_schedule(db, weeks_ahead)
+    _generate_for_new_schedule(db, weeks_ahead, start_date)
     return _attach_fixed_student_ids(db, schedule)
 
 
-def _generate_for_new_schedule(db: Session, weeks_ahead: int) -> None:
+def _generate_for_new_schedule(db: Session, weeks_ahead: int, start_date: date | None) -> None:
     """Dispara la generación automática de sesiones tras crear un horario."""
     generate_sessions_from_schedule(
-        db, SessionGenerationRequest(weeks_ahead=weeks_ahead, start_date=None)
+        db, SessionGenerationRequest(weeks_ahead=weeks_ahead, start_date=start_date)
     )
 
 
@@ -294,15 +295,20 @@ def generate_sessions_from_schedule(
             if existing_session is not None:
                 # Ya existe -- no crear duplicado, pero sí intentar completar sus reservas fijas pendientes.
                 skipped_existing_count += 1
+                if existing_session.weekly_schedule_id is None:
+                    existing_session.weekly_schedule_id = schedule.id
                 if fixed_student_ids:
                     sessions_to_prebook.append((existing_session, fixed_student_ids))
                 continue
 
             new_session = SessionModel(
                 trainer_id=schedule.trainer_id,
+                weekly_schedule_id=schedule.id,
                 start_time=start_dt,
                 end_time=_local_datetime(current_date, schedule.end_time),
                 capacity=schedule.capacity,
+                class_name=schedule.class_name,
+                notes=schedule.notes,
                 status="active",
             )
             new_sessions.append(new_session)

@@ -3,7 +3,8 @@ import logoIcon from '../icons/icon.png';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IonDatetime, IonModal } from '@ionic/react';
 import { getAssignableTrainers, getEligibleFixedStudents, type AssignableTrainer, type FixedStudentCandidate } from '../api/user';
-import { createSingleSession, createRecurringSessions } from '../api/sessions';
+import { createSingleSession } from '../api/sessions';
+import { createWeeklySchedule } from '../api/schedule';
 import { copyWeekSessions } from '../api/sessions';
 import { formatIsoDateForUi, fromPickerTimeIso, getTodayIsoDate, toPickerTimeIso, getMondayOfWeek, getSundayOfWeek } from '../utils/funcionesGeneral';
 import CustomToast from './CustomStyles';
@@ -1436,29 +1437,18 @@ const CrearForm: React.FC = () => {
                                     className="crear-btn-primary"
                                     disabled={recurringDraft.className.trim().length === 0 || recurringDraft.trainerId === null || recurringDraft.daysOfWeek.length === 0 || recurringDraft.startTime >= recurringDraft.endTime}
                                     onClick={async () => {
-                                        // Generar todas las fechas de la recurrencia semanal
                                         const start = new Date(recurringDraft.startDate);
                                         const end = new Date(recurringDraft.endDate);
-                                        const sessions = [];
-                                        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                                            // d.getDay(): 0=Dom, 1=Lun, ..., 6=Sab
-                                            // Our daysOfWeek: [1,2,3,4,5,6,0] (L->D)
-                                            const jsDay = d.getDay();
-                                            const mappedDay = jsDay === 0 ? 0 : jsDay; // 0=Domingo, 1=Lunes...
-                                            if (recurringDraft.daysOfWeek.includes(mappedDay)) {
-                                                sessions.push({
-                                                    session_date: d.toISOString().slice(0, 10),
-                                                    start_time: recurringDraft.startTime,
-                                                    end_time: recurringDraft.endTime,
-                                                    capacity: recurringDraft.capacity,
-                                                    class_name: recurringDraft.className.trim(),
-                                                    notes: recurringDraft.notes.trim() || undefined,
-                                                    trainer_id: recurringDraft.trainerId || undefined,
-                                                    fixed_student_ids: recurringDraft.fixedStudentIds,
-                                                });
-                                            }
+                                        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+                                            setToast({
+                                                show: true,
+                                                message: 'Rango de fechas inválido para la recurrencia semanal.',
+                                                type: 'danger',
+                                            });
+                                            return;
                                         }
-                                        if (sessions.length === 0) {
+
+                                        if (recurringDraft.daysOfWeek.length === 0) {
                                             setToast({
                                                 show: true,
                                                 message: 'Selecciona al menos un día válido en el rango.',
@@ -1466,8 +1456,38 @@ const CrearForm: React.FC = () => {
                                             });
                                             return;
                                         }
+
+                                        const daySpanMs = end.getTime() - start.getTime();
+                                        const daySpan = Math.floor(daySpanMs / (24 * 60 * 60 * 1000)) + 1;
+                                        const weeksAhead = Math.ceil(daySpan / 7);
+
+                                        if (weeksAhead > 12) {
+                                            setToast({
+                                                show: true,
+                                                message: 'La recurrencia semanal admite un máximo de 12 semanas.',
+                                                type: 'danger',
+                                            });
+                                            return;
+                                        }
+
+                                        // Backend usa 0=lunes ... 6=domingo, mientras la UI usa 0=domingo ... 6=sábado.
+                                        const backendDays = recurringDraft.daysOfWeek.map((day) => (day === 0 ? 6 : day - 1));
+
                                         try {
-                                            await createRecurringSessions(sessions);
+                                            await Promise.all(
+                                                backendDays.map((backendDay) => createWeeklySchedule({
+                                                    trainer_id: recurringDraft.trainerId as number,
+                                                    day_of_week: backendDay,
+                                                    start_time: recurringDraft.startTime,
+                                                    end_time: recurringDraft.endTime,
+                                                    capacity: recurringDraft.capacity,
+                                                    class_name: recurringDraft.className.trim(),
+                                                    notes: recurringDraft.notes.trim() || undefined,
+                                                    fixed_student_ids: recurringDraft.fixedStudentIds,
+                                                    weeks_ahead: Math.max(1, weeksAhead),
+                                                    start_date: recurringDraft.startDate,
+                                                }))
+                                            );
                                             setToast({
                                                 show: true,
                                                 message: '✓ Clases recurrentes creadas exitosamente',

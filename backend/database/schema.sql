@@ -55,6 +55,8 @@ CREATE TABLE IF NOT EXISTS weekly_schedule (
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0 AND capacity <= 10),
+    class_name VARCHAR(120) NOT NULL DEFAULT 'Clase',
+    notes TEXT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
@@ -119,6 +121,9 @@ CREATE TABLE IF NOT EXISTS sessions (
     trainer_id INTEGER NOT NULL
         REFERENCES users(id)
         ON DELETE RESTRICT,
+    weekly_schedule_id INTEGER
+        REFERENCES weekly_schedule(id)
+        ON DELETE SET NULL,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0 AND capacity <= 10),
@@ -141,6 +146,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_trainer ON sessions(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_weekly_schedule_id ON sessions(weekly_schedule_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
 CREATE INDEX IF NOT EXISTS idx_sessions_start_time ON sessions(start_time);
 CREATE INDEX IF NOT EXISTS idx_sessions_active_trainer ON sessions(trainer_id, status);

@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     void refreshProfile();
   }, [refreshProfile, token]);
 
-  const setToken = (nextToken: string | null) => {
+  const setToken = useCallback((nextToken: string | null) => {
     if (!nextToken) {
       clearAuthState();
       return;
@@ -103,12 +103,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     setTokenState(nextToken);
     setIsLoadingProfile(true);
-  };
+  }, [clearAuthState]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     clearAuthState();
     history.replace('/login');
-  };
+  }, [clearAuthState, history]);
 
   return (
     <AuthContext.Provider

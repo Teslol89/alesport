@@ -201,7 +201,7 @@ const buildClientUsageMap = (clients: UserProfile[], bookings: BookingItem[]): R
 donde los usuarios pueden editar su perfil, cambiar idioma, gestionar reglas del centro
 y planes de clientes (si tienen permisos), etc. */
 const ConfigForm: React.FC = () => {
-  const { logout, role } = useAuth();
+  const { logout, role, user } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const [profile, setProfile] = useState<Partial<UserProfile>>({});
   const [editName, setEditName] = useState('');
@@ -290,6 +290,14 @@ const ConfigForm: React.FC = () => {
 
     return () => { mounted = false; };
   }, [logout]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    setProfile((prevProfile) => ({ ...prevProfile, ...user }));
+  }, [user]);
 
   useEffect(() => {
     const ionApp = document.querySelector('ion-app');

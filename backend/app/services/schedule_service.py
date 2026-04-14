@@ -38,6 +38,7 @@ def _get_fixed_student_ids_by_schedule(
             User.role == "client",
             User.is_active.is_(True),
             User.membership_active.is_(True),
+            User.monthly_booking_quota.is_not(None),
         )
         .order_by(WeeklyScheduleStudent.id.asc())
         .all()
@@ -72,6 +73,7 @@ def _get_valid_fixed_students(db: Session, student_ids: list[int] | None) -> lis
             User.role == "client",
             User.is_active.is_(True),
             User.membership_active.is_(True),
+            User.monthly_booking_quota.is_not(None),
         )
         .all()
     )
@@ -80,7 +82,7 @@ def _get_valid_fixed_students(db: Session, student_ids: list[int] | None) -> lis
     if missing_ids:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Los alumnos fijos deben ser clientes activos con la membresía vigente",
+            detail="Los alumnos fijos deben ser clientes activos con membresía y plan vigente",
         )
 
     return [students_by_id[student_id] for student_id in normalized_ids]

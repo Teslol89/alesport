@@ -69,6 +69,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     message: '',
     type: 'info',
   });
+  const isCancelModalOpen = Boolean(pendingCancelBooking);
   const isUserBlockedByAccessOrPlan = Boolean(
     user && (!user.is_active || !user.membership_active || user.monthly_booking_quota == null)
   );
@@ -123,6 +124,10 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   }, [isUserBlockedByAccessOrPlan, t, user?.id]);
 
   useEffect(() => {
+    if (isCancelModalOpen) {
+      return;
+    }
+
     if (isUserBlockedByAccessOrPlan) {
       const now = Date.now();
       if (now - blockedProfileRefreshAtRef.current >= BLOCKED_PROFILE_REFRESH_COOLDOWN_MS) {
@@ -134,7 +139,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     }
 
     void loadBookings({ silent: hasLoadedBookingsRef.current });
-  }, [isUserBlockedByAccessOrPlan, loadBookings, refreshProfile, refreshSignal]);
+  }, [isCancelModalOpen, isUserBlockedByAccessOrPlan, loadBookings, refreshProfile, refreshSignal]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -142,6 +147,10 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     }
 
     const refreshBookingsState = () => {
+      if (isCancelModalOpen) {
+        return;
+      }
+
       if (document.visibilityState !== 'visible') {
         return;
       }
@@ -167,9 +176,13 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
       window.removeEventListener('focus', refreshBookingsState);
       document.removeEventListener('visibilitychange', refreshBookingsState);
     };
-  }, [loadBookings, refreshProfile, user?.id, user?.is_active, user?.membership_active, user?.monthly_booking_quota]);
+  }, [isCancelModalOpen, loadBookings, refreshProfile, user?.id, user?.is_active, user?.membership_active, user?.monthly_booking_quota]);
 
   useIonViewWillEnter(() => {
+    if (isCancelModalOpen) {
+      return;
+    }
+
     if (isUserBlockedByAccessOrPlan) {
       const now = Date.now();
       if (now - blockedProfileRefreshAtRef.current >= BLOCKED_PROFILE_REFRESH_COOLDOWN_MS) {
@@ -179,14 +192,34 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
       return;
     }
     void loadBookings({ silent: true });
-  }, [isUserBlockedByAccessOrPlan, loadBookings, refreshProfile]);
+  }, [isCancelModalOpen, isUserBlockedByAccessOrPlan, loadBookings, refreshProfile]);
 
   useEffect(() => {
+    if (!isCancelModalOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  }, [isCancelModalOpen]);
+
+  useEffect(() => {
+    if (isCancelModalOpen) {
+      return;
+    }
+
     const intervalId = window.setInterval(() => setOfferClockMs(Date.now()), 1000);
     return () => {
       window.clearInterval(intervalId);
     };
-  }, []);
+  }, [isCancelModalOpen]);
 
   const visibleBookings = useMemo(() => {
     return bookings
@@ -349,7 +382,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   }
 
   return (
-    <div className={`bookings-form-container app-blur-target ${pendingCancelBooking ? 'app-blur-target--modal-open' : ''}`}>
+    <div className="bookings-form-container app-blur-target">
       <div className="bookings-top-bar">
         <img src={logoIcon} alt="Logo gimnasio" className="bookings-top-logo" />
         <div className="bookings-top-title bookings-top-title-absolute">{t('myBookings.title')}</div>
@@ -430,6 +463,7 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
       <IonModal
         className="bookings-confirm-modal-wrapper"
         isOpen={Boolean(pendingCancelBooking)}
+        keepContentsMounted={true}
         onDidDismiss={() => setPendingCancelBooking(null)}
       >
         <div className="app-modal-panel bookings-confirm-modal">

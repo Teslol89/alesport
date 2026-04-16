@@ -858,7 +858,7 @@ const Calendar: React.FC = () => {
       const occupancyEntries = await Promise.all(
         sessionsForDate.map(async (session) => {
           try {
-            const sessionBookings = await getSessionBookingsCached(session.id, { forceRefresh: true });
+            const sessionBookings = await getSessionBookingsCached(session.id);
             const activeCount = sessionBookings.filter(b => b.status === 'active').length;
             return [session.id, activeCount] as const;
           } catch {

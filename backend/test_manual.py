@@ -534,12 +534,16 @@ def run_role_specific_checks(token: str, role: str, user_id: int | None, session
         if booking.status_code in (200, 201):
             booking_id = booking.json().get("id")
             if booking_id is not None:
-                request_and_check(
+                cancel_resp = request_and_check(
                     "PATCH",
                     f"/bookings/{booking_id}/cancel",
-                    {200},
+                    {200, 409},  # 409 aceptado si la sesión está dentro del margen de 2h
                     headers=headers,
                 )
+                if cancel_resp.status_code == 409:
+                    print(f"    ✓ Cancelación bloqueada por antelación mínima (correcto)")
+                else:
+                    print(f"    ✓ Reserva cancelada correctamente")
 
 
 def run_auth_guard_checks():

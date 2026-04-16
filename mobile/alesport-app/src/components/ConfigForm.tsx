@@ -229,6 +229,7 @@ const ConfigForm: React.FC = () => {
   const [savingClientId, setSavingClientId] = useState<number | null>(null);
   const [customQuotaTarget, setCustomQuotaTarget] = useState<{ userId: number; name: string } | null>(null);
   const [customQuotaDraft, setCustomQuotaDraft] = useState('');
+  const [planPickerTarget, setPlanPickerTarget] = useState<{ userId: number; name: string; currentQuota: number | null | undefined } | null>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const clientPlansRealtimeSocketRef = useRef<WebSocket | null>(null);
   const clientPlansRealtimeReconnectTimerRef = useRef<number | null>(null);
@@ -1213,35 +1214,23 @@ const ConfigForm: React.FC = () => {
                         />
                       </label>
 
-                      <label className="config-client-plan-row config-client-plan-row--quota" htmlFor={`plan-quota-${clientUser.id}`}>
+                      <label className="config-client-plan-row config-client-plan-row--quota">
                         <span>{t('config.clientPlansQuota')}</span>
-                        <select
-                          id={`plan-quota-${clientUser.id}`}
-                          className="config-client-plan-select"
-                          value={clientUser.monthly_booking_quota === null || clientUser.monthly_booking_quota === undefined
-                            ? 'none'
-                            : FIXED_PLAN_VALUES.includes(clientUser.monthly_booking_quota)
-                              ? clientUser.monthly_booking_quota
-                              : 'custom'}
+                        <button
+                          type="button"
+                          className="config-client-plan-select-btn"
                           disabled={isSavingThisClient}
-                          onChange={(event) => {
-                            if (event.target.value === 'custom') {
-                              handleOpenCustomQuota(clientUser.id, clientUser.name, clientUser.monthly_booking_quota);
-                            } else if (event.target.value === 'none') {
-                              void handlePatchClient(clientUser.id, { monthly_booking_quota: null });
-                            } else {
-                              void handlePatchClient(clientUser.id, { monthly_booking_quota: Number(event.target.value) });
-                            }
-                          }}
+                          onClick={() => setPlanPickerTarget({ userId: clientUser.id, name: clientUser.name, currentQuota: clientUser.monthly_booking_quota })}
                         >
-                          {CLIENT_PLAN_OPTIONS.map((option) => (
-                            <option key={option.label} value={option.value}>
-                              {option.value === 'custom' && !FIXED_PLAN_VALUES.includes(clientUser.monthly_booking_quota ?? -1) && clientUser.monthly_booking_quota !== null && clientUser.monthly_booking_quota !== undefined
-                                ? `${t('config.clientPlansCustomLabel')} (${clientUser.monthly_booking_quota})`
-                                : option.label}
-                            </option>
-                          ))}
-                        </select>
+                          <span className="config-client-plan-select-btn-label">
+                            {clientUser.monthly_booking_quota === null || clientUser.monthly_booking_quota === undefined
+                              ? t('config.clientPlansNoPlanShort')
+                              : FIXED_PLAN_VALUES.includes(clientUser.monthly_booking_quota)
+                                ? `${t('config.clientPlansPlanPrefix')} ${clientUser.monthly_booking_quota}`
+                                : `${t('config.clientPlansCustomLabel')} (${clientUser.monthly_booking_quota})`}
+                          </span>
+                          <span className="config-client-plan-select-chevron">›</span>
+                        </button>
                       </label>
                     </div>
                   );
@@ -1535,6 +1524,56 @@ const ConfigForm: React.FC = () => {
           </button>
           <button type="button" className="crear-btn-secondary" onClick={() => setShowDeleteAccountConfirm(false)}>
             <span>{t('config.deleteAccountCancel')}</span>
+          </button>
+        </div>
+      </IonModal>
+
+      <IonModal
+        className="config-plan-picker-modal-wrapper"
+        isOpen={!!planPickerTarget}
+        onDidDismiss={() => setPlanPickerTarget(null)}
+      >
+        <div className="config-plan-picker-modal">
+          <h3 className="config-plan-picker-title">{planPickerTarget?.name}</h3>
+          {CLIENT_PLAN_OPTIONS.map((option) => {
+            const isSelected = planPickerTarget
+              ? option.value === 'none'
+                ? planPickerTarget.currentQuota === null || planPickerTarget.currentQuota === undefined
+                : option.value === 'custom'
+                  ? planPickerTarget.currentQuota !== null && planPickerTarget.currentQuota !== undefined && !FIXED_PLAN_VALUES.includes(planPickerTarget.currentQuota)
+                  : planPickerTarget.currentQuota === option.value
+              : false;
+            return (
+              <button
+                key={String(option.value)}
+                type="button"
+                className={`config-plan-picker-option${isSelected ? ' config-plan-picker-option--selected' : ''}`}
+                onClick={() => {
+                  if (!planPickerTarget) return;
+                  const { userId, name, currentQuota } = planPickerTarget;
+                  setPlanPickerTarget(null);
+                  if (option.value === 'custom') {
+                    handleOpenCustomQuota(userId, name, currentQuota);
+                  } else if (option.value === 'none') {
+                    void handlePatchClient(userId, { monthly_booking_quota: null });
+                  } else {
+                    void handlePatchClient(userId, { monthly_booking_quota: Number(option.value) });
+                  }
+                }}
+              >
+                <span>{option.value === 'custom' && planPickerTarget?.currentQuota !== null && planPickerTarget?.currentQuota !== undefined && !FIXED_PLAN_VALUES.includes(planPickerTarget.currentQuota ?? -1)
+                  ? `${t('config.clientPlansCustomLabel')} (${planPickerTarget.currentQuota})`
+                  : option.label}</span>
+                {isSelected && <span className="config-plan-picker-check">✓</span>}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            className="crear-btn-secondary config-plan-picker-cancel"
+            onClick={() => setPlanPickerTarget(null)}
+          >
+            {t('common.cancel')}
           </button>
         </div>
       </IonModal>

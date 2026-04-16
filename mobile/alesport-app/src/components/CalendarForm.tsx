@@ -201,24 +201,24 @@ const Calendar: React.FC = () => {
 
     getSessionsByDateRange(startDate, endDate)
       .then(async (data) => {
-        setSessions(data as SessionItem[]);
         if (canManageSessionBookings && data.length > 0) {
+          // Registrar inFlight ANTES de setSessions para bloquear llamadas individuales
+          const sessionIds = (data as SessionItem[]).map((s) => s.id);
+          const batchPromise = getBookingsBySessionIds(sessionIds);
+          for (const sid of sessionIds) {
+            bookingsInFlightRef.current[sid] = batchPromise.then((allBookings) => {
+              const grouped: Record<number, BookingItem[]> = {};
+              for (const booking of allBookings) {
+                if (!grouped[booking.session_id]) grouped[booking.session_id] = [];
+                grouped[booking.session_id].push(booking);
+              }
+              return grouped[sid] ?? [];
+            }).finally(() => {
+              delete bookingsInFlightRef.current[sid];
+            });
+          }
+          setSessions(data as SessionItem[]);
           try {
-            const sessionIds = (data as SessionItem[]).map((s) => s.id);
-            // Registrar cada session como in-flight para bloquear llamadas individuales
-            const batchPromise = getBookingsBySessionIds(sessionIds);
-            for (const sid of sessionIds) {
-              bookingsInFlightRef.current[sid] = batchPromise.then((allBookings) => {
-                const grouped: Record<number, BookingItem[]> = {};
-                for (const booking of allBookings) {
-                  if (!grouped[booking.session_id]) grouped[booking.session_id] = [];
-                  grouped[booking.session_id].push(booking);
-                }
-                return grouped[sid] ?? [];
-              }).finally(() => {
-                delete bookingsInFlightRef.current[sid];
-              });
-            }
             const allBookings = await batchPromise;
             const grouped: Record<number, BookingItem[]> = {};
             for (const booking of allBookings) {
@@ -231,6 +231,8 @@ const Calendar: React.FC = () => {
           } catch {
             // Prefetch fallido: se cargarán individualmente bajo demanda
           }
+        } else {
+          setSessions(data as SessionItem[]);
         }
       })
       .catch(() => {

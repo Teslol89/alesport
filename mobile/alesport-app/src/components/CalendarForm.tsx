@@ -205,7 +205,21 @@ const Calendar: React.FC = () => {
         if (canManageSessionBookings && data.length > 0) {
           try {
             const sessionIds = (data as SessionItem[]).map((s) => s.id);
-            const allBookings = await getBookingsBySessionIds(sessionIds);
+            // Registrar cada session como in-flight para bloquear llamadas individuales
+            const batchPromise = getBookingsBySessionIds(sessionIds);
+            for (const sid of sessionIds) {
+              bookingsInFlightRef.current[sid] = batchPromise.then((allBookings) => {
+                const grouped: Record<number, BookingItem[]> = {};
+                for (const booking of allBookings) {
+                  if (!grouped[booking.session_id]) grouped[booking.session_id] = [];
+                  grouped[booking.session_id].push(booking);
+                }
+                return grouped[sid] ?? [];
+              }).finally(() => {
+                delete bookingsInFlightRef.current[sid];
+              });
+            }
+            const allBookings = await batchPromise;
             const grouped: Record<number, BookingItem[]> = {};
             for (const booking of allBookings) {
               if (!grouped[booking.session_id]) grouped[booking.session_id] = [];

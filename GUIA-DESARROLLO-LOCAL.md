@@ -137,6 +137,34 @@ npx cap sync android
 
 ---
 
+## Modo 3b — Build manual para instalar en Android (sin Codemagic)
+
+**Cuándo usarlo:** para probar la app como APK real en el móvil durante desarrollo, sin pasar por Codemagic.
+
+> ⚠️ El `.env.local` tiene prioridad sobre `.env` en Vite. Si existe cuando haces `npm run build`, el bundle tendrá `localhost:8000` y la app instalada en el móvil no podrá conectar con el servidor.
+
+### Pasos
+
+```cmd
+cd mobile\alesport-app
+
+rem 1. Desactivar temporalmente el .env.local
+ren .env.local .env.local.bak
+
+rem 2. Build con la URL de producción
+npm run build
+
+rem 3. Sincronizar Capacitor
+npx cap sync android
+
+rem 4. Restaurar el .env.local
+ren .env.local.bak .env.local
+```
+
+Luego abre Android Studio y lanza el build en el móvil.
+
+---
+
 ## Modo 3 — Build de producción (Codemagic)
 
 **Cuándo usarlo:** cuando tienes una feature lista, testeada en local, y quieres subirla a TestFlight / App Store.

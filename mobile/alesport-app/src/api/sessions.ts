@@ -5,7 +5,7 @@
 import { fetchWithAuth } from "./fetchWithAuth";
 
 /* API para gestionar sesiones: creación, actualización, cancelación y consulta por rango de fechas. */
-const baseApiUrl = import.meta.env.VITE_API_URL || "https://api.verdeguerlabs.es/api";
+const baseApiUrl = import.meta.env.VITE_API_BASE_URL || "https://api.verdeguerlabs.es/api";
 
 /* POST para crear varias sesiones recurrentes de forma transaccional */
 export async function createRecurringSessions(sessions: Array<{

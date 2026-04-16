@@ -193,3 +193,12 @@ export async function updateUserAdminSettings(userId: number, payload: AdminUser
 
   return await response.json();
 }
+
+export async function deleteMyAccount(): Promise<void> {
+  const response = await fetchWithAuth(`${baseApiUrl}/users/me`, {
+    method: "DELETE",
+  });
+  if (!response.ok && response.status !== 204) {
+    throw new Error("No se pudo eliminar la cuenta");
+  }
+}

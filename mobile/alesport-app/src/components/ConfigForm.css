@@ -408,7 +408,7 @@
   width: 100%;
 }
 
-.config-custom-quota-actions > button {
+.config-custom-quota-actions>button {
   flex: 1;
   min-height: 36px;
 }
@@ -736,7 +736,9 @@
   margin: auto auto 0 auto;
   padding-top: 1rem;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .config-logout-btn {
@@ -745,6 +747,112 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+}
+
+.config-delete-account-btn {
+  background: none;
+  border: none;
+  color: var(--ion-color-medium, #92949c);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.config-delete-account-btn span {
+  color: #000000
+}
+
+.config-delete-account-modal .crear-btn-secondary {
+  width: 100%;
+}
+
+.crear-btn-secondary {
+  flex: 1;
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.12s ease;
+  border: 0.75px solid #000000;
+  background: #ffffff;
+  color: #000000;
+}
+
+.crear-btn-secondary:focus,
+.crear-btn-secondary:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+.crear-btn-secondary:focus-visible {
+  outline: 2px solid rgba(0, 137, 166, 0.28);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .crear-btn-secondary:hover {
+    background: rgba(0, 137, 166, 0.08);
+    border-color: #0a7891;
+    color: #0a7891;
+  }
+}
+
+.crear-btn-secondary:active {
+  background: rgba(0, 137, 166, 0.16);
+  border-color: #0a7891;
+  color: #0a7891;
+  transform: scale(0.98);
+}
+
+.config-delete-account-confirm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--ion-color-danger, #eb445a);
+  border-radius: 8px;
+}
+
+.config-delete-account-confirm p {
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--ion-color-danger, #eb445a);
+  margin: 0;
+}
+
+.config-delete-account-modal-wrapper {
+  --height: auto;
+  --width: 90%;
+  --max-width: 400px;
+  --border-radius: 16px;
+}
+
+.config-delete-account-modal {
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.config-delete-account-modal h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+}
+
+.config-delete-account-modal p {
+  font-size: 0.9rem;
+  color: #000000;
+  margin: 0;
 }
 
 /* ------------------------------- */

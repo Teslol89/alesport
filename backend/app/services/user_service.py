@@ -124,6 +124,12 @@ def get_all_users(db: Session) -> list[User]:
     return db.query(User).all()
 
 
+def delete_my_account(db: Session, user: User) -> None:
+    """Elimina permanentemente la cuenta del usuario autenticado y todos sus datos asociados."""
+    db.delete(user)
+    db.commit()
+
+
 def _assignable_trainer_filters():
     """Define quién puede salir como entrenador asignable en la app.
 

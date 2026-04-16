@@ -14,7 +14,15 @@ SQLALCHEMY_DATABASE_URL = DATABASE_URL.replace(
 )
 
 # pool_pre_ping=True: verifica la conexión antes de usarla para evitar errores por conexiones caídas.
-engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+# pool_size=20, max_overflow=20: soporta hasta 40 conexiones simultáneas para cargas con muchas peticiones paralelas.
+# pool_recycle=1800: recicla conexiones cada 30 min para evitar conexiones caídas por timeout del servidor.
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    pool_pre_ping=True,
+    pool_size=20,
+    max_overflow=20,
+    pool_recycle=1800,
+)
 
 # Fábrica de sesiones: autocommit y autoflush desactivados para control manual de transacciones
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

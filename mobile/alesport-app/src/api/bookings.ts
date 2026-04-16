@@ -26,6 +26,16 @@ export async function getBookingsBySession(sessionId: number): Promise<BookingIt
   return response.json();
 }
 
+export async function getBookingsBySessionIds(sessionIds: number[]): Promise<BookingItem[]> {
+  if (sessionIds.length === 0) return [];
+  const ids = sessionIds.join(',');
+  const response = await fetchWithAuth(`${baseApiUrl}/bookings/by-sessions?ids=${ids}`);
+  if (!response.ok) {
+    throw new Error(await getResponseErrorDetail(response, 'No se pudieron cargar las reservas de las sesiones'));
+  }
+  return response.json();
+}
+
 export async function getAllBookings(): Promise<BookingItem[]> {
   const response = await fetchWithAuth(`${baseApiUrl}/bookings/`);
   if (!response.ok) {

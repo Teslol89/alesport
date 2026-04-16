@@ -15,7 +15,7 @@ import {
   toPickerTimeIso,
 } from '../utils/funcionesGeneral';
 import { getSessionsByDateRange, updateSession, cancelSession } from '../api/sessions';
-import { BookingItem, cancelBooking, createBooking, getBookingsBySession, getBookingsByUser, reactivateBooking } from '../api/bookings';
+import { BookingItem, cancelBooking, createBooking, getBookingsBySession, getBookingsBySessionIds, getBookingsByUser, reactivateBooking } from '../api/bookings';
 import { getRealtimeWsTicket } from '../api/realtime';
 import { getAssignableTrainers, type AssignableTrainer } from '../api/user';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -200,7 +200,25 @@ const Calendar: React.FC = () => {
     }
 
     getSessionsByDateRange(startDate, endDate)
-      .then(data => setSessions(data as SessionItem[]))
+      .then(async (data) => {
+        setSessions(data as SessionItem[]);
+        if (canManageSessionBookings && data.length > 0) {
+          try {
+            const sessionIds = (data as SessionItem[]).map((s) => s.id);
+            const allBookings = await getBookingsBySessionIds(sessionIds);
+            const grouped: Record<number, BookingItem[]> = {};
+            for (const booking of allBookings) {
+              if (!grouped[booking.session_id]) grouped[booking.session_id] = [];
+              grouped[booking.session_id].push(booking);
+            }
+            for (const sid of sessionIds) {
+              bookingsCacheRef.current[sid] = grouped[sid] ?? [];
+            }
+          } catch {
+            // Prefetch fallido: se cargarán individualmente bajo demanda
+          }
+        }
+      })
       .catch(() => {
         if (!silent) {
           setError("No se pudieron cargar las sesiones");

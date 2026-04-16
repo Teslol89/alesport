@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database.db import get_db
@@ -11,12 +11,29 @@ from app.services.booking_service import (
     cancel_booking,
     create_booking,
     get_all_bookings,
-    get_bookings_by_user,
     get_bookings_by_session,
+    get_bookings_by_session_ids,
+    get_bookings_by_user,
     reactivate_booking,
 )
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
+
+
+@router.get("/by-sessions", response_model=list[BookingResponse])
+def read_bookings_by_sessions(
+    ids: str = Query(..., description="IDs de sesión separados por comas"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Devuelve las reservas de múltiples sesiones en una sola petición (admin/entrenador)."""
+    if not is_admin_role(current_user.role) and current_user.role != "trainer":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No autorizado para ver reservas",
+        )
+    session_ids = [int(i) for i in ids.split(",") if i.strip().isdigit()]
+    return get_bookings_by_session_ids(db, session_ids)
 
 
 @router.get("/session/{session_id}", response_model=list[BookingResponse])

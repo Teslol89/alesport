@@ -1,6 +1,6 @@
 import { fetchWithAuth } from './fetchWithAuth';
 
-const baseApiUrl = import.meta.env.VITE_API_URL || 'https://api.verdeguerlabs.es/api';
+const baseApiUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.verdeguerlabs.es/api';
 
 type WeeklyScheduleCreatePayload = {
   trainer_id: number;

@@ -8,7 +8,7 @@ from app.database.db import get_db
 from app.models.user import User, User as UserModel
 from app.schemas.user import AssignableTrainerResponse, FixedStudentCandidateResponse, UserAdminUpdate, UserResponse, UserProfileUpdate
 from app.services.realtime_events import publish_user_profile_change
-from app.services.user_service import get_all_users, get_assignable_trainers, get_eligible_fixed_students
+from app.services.user_service import get_all_users, get_assignable_trainers, get_eligible_fixed_students, delete_my_account
 
 
 # --- INICIALIZAR ROUTER ANTES DE USARLO ---
@@ -112,6 +112,21 @@ def update_my_profile(
     db.refresh(current_user)
     publish_user_profile_change(current_user.id)
     return current_user
+
+
+@router.delete("/me", status_code=204)
+def delete_own_account(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Elimina permanentemente la cuenta del usuario autenticado y todos sus datos."""
+    if current_user.role == "superadmin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="La cuenta de superadmin no puede eliminarse desde la app",
+        )
+    delete_my_account(db, current_user)
+    return
 
 
 class FcmTokenUpdate(BaseModel):

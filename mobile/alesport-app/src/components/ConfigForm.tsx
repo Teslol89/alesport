@@ -12,7 +12,7 @@ import politicaPrivMenuIcon from '../icons/politicaPriv.svg';
 import whatsappMenuIcon from '../icons/whatsapp.svg';
 import { useAuth } from './AuthContext';
 import CustomToast from './CustomStyles';
-import { getUserProfile, getUsersForAdmin, type UserProfile, updateUserAdminSettings, updateUserProfile } from '../api/user';
+import { getUserProfile, getUsersForAdmin, type UserProfile, updateUserAdminSettings, updateUserProfile, deleteMyAccount } from '../api/user';
 import { getAllBookings, type BookingItem } from '../api/bookings';
 import { getRealtimeWsTicket } from '../api/realtime';
 import { getCenterRules, updateCenterRules } from '../api/centerRules';
@@ -908,8 +908,19 @@ const ConfigForm: React.FC = () => {
     else alert(t('config.loggedOut'));
   };
 
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteMyAccount();
+      if (logout) logout();
+    } catch {
+      setToast({ show: true, message: t('config.deleteAccountError'), type: 'danger' });
+    }
+  };
+
   return (
-    <div className={`config-form-container app-blur-target ${(showEditProfileModal || showSupportModal || showPrivacyModal || showRulesModal || showAvatarSourceAlert || showRuleEditorModal || showClientPlansModal) ? 'app-blur-target--modal-open' : ''}`}>
+    <div className={`config-form-container app-blur-target ${(showEditProfileModal || showSupportModal || showPrivacyModal || showRulesModal || showAvatarSourceAlert || showRuleEditorModal || showClientPlansModal || showDeleteAccountConfirm) ? 'app-blur-target--modal-open' : ''}`}>
       <div className="config-top-bar">
         <img src={logoIcon} alt="Logo gimnasio" className="config-top-logo" />
         <div className="config-top-title config-top-title-absolute">{t('config.title')}</div>
@@ -1013,6 +1024,9 @@ const ConfigForm: React.FC = () => {
         <div className="config-logout">
           <button type="button" className="app-btn-danger config-logout-btn" onClick={handleLogout}>
             <span>{t('config.logout')}</span>
+          </button>
+          <button type="button" className="config-delete-account-btn" onClick={() => setShowDeleteAccountConfirm(true)}>
+            <span>{t('config.deleteAccount')}</span>
           </button>
         </div>
       </div>
@@ -1507,6 +1521,23 @@ const ConfigForm: React.FC = () => {
         type={toast.type}
         duration={2600}
       />
+
+      <IonModal
+        className="config-delete-account-modal-wrapper"
+        isOpen={showDeleteAccountConfirm}
+        onDidDismiss={() => setShowDeleteAccountConfirm(false)}
+      >
+        <div className="config-delete-account-modal">
+          <h3>{t('config.deleteAccount')}</h3>
+          <p>{t('config.deleteAccountConfirm')}</p>
+          <button type="button" className="app-btn-danger config-logout-btn" onClick={handleDeleteAccount}>
+            <span>{t('config.deleteAccountConfirmBtn')}</span>
+          </button>
+          <button type="button" className="crear-btn-secondary" onClick={() => setShowDeleteAccountConfirm(false)}>
+            <span>{t('config.deleteAccountCancel')}</span>
+          </button>
+        </div>
+      </IonModal>
     </div>
   );
 };

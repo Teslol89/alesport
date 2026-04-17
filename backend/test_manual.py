@@ -1,3 +1,56 @@
+import threading
+
+# ================= PRUEBAS MULTIUSUARIO Y CONCURRENCIA =================
+def reservar_como(token, session_id, label):
+    try:
+        resp = request_and_check(
+            "POST",
+            "/bookings/",
+            {200, 201, 403, 409},
+            headers=auth_headers(token),
+            json={"session_id": session_id},
+        )
+        print(f"[{label}] Reserva: {resp.status_code}")
+    except Exception as e:
+        print(f"[{label}] Error: {e}")
+
+def test_concurrencia_reservas(admin_token, client_token, session_id):
+    t1 = threading.Thread(target=reservar_como, args=(admin_token, session_id, "ADMIN"))
+    t2 = threading.Thread(target=reservar_como, args=(client_token, session_id, "CLIENTE"))
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+    print("✓ Prueba de concurrencia de reservas completada")
+
+def editar_sesion(token, session_id, nuevo_nombre, label):
+    try:
+        resp = request_and_check(
+            "PATCH",
+            f"/sessions/{session_id}",
+            {200, 409, 422},
+            headers=auth_headers(token),
+            json={"class_name": nuevo_nombre},
+        )
+        print(f"[{label}] Editar sesión: {resp.status_code}")
+    except Exception as e:
+        print(f"[{label}] Error: {e}")
+
+def test_concurrencia_edicion(admin_token, trainer_token, session_id):
+    t1 = threading.Thread(target=editar_sesion, args=(admin_token, session_id, "Clase Admin", "ADMIN"))
+    t2 = threading.Thread(target=editar_sesion, args=(trainer_token, session_id, "Clase Trainer", "TRAINER"))
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+    print("✓ Prueba de concurrencia de edición de sesión completada")
+
+def test_aislamiento_roles(admin_token, client_token):
+    request_and_check("GET", "/users/", {200}, headers=auth_headers(admin_token))
+    request_and_check("GET", "/users/", {403}, headers=auth_headers(client_token))
+    print("✓ Aislamiento de roles validado")
+
+# ================= FIN PRUEBAS MULTIUSUARIO Y CONCURRENCIA =================
 def create_test_recurring_sessions(token: str, trainer_id: int | None, start_date: str, end_date: str, days_of_week: list[int]) -> list[dict] | None:
     """Crea varias sesiones recurrentes usando el endpoint /sessions/recurring."""
     headers = auth_headers(token)
@@ -701,5 +754,44 @@ if __name__ == "__main__":
     run_auth_guard_checks()
     print("\n===== TESTS ADICIONALES =====")
     run_session_validation_checks(admin_token)
-    
+
+    # === PRUEBA MULTIUSUARIO Y CONCURRENCIA ===
+    trainer_token = login(USERS[1]["email"], USERS[1]["password"])
+    client_token = login(USERS[2]["email"], USERS[2]["password"])
+
+    # Crear una sesión de prueba para concurrencia (con trainer_id válido)
+    if admin_token and client_token:
+        # Obtener sesiones existentes
+        sessions_resp = requests.get(f"{BASE_URL}/sessions/", headers=auth_headers(admin_token), timeout=20)
+        sessions = sessions_resp.json() if sessions_resp.status_code == 200 else []
+        # Buscar un trainer_id válido
+        trainer_id = None
+        for s in sessions:
+            tid = s.get("trainer_id")
+            if tid:
+                trainer_id = tid
+                break
+        # Si no hay ninguno, usar el id del usuario trainer demo
+        if not trainer_id:
+            trainer_token = login(USERS[1]["email"], USERS[1]["password"])
+            if trainer_token:
+                trainer_me = requests.get(f"{BASE_URL}/auth/me", headers=auth_headers(trainer_token), timeout=10)
+                if trainer_me.status_code == 200:
+                    trainer_id = trainer_me.json().get("id")
+        # Crear una sesión de prueba con trainer_id
+        test_session = create_test_session(admin_token, trainer_id, TOMORROW.isoformat(), sessions)
+        if not test_session:
+            print("No se pudo crear sesión de prueba para concurrencia.")
+        else:
+            session_id = test_session["id"]
+            # Prueba de concurrencia de reservas
+            test_concurrencia_reservas(admin_token, client_token, session_id)
+            # Prueba de concurrencia de edición (si hay trainer_token)
+            if trainer_token:
+                test_concurrencia_edicion(admin_token, trainer_token, session_id)
+            # Prueba de aislamiento de roles
+            test_aislamiento_roles(admin_token, client_token)
+    else:
+        print("No se pudieron obtener todos los tokens para pruebas multiusuario.")
+
     print("\n=== TODO OK ===")

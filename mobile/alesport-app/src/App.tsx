@@ -306,7 +306,7 @@ const App: React.FC = () => {
       <IonReactRouter>
         <LanguageProvider>
           <AuthProvider>
-            <MainRoutes />
+              <MainRoutes />
           </AuthProvider>
         </LanguageProvider>
       </IonReactRouter>

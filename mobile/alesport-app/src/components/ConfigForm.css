@@ -546,6 +546,7 @@
 }
 
 .config-legal-scroll {
+  min-height: 120px;
   max-height: min(56vh, 420px);
   overflow-y: auto;
   padding-right: 0.2rem;

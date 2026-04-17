@@ -260,9 +260,7 @@ ion-app.ion-palette-dark {
     color: var(--app-text-primary, #f5f7fa) !important;
 }
 
-.ion-palette-dark .crear-day-checkbox {
-    background: var(--app-surface-background, #1b212c) !important;
-}
+
 
 .ion-palette-dark .crear-day-checkbox .custom-checkbox {
     background: #0f131a;

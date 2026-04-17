@@ -102,7 +102,7 @@
 .crear-day-checkbox {
   position: relative;
   cursor: pointer;
-  background: #ffffff !important;
+  background: transparent;
   border-radius: 0.4em;
   display: inline-flex;
   align-items: center;
@@ -480,9 +480,11 @@
   max-height: min(86vh, 780px);
   border-radius: 22px;
   overflow: hidden;
+  background: #ffffff;
 }
 
 .crear-single-modal {
+  background: #ffffff;
   border: 1px solid rgba(15, 48, 55, 0.08);
   max-height: min(86vh, 780px);
   overflow-y: auto;

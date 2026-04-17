@@ -27,6 +27,7 @@ const LoginForm: React.FC = () => {
         try {
             const data = await loginUser(email, password);
             setToken(data.access_token);
+            history.replace("/admin-calendar");
         } catch (err) {
             setToastType("danger");
             setToastPlacement("top");

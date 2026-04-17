@@ -22,25 +22,25 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { clearPendingPushNavigation } from '../services/fcm';
 import { useAuth } from './AuthContext';
 
+type SessionItem = {
+  id: number;
+  trainer_id: number;
+  trainer_name?: string;
+  session_date: string;
+  start_time: string | Date;
+  end_time: string | Date;
+  capacity: number;
+  class_name?: string;
+  notes?: string | null;
+  status: string;
+};
+
 const Calendar: React.FC = () => {
   const { t, dateLocale } = useLanguage();
   const { role: userRole, user, refreshProfile } = useAuth();
   const location = useLocation();
   const TIME_PICKER_BASE_DATE = '1970-01-01';
   const AGENDA_AUTO_REFRESH_MS = 10000;
-
-  type SessionItem = {
-    id: number;
-    trainer_id: number;
-    trainer_name?: string;
-    session_date: string;
-    start_time: string | Date;
-    end_time: string | Date;
-    capacity: number;
-    class_name?: string;
-    notes?: string | null;
-    status: string;
-  };
 
   const todayDate = getTodayIsoDate();
   const [weekAnchorDate, setWeekAnchorDate] = useState(todayDate);
@@ -250,6 +250,7 @@ const Calendar: React.FC = () => {
   // Cargar sesiones al montar y al cambiar semana
   useEffect(() => {
     fetchSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchSessions]);
 
   useEffect(() => {

@@ -52,9 +52,9 @@ El equipo de Alesport
     msg.set_content(text_body)
     msg.add_alternative(html_body, subtype="html")
 
-    print(f"[LOG] Intentando enviar email de recuperación a: {email}")
+    # ...existing code...
     try:
-        result = await aiosmtplib.send(
+        await aiosmtplib.send(
             msg,
             hostname=settings.SMTP_HOST,
             port=settings.SMTP_PORT,
@@ -62,9 +62,11 @@ El equipo de Alesport
             password=settings.SMTP_PASSWORD,
             start_tls=True,
         )
-        print(f"[LOG] Email de recuperación enviado correctamente. Respuesta SMTP: {result}")
+        # ...existing code...
+
     except Exception as e:
-        print(f"[ERROR] Fallo al enviar email de recuperación: {e}")
+        pass
+        pass
 
 # Envío de email de verificación al registrar un nuevo usuario
 async def send_verification_email(email: str, code: str):
@@ -101,11 +103,9 @@ El equipo de Alesport
     msg.set_content(text_body)
     msg.add_alternative(html_body, subtype="html")
 
-    print(f"[LOG] Intentando enviar email de verificación a: {email}")
-    print(f"[LOG] SMTP_HOST: {settings.SMTP_HOST}, SMTP_PORT: {settings.SMTP_PORT}, SMTP_USER: {settings.SMTP_USER}, SMTP_FROM: {settings.SMTP_FROM}")
-    print(f"[LOG] Código de verificación: {code}")
+    # ...existing code...
     try:
-        result = await aiosmtplib.send(
+        await aiosmtplib.send(
             msg,
             hostname=settings.SMTP_HOST,
             port=settings.SMTP_PORT,
@@ -113,10 +113,8 @@ El equipo de Alesport
             password=settings.SMTP_PASSWORD,
             start_tls=True,
         )
-        print(f"[LOG] Email enviado correctamente. Respuesta SMTP: {result}")
     except Exception as e:
-        print(f"[ERROR] Fallo al enviar email de verificación: {e}")
-
+        pass
 
 # --- OBTENER USUARIOS ---
 def get_all_users(db: Session) -> list[User]:
@@ -182,7 +180,7 @@ def get_assignable_trainer_by_id(db: Session, trainer_id: int) -> User | None:
 async def create_user(db: Session, user_in: UserCreate) -> User:
     """Crea un usuario nuevo con contraseña hasheada y verificación de email. Lanza excepción si el email ya existe."""
     if db.query(User).filter(User.email == user_in.email).first():
-        print(f"[LOG] Registro fallido: el email {user_in.email} ya está registrado.")
+        # ...existing code...
         raise ValueError("El email ya está registrado")
     import string
     code_charset = string.ascii_uppercase + string.digits
@@ -201,10 +199,10 @@ async def create_user(db: Session, user_in: UserCreate) -> User:
     try:
         db.commit()
         db.refresh(user)
-        print(f"[LOG] Usuario creado correctamente en la base de datos: {user.email}")
+        # ...existing code...
         await send_verification_email(user.email, verification_code)
     except IntegrityError as e:
         db.rollback()
-        print(f"[ERROR] Error de integridad al crear usuario: {e}")
+        # ...existing code...
         raise ValueError("Error de integridad al crear usuario")
     return user

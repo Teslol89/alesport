@@ -147,11 +147,7 @@ def _ensure_fixed_bookings_for_session(
         if student_id in existing_user_ids:
             continue
         if reserved_slots >= session.capacity:
-            logger.warning(
-                "No se ha podido preasignar al alumno %s en la sesión %s porque el aforo ya está completo.",
-                student_id,
-                session.id,
-            )
+            break
             break
 
         db.add(

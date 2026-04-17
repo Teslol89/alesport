@@ -342,17 +342,17 @@ def get_bookings_by_session_ids(db: Session, session_ids: list[int]) -> list[dic
     if not session_ids:
         return []
     bookings = db.query(Booking).filter(Booking.session_id.in_(session_ids)).all()
-    # Agrupar por sesión, colapsar y enriquecer
+    # Agrupar por sesión y colapsar, pero enriquecer todo junto (sin N+1)
     from collections import defaultdict
     by_session: dict[int, list[Booking]] = defaultdict(list)
     for booking in bookings:
         by_session[booking.session_id].append(booking)
-    result: list[dict] = []
+    all_visible: list[Booking] = []
     for sid in session_ids:
         session_bookings = by_session.get(sid, [])
         visible = _collapse_session_bookings(session_bookings)
-        result.extend(_attach_user_data(db, visible))
-    return result
+        all_visible.extend(visible)
+    return _attach_user_data(db, all_visible)
 
 
 def get_all_bookings(db: Session) -> list[dict]:

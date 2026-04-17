@@ -302,8 +302,7 @@ def get_sessions(db: Session) -> list[SessionModel]:
 def get_sessions_by_date_range(
     db: Session, start_date: Optional[date] = None, end_date: Optional[date] = None
 ) -> list[SessionModel]:
-    logger.debug("¡Logger activo! Entrando en get_sessions_by_date_range")
-    logger.debug(f"[DEBUG] start_date: {start_date}, end_date: {end_date}")
+    # ...existing code...
     query = db.query(SessionModel, User.name).join(
         User, SessionModel.trainer_id == User.id
     )
@@ -311,9 +310,7 @@ def get_sessions_by_date_range(
         query = query.filter(func.date(SessionModel.start_time) >= start_date)
     if end_date:
         query = query.filter(func.date(SessionModel.start_time) <= end_date)
-    logger.debug(
-        f"[DEBUG] SQL: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}"
-    )
+    # ...existing code...
     results = query.all()
     sessions = []
     for session_obj, trainer_name in results:
@@ -325,11 +322,7 @@ def get_sessions_by_date_range(
 
 # --- Función para actualizar una sesión concreta --- #
 def update_session(db: Session, session_id: int, update_data, current_user) -> dict:
-    print(f"[DEBUG] PATCH session_id: {session_id}")
-    print(
-        f"[DEBUG] current_user: id={getattr(current_user, 'id', None)}, role={getattr(current_user, 'role', None)}"
-    )
-    print(f"[DEBUG] update_data: {update_data}")
+    # ...existing code...
     """Permite al entrenador o admin ajustar manualmente una sesión concreta.
 
     Solo se actualizan los campos enviados (PATCH parcial).

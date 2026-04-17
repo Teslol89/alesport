@@ -74,23 +74,19 @@ def _init_firebase() -> bool:
                 cred = credentials.Certificate(str(credentials_path))
 
         if cred is None:
-            logger.warning(
-                "FCM no configurado: define FIREBASE_CREDENTIALS_JSON o FIREBASE_CREDENTIALS_PATH"
-            )
+            return False
             return False
 
         firebase_admin.initialize_app(cred)
         _firebase_initialized = True
-        logger.info("Firebase Admin SDK inicializado correctamente")
+        # ...existing code...
         return True
 
     except ImportError:
-        logger.warning(
-            "firebase-admin no está instalado. Las notificaciones push no funcionarán."
-        )
+        return False
         return False
     except Exception as e:
-        logger.error(f"Error inicializando Firebase: {e}")
+        return False
         return False
 
 
@@ -146,9 +142,8 @@ def send_push_notification(
             return
 
         response = messaging.send_each(messages)
-        logger.info(
-            f"Push enviado: {response.success_count} ok, {response.failure_count} fallidos"
-        )
+        # ...existing code...
 
     except Exception as e:
-        logger.error(f"Error enviando notificaciones FCM: {e}")
+        # ...existing code...
+        pass

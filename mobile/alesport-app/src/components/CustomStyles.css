@@ -103,7 +103,7 @@
   height: 4px;
   margin-top: 120px;
   border-radius: 12px;
-  background: #d1d5db;
+  background: rgba(0, 137, 166, 0.25);
   /* gris claro por defecto */
   transition: background 0.2s, box-shadow 0.2s;
 }

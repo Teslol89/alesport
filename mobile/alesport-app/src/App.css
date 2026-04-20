@@ -73,7 +73,7 @@ ion-tab-button[aria-selected="true"] {
 
 /* Barra inferior translúcida y tabs sin fondo ni borde al seleccionar */
 ion-tab-bar.tabbar-glass {
-    background: rgba(0, 137, 166, 0.3) !important;
+    background: rgba(0, 137, 166, 0.1) !important;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
     height: var(--app-tabbar-height) !important;

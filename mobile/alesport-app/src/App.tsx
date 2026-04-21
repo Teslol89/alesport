@@ -134,44 +134,6 @@ function MainRoutes() {
     return <Redirect to="/admin-calendar" />;
   }
 
-  if (isLoadingProfile) {
-    return (
-      <IonTabs>
-        <IonRouterOutlet>
-          <Route render={() => <AppRouteLoadingScreen />} />
-        </IonRouterOutlet>
-        <IonTabBar className="tabbar-glass" slot="bottom">
-          <IonTabButton tab="admin-calendar" href="/admin-calendar">
-            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isAgendaActive ? agendaActiveIcon : agendaIcon} />
-            <IonLabel>{t('tabs.agenda')}</IonLabel>
-          </IonTabButton>
-          {isAdmin ? (
-            <IonTabButton tab="search" href="/search">
-              <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isSearchActive ? buscarActiveIcon : buscarIcon} />
-              <IonLabel>{t('tabs.search')}</IonLabel>
-            </IonTabButton>
-          ) : null}
-          {canManageSessions ? (
-            <IonTabButton tab="crear" href="/crear">
-              <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isCrearActive ? crearActiveIcon : crearIcon} />
-              <IonLabel>{t('tabs.create')}</IonLabel>
-            </IonTabButton>
-          ) : null}
-          {isClient ? (
-            <IonTabButton tab="bookings" href="/bookings">
-              <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isBookingsActive ? buscarActiveIcon : buscarIcon} />
-              <IonLabel>{t('tabs.bookings')}</IonLabel>
-            </IonTabButton>
-          ) : null}
-          <IonTabButton tab="config" href="/config">
-            <IonIcon className="tabbar-icons-only" aria-hidden="true" icon={isConfigActive ? configActiveIcon : configIcon} />
-            <IonLabel>{t('tabs.options')}</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
-      </IonTabs>
-    );
-  }
-
   return (
     <IonTabs>
       <IonRouterOutlet>

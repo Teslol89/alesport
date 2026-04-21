@@ -1068,8 +1068,14 @@ const Calendar: React.FC = () => {
       {/* Bloque independiente para las sesiones */}
       <div className="calendar-sessions-section">
         {loading ? (
-          <div className="calendar-loading-state">
-            <IonSpinner name="crescent" color="primary" />
+          <div className="calendar-skeleton-list">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="calendar-skeleton-card">
+                <div className="calendar-skeleton-line calendar-skeleton-title" />
+                <div className="calendar-skeleton-line calendar-skeleton-subtitle" />
+                <div className="calendar-skeleton-line calendar-skeleton-short" />
+              </div>
+            ))}
           </div>
         ) : error ? (
           <p className="calendar-error-state">{error}</p>

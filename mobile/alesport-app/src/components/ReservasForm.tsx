@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { IonModal, IonSpinner, useIonViewWillEnter } from '@ionic/react';
+import { IonModal, useIonViewWillEnter } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import logoIcon from '../icons/icon.png';
 import { BookingItem, cancelBooking, getBookingsByUser, reactivateBooking } from '../api/bookings';
@@ -391,8 +391,14 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
 
       <div className="bookings-form-wrapper">
         {loading ? (
-          <div className="bookings-loading" aria-live="polite" aria-busy="true">
-            <IonSpinner name="crescent" color="primary" />
+          <div className="bookings-skeleton-list" aria-live="polite" aria-busy="true">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bookings-skeleton-card">
+                <div className="bookings-skeleton-line bookings-skeleton-title" />
+                <div className="bookings-skeleton-line bookings-skeleton-detail" />
+                <div className="bookings-skeleton-line bookings-skeleton-short" />
+              </div>
+            ))}
           </div>
         ) : visibleBookings.length === 0 ? (
           <div className="bookings-empty app-surface-card">

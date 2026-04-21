@@ -1,7 +1,7 @@
 /* Buscador avanzado de reservas para admins, con filtros por texto y fecha, y resumen de resultados. */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import logoIcon from '../icons/icon.png';
-import { IonDatetime, IonModal, IonSpinner, useIonViewWillEnter } from '@ionic/react';
+import { IonDatetime, IonModal, useIonViewWillEnter } from '@ionic/react';
 import { BookingItem, getAllBookings } from '../api/bookings';
 import { formatDateDdMmYy, formatHour, isSameDay, isSameWeek, toLocalISODate } from '../utils/funcionesGeneral';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -225,11 +225,7 @@ const BuscarForm: React.FC = () => {
             </div>
             {/* Contenido principal de la búsqueda */}
             <div className="search-form-content">
-                {isLoadingProfile ? (
-                    <div className="search-form-loading">
-                        <IonSpinner name="crescent" color="primary" />
-                    </div>
-                ) : !isAdmin ? (
+                {!isAdmin && !isLoadingProfile ? (
                     <p className="search-form-empty">{t('search.adminOnly')}</p>
                 ) : (
                     <div className="search-form-body">
@@ -356,8 +352,14 @@ const BuscarForm: React.FC = () => {
                         ) : null}
 
                         {loading ? (
-                            <div className="search-form-loading">
-                                <IonSpinner name="crescent" color="primary" />
+                            <div className="search-skeleton-list">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="search-skeleton-card">
+                                        <div className="search-skeleton-line search-skeleton-name" />
+                                        <div className="search-skeleton-line search-skeleton-detail" />
+                                        <div className="search-skeleton-line search-skeleton-short" />
+                                    </div>
+                                ))}
                             </div>
                         ) : error ? (
                             <p className="search-form-error">{error}</p>

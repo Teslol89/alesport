@@ -7,7 +7,6 @@ import {
   IonIcon,
   IonLabel,
   IonRouterOutlet,
-  IonSpinner,
   IonTabBar,
   IonTabButton,
   IonTabs,
@@ -57,12 +56,6 @@ import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
 
 /* import '@ionic/react/css/palettes/dark.always.css'; */
 import '@ionic/react/css/palettes/dark.class.css';
@@ -75,26 +68,19 @@ import './App.css';
 
 setupIonicReact();
 
-function AppRouteLoadingScreen() {
-  return (
-    <div className="app-route-loading" role="status" aria-live="polite" aria-label="Cargando">
-      <IonSpinner className="app-route-loading__spinner" name="crescent" color="primary" />
-    </div>
-  );
-}
-
 // App principal con SplashPage integrado
 // Componente dedicado para la redirección de la ruta raíz
 function RootRedirect() {
   const { isAuthenticated, isLoadingProfile } = useAuth();
 
   if (isLoadingProfile) {
-    return <AppRouteLoadingScreen />;
+    return <Redirect to="/admin-calendar" />;
   }
 
   return <Redirect to={isAuthenticated ? "/admin-calendar" : "/login"} />;
 }
 
+// Componente que gestiona las rutas principales de la app, mostrando diferentes tabs según el rol.
 function MainRoutes() {
   const { isAuthenticated, isLoadingProfile, role } = useAuth();
   const { t } = useLanguage();
@@ -132,10 +118,6 @@ function MainRoutes() {
 
   if (isAuthenticated && !isLoadingProfile && isAuthRoute) {
     return <Redirect to="/admin-calendar" />;
-  }
-
-  if (isLoadingProfile) {
-    return <AppRouteLoadingScreen />;
   }
 
   return (
@@ -306,7 +288,7 @@ const App: React.FC = () => {
       <IonReactRouter>
         <LanguageProvider>
           <AuthProvider>
-              <MainRoutes />
+            <MainRoutes />
           </AuthProvider>
         </LanguageProvider>
       </IonReactRouter>

@@ -285,6 +285,39 @@
 	padding: 1.4rem 0 0.4rem;
 }
 
+.search-skeleton-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-top: 0.5rem;
+}
+
+.search-skeleton-card {
+	background: var(--ion-color-light, #f4f5f8);
+	border-radius: 10px;
+	padding: 0.9rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+
+.search-skeleton-line {
+	height: 12px;
+	border-radius: 6px;
+	background: linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 50%, #e0e0e0 75%);
+	background-size: 200% 100%;
+	animation: search-shimmer 1.4s infinite;
+}
+
+.search-skeleton-name  { width: 55%; height: 14px; }
+.search-skeleton-detail { width: 80%; }
+.search-skeleton-short { width: 35%; }
+
+@keyframes search-shimmer {
+	0%   { background-position: 200% 0; }
+	100% { background-position: -200% 0; }
+}
+
 .search-form-error {
 	color: #b43434;	
 	margin: 0.2rem 0 0;

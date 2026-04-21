@@ -96,6 +96,39 @@
   gap: 1.1rem;
 }
 
+.bookings-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.bookings-skeleton-card {
+  background: var(--ion-color-light, #f4f5f8);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.bookings-skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  animation: bookings-shimmer 1.4s infinite;
+}
+
+.bookings-skeleton-title  { width: 55%; height: 14px; }
+.bookings-skeleton-detail { width: 80%; }
+.bookings-skeleton-short  { width: 35%; }
+
+@keyframes bookings-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .bookings-loading,
 .bookings-empty {
   display: flex;

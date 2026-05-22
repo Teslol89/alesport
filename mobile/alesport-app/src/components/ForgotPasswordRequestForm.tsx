@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import CustomToast from "./CustomStyles";
+import { baseApiUrl } from "../api/config";
 import "./ForgotPasswordRequestForm.css";
 import atrasIcon from "../icons/atras.svg";
 
@@ -30,8 +31,7 @@ const ForgotPasswordRequestForm: React.FC = () => {
         setLoading(true);
         setShowToast(false);
         try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-            const res = await fetch(`${apiUrl}/auth/request-password-reset`, {
+            const res = await fetch(`${baseApiUrl}/auth/request-password-reset`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email })

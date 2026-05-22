@@ -19,6 +19,12 @@ workflows:
       - name: Install dependencies
         script: npm install --legacy-peer-deps
 
+      - name: Disable local env override for CI build
+        script: |
+          if [ -f .env.local ]; then
+            mv .env.local .env.local.bak
+          fi
+
       - name: Build web app
         script: npm run build
 

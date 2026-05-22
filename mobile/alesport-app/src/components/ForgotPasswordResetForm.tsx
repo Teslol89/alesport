@@ -3,6 +3,7 @@ import ojoAbierto from "../icons/ojoAbierto.svg";
 import ojoCerrado from "../icons/ojoCerrado.svg";
 import { useHistory } from "react-router-dom";
 import CustomToast from "./CustomStyles";
+import { baseApiUrl } from "../api/config";
 import "./ForgotPasswordResetForm.css";
 import atrasIcon from "../icons/atras.svg";
 
@@ -26,8 +27,7 @@ const ForgotPasswordResetForm: React.FC = () => {
     setLoading(true);
     setToast({ show: false, message: "", type: "success" });
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-      const res = await fetch(`${apiUrl}/auth/reset-password`, {
+      const res = await fetch(`${baseApiUrl}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code, new_password: password })

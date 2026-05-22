@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import CustomToast from "./CustomStyles";
+import { baseApiUrl } from "../api/config";
 import "./ForgotPasswordVerifyForm.css";
 import atrasIcon from "../icons/atras.svg";
 
@@ -9,7 +10,7 @@ const ForgotPasswordVerifyForm: React.FC = () => {
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Función para reenviar el código con temporizador
   const handleResend = async () => {
@@ -18,8 +19,7 @@ const ForgotPasswordVerifyForm: React.FC = () => {
     setResent(false);
     setToast({ show: false, message: '', type: 'success' });
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-      const res = await fetch(`${apiUrl}/auth/request-password-reset`, {
+      const res = await fetch(`${baseApiUrl}/auth/request-password-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
@@ -69,8 +69,7 @@ const ForgotPasswordVerifyForm: React.FC = () => {
     setLoading(true);
     setToast({ show: false, message: "", type: "success" });
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-      const res = await fetch(`${apiUrl}/auth/verify-password-reset-code`, {
+      const res = await fetch(`${baseApiUrl}/auth/verify-password-reset-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code })

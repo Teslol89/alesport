@@ -2,6 +2,7 @@ import React, { useState } from "react";
 // import { deletePendingUser } from "../api/auth";
 import { IonToast } from "@ionic/react";
 import { useHistory } from "react-router-dom";
+import { baseApiUrl } from "../api/config";
 import "./VerifyCodeForm.css";
 
 const VerifyCodeForm: React.FC = () => {
@@ -28,8 +29,7 @@ const VerifyCodeForm: React.FC = () => {
         setLoading(true);
         setToast({ show: false, message: "" });
         try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || "/api";
-            const res = await fetch(`${apiUrl}/auth/verify-email-code`, {
+            const res = await fetch(`${baseApiUrl}/auth/verify-email-code`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, code })

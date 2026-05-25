@@ -1,10 +1,9 @@
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
-from sqlalchemy.orm import Session
 
 from app.auth.security import get_current_user
-from app.database.db import get_db
+from app.database.db import SessionLocal
 from app.models.user import User
 from app.services.realtime_events import realtime_event_bus
 from app.services.realtime_ticket_service import WS_TICKET_TTL_SECONDS, realtime_ticket_service
@@ -29,7 +28,6 @@ def create_realtime_ws_ticket(current_user: User = Depends(get_current_user)):
 async def realtime_ws_endpoint(
     websocket: WebSocket,
     ticket: str = Query(...),
-    db: Session = Depends(get_db),
 ):
     payload = realtime_ticket_service.consume_ticket(ticket)
     if payload is None:
@@ -41,7 +39,14 @@ async def realtime_ws_endpoint(
         await websocket.close(code=1008)
         return
 
-    user = db.query(User).filter(User.email == user_email).first()
+    # Abrimos una sesión corta solo para validar el usuario y la cerramos
+    # antes de mantener el WebSocket abierto, para no agotar el pool de conexiones.
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == user_email).first()
+    finally:
+        db.close()
+
     if user is None or not user.is_active:
         await websocket.close(code=1008)
         return

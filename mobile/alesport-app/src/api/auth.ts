@@ -1,14 +1,42 @@
 import { baseApiUrl } from './config';
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchWithRetry(
+    url: string,
+    init: RequestInit,
+    maxAttempts = 2
+): Promise<Response> {
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await fetch(url, init);
+        } catch (error) {
+            lastError = error;
+            if (attempt < maxAttempts) {
+                await sleep(700);
+            }
+        }
+    }
+
+    throw lastError;
+}
+
 // Registro de usuario
 export async function registerUser(name: string, email: string, password: string) {
-    const response = await fetch(`${baseApiUrl}/auth/register`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, email, password })
-    });
+    let response: Response;
+    try {
+        response = await fetchWithRetry(`${baseApiUrl}/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, email, password })
+        }, 2);
+    } catch {
+        throw new Error('No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
+    }
 
     if (!response.ok) {
         let data: any = null;
@@ -41,13 +69,18 @@ export async function registerUser(name: string, email: string, password: string
 
 // Login normal
 export async function loginUser(email: string, password: string) {
-    const response = await fetch(`${baseApiUrl}/auth/login`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
-    });
+    let response: Response;
+    try {
+        response = await fetchWithRetry(`${baseApiUrl}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        }, 2);
+    } catch {
+        throw new Error('No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
+    }
 
     if (!response.ok) {
         let data: any = null;

@@ -449,7 +449,7 @@ const Calendar: React.FC = () => {
         realtimeReconnectTimerRef.current = null;
       }
     };
-  }, [canManageSessionBookings, detailsSession?.id, fetchSessions, getSessionBookingsCached, isClient, refreshMyBookings, refreshProfile, showDetailsModal, user?.id]);
+  }, [canManageSessionBookings, detailsSession?.id, fetchSessions, getSessionBookingsCached, isClient, refreshMyBookings, refreshProfile, user?.id]);
 
   // Filtra y ordena sesiones por fecha seleccionada y hora de inicio
   const sessionsForDate = useMemo(

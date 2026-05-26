@@ -4,6 +4,7 @@ import { useHistory } from 'react-router-dom';
 import logoIcon from '../icons/icon.png';
 import { BookingItem, cancelBooking, getBookingsByUser, reactivateBooking } from '../api/bookings';
 import { getSessionsByDateRange } from '../api/sessions';
+import { getRealtimeWsTicket } from '../api/realtime';
 import { useAuth } from './AuthContext';
 import { useLanguage } from '../i18n/LanguageContext';
 import CustomToast from './CustomStyles';
@@ -64,6 +65,9 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
   const [offerClockMs, setOfferClockMs] = useState(() => Date.now());
   const hasLoadedBookingsRef = useRef(false);
   const blockedProfileRefreshAtRef = useRef(0);
+  const realtimeSocketRef = useRef<WebSocket | null>(null);
+  const realtimeReconnectTimerRef = useRef<number | null>(null);
+  const realtimeRefreshCooldownRef = useRef(0);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' | 'info' }>({
     show: false,
     message: '',
@@ -194,6 +198,112 @@ const ReservasForm: React.FC<ReservasFormProps> = ({ refreshSignal = 0 }) => {
     }
     void loadBookings({ silent: true });
   }, [isCancelModalOpen, isUserBlockedByAccessOrPlan, loadBookings, refreshProfile]);
+
+  useEffect(() => {
+    if (isCancelModalOpen || !user?.id || isUserBlockedByAccessOrPlan) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const buildWsUrl = (ticket: string) => {
+      const base = import.meta.env.VITE_API_BASE_URL || 'https://api.verdeguerlabs.es/api';
+      const wsBase = base.replace(/^http:/i, 'ws:').replace(/^https:/i, 'wss:');
+      return `${wsBase}/realtime/ws?ticket=${encodeURIComponent(ticket)}`;
+    };
+
+    const closeSocket = () => {
+      if (realtimeSocketRef.current) {
+        realtimeSocketRef.current.close();
+        realtimeSocketRef.current = null;
+      }
+    };
+
+    const scheduleReconnect = () => {
+      if (cancelled || realtimeReconnectTimerRef.current !== null) {
+        return;
+      }
+
+      realtimeReconnectTimerRef.current = window.setTimeout(() => {
+        realtimeReconnectTimerRef.current = null;
+        void connect();
+      }, 2500);
+    };
+
+    const triggerRealtimeRefresh = () => {
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+
+      if (isUserBlockedByAccessOrPlan || isCancelModalOpen) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - realtimeRefreshCooldownRef.current < 700) {
+        return;
+      }
+
+      realtimeRefreshCooldownRef.current = now;
+      void loadBookings({ silent: true });
+      void refreshProfile({ showLoading: false });
+    };
+
+    const connect = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      closeSocket();
+
+      try {
+        const wsTicket = await getRealtimeWsTicket();
+        if (cancelled) {
+          return;
+        }
+
+        const socket = new WebSocket(buildWsUrl(wsTicket));
+        realtimeSocketRef.current = socket;
+
+        socket.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data) as { type?: string; user_id?: number };
+            if (payload.type === 'booking_changed') {
+              triggerRealtimeRefresh();
+            }
+            if (payload.type === 'user_profile_changed' && payload.user_id === user?.id) {
+              void refreshProfile({ showLoading: false });
+            }
+          } catch {
+            // Ignorar mensajes no JSON.
+          }
+        };
+
+        socket.onerror = () => {
+          closeSocket();
+          scheduleReconnect();
+        };
+
+        socket.onclose = () => {
+          closeSocket();
+          scheduleReconnect();
+        };
+      } catch {
+        scheduleReconnect();
+      }
+    };
+
+    void connect();
+
+    return () => {
+      cancelled = true;
+      closeSocket();
+      if (realtimeReconnectTimerRef.current !== null) {
+        window.clearTimeout(realtimeReconnectTimerRef.current);
+        realtimeReconnectTimerRef.current = null;
+      }
+    };
+  }, [isCancelModalOpen, isUserBlockedByAccessOrPlan, loadBookings, refreshProfile, user?.id]);
 
   useEffect(() => {
     if (!isCancelModalOpen) {

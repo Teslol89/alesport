@@ -235,6 +235,7 @@ const ConfigForm: React.FC = () => {
   const clientPlansRealtimeReconnectTimerRef = useRef<number | null>(null);
   const clientPlansRealtimeRefreshAtRef = useRef(0);
   const clientPlansMutationAtRef = useRef(0);
+  const clientPlansModalWasOpenRef = useRef(false);
   const [ruleDraft, setRuleDraft] = useState('');
   const [editingRuleIndex, setEditingRuleIndex] = useState<number | null>(null);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'danger' }>({
@@ -423,13 +424,26 @@ const ConfigForm: React.FC = () => {
 
   // When modal opens, data is already loaded (no spinner on first open)
   useEffect(() => {
-    if (showClientPlansModal && managedClients.length === 0 && !isLoadingManagedClients) {
-      void loadManagedClients();
+    if (!canManageClientPlans) {
+      clientPlansModalWasOpenRef.current = false;
+      return;
     }
-  }, [showClientPlansModal, loadManagedClients, managedClients.length, isLoadingManagedClients]);
+
+    if (!showClientPlansModal) {
+      clientPlansModalWasOpenRef.current = false;
+      return;
+    }
+
+    if (clientPlansModalWasOpenRef.current) {
+      return;
+    }
+
+    clientPlansModalWasOpenRef.current = true;
+    void loadManagedClients(managedClients.length === 0 ? 'initial' : 'refresh');
+  }, [showClientPlansModal, canManageClientPlans, loadManagedClients, managedClients.length]);
 
   useEffect(() => {
-    if (!showClientPlansModal || !canManageClientPlans) {
+    if (!canManageClientPlans) {
       return;
     }
 
@@ -469,11 +483,10 @@ const ConfigForm: React.FC = () => {
     isRefreshingManagedClients,
     loadManagedClients,
     savingClientId,
-    showClientPlansModal,
   ]);
 
   useEffect(() => {
-    if (!showClientPlansModal || !canManageClientPlans) {
+    if (!canManageClientPlans) {
       return;
     }
 
@@ -576,7 +589,7 @@ const ConfigForm: React.FC = () => {
         clientPlansRealtimeReconnectTimerRef.current = null;
       }
     };
-  }, [canManageClientPlans, loadManagedClients, showClientPlansModal]);
+  }, [canManageClientPlans, loadManagedClients]);
 
   const openEditProfileModal = () => {
     setEditName(profile.name || '');

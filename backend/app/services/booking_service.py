@@ -82,16 +82,16 @@ def _month_boundaries(reference: datetime) -> tuple[datetime, datetime]:
 
 
 def _count_user_monthly_active_bookings(db: Session, user_id: int, session_start_time: datetime) -> int:
-    """Cuenta reservas activas de un cliente dentro del mes de la sesión a reservar."""
-    month_start, next_month_start = _month_boundaries(session_start_time)
+    """Cuenta reservas activas de un cliente dentro del mes en que se crean."""
+    month_start, next_month_start = _month_boundaries(_utc_now())
     return (
         db.query(Booking)
         .join(SessionModel, SessionModel.id == Booking.session_id)
         .filter(
             Booking.user_id == user_id,
             Booking.status == ACTIVE_BOOKING_STATUS,
-            SessionModel.start_time >= month_start,
-            SessionModel.start_time < next_month_start,
+            Booking.created_at >= month_start,
+            Booking.created_at < next_month_start,
         )
         .count()
     )

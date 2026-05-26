@@ -934,8 +934,7 @@ const Calendar: React.FC = () => {
         return count;
       }
 
-      const dateSource = booking.session_start_time ?? booking.created_at;
-      const bookingDate = dateSource ? new Date(dateSource) : null;
+      const bookingDate = booking.created_at ? new Date(booking.created_at) : null;
       if (!bookingDate || Number.isNaN(bookingDate.getTime())) {
         return count;
       }

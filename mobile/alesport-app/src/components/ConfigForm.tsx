@@ -168,15 +168,15 @@ const isDateInsideCurrentMonth = (date: Date): boolean => {
   return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
 };
 
-/* Función para construir un mapa de uso de clases por cliente, contando las reservas activas del mes actual y comparándolas con la cuota mensual */
+/* Función para construir un mapa de uso de clases por cliente, contando las reservas activas creadas en el mes actual y comparándolas con la cuota mensual */
 const buildClientUsageMap = (clients: UserProfile[], bookings: BookingItem[]): Record<number, ClientUsageSummary> => {
   const activeBookingsThisMonth = bookings.filter((booking) => {
     if (booking.status !== 'active') {
       return false;
     }
 
-    const sessionDate = asDate(booking.session_start_time ?? booking.created_at);
-    return sessionDate ? isDateInsideCurrentMonth(sessionDate) : false;
+    const bookingCreatedAt = asDate(booking.created_at);
+    return bookingCreatedAt ? isDateInsideCurrentMonth(bookingCreatedAt) : false;
   });
 
   const usageByClientId: Record<number, number> = {};

@@ -82,16 +82,17 @@ def _month_boundaries(reference: datetime) -> tuple[datetime, datetime]:
 
 
 def _count_user_monthly_active_bookings(db: Session, user_id: int, session_start_time: datetime) -> int:
-    """Cuenta reservas activas de un cliente dentro del mes en que se crean."""
-    month_start, next_month_start = _month_boundaries(_utc_now())
+    """Cuenta reservas activas de un cliente dentro del mes de la sesión reservada."""
+    reference_time = session_start_time or _utc_now()
+    month_start, next_month_start = _month_boundaries(reference_time)
     return (
         db.query(Booking)
         .join(SessionModel, SessionModel.id == Booking.session_id)
         .filter(
             Booking.user_id == user_id,
             Booking.status == ACTIVE_BOOKING_STATUS,
-            Booking.created_at >= month_start,
-            Booking.created_at < next_month_start,
+            SessionModel.start_time >= month_start,
+            SessionModel.start_time < next_month_start,
         )
         .count()
     )
@@ -283,6 +284,41 @@ def _process_waitlist_for_session(db: Session, session: SessionModel) -> None:
     user = db.query(User).filter(User.id == next_waitlist.user_id).first()
     if user is not None:
         _send_waitlist_offer_notification(session, next_waitlist, user)
+
+
+def cancel_future_bookings_for_inactive_membership(db: Session, user: User) -> None:
+    """Cancela reservas futuras de un cliente cuando su membresía se desactiva."""
+    if user.role != "client":
+        return
+
+    now = _utc_now()
+    future_bookings = (
+        db.query(Booking)
+        .join(SessionModel, SessionModel.id == Booking.session_id)
+        .filter(
+            Booking.user_id == user.id,
+            Booking.status.in_(LIVE_BOOKING_STATUSES),
+            SessionModel.start_time > now,
+        )
+        .all()
+    )
+    if not future_bookings:
+        return
+
+    session_ids = {booking.session_id for booking in future_bookings}
+    for booking in future_bookings:
+        booking.status = CANCELLED_BOOKING_STATUS
+        booking.offer_expires_at = None
+
+    db.flush()
+
+    for session_id in session_ids:
+        session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
+        if session is None:
+            continue
+        reserved_slots = _count_reserved_slots(db, session_id)
+        _sync_session_status_with_capacity(session, reserved_slots)
+        _process_waitlist_for_session(db, session)
 
 
 def _attach_user_data(db: Session, bookings: list[Booking]) -> list[dict]:

@@ -57,11 +57,16 @@ export async function registerUser(name: string, email: string, password: string
 
         // Error normal del backend
         if (data?.detail) {
+            if (response.status === 404) {
+                throw new Error(
+                    `No se encontró el endpoint de registro en la API. URL consultada: ${response.url}`
+                );
+            }
             throw new Error(data.detail);
         }
 
         // Error genérico fallback
-        throw new Error('No se pudo registrar el usuario.');
+        throw new Error(`No se pudo registrar el usuario. Código: ${response.status}`);
     }
 
     return response.json();
@@ -90,6 +95,11 @@ export async function loginUser(email: string, password: string) {
         } catch { }
 
         if (data?.detail) {
+            if (response.status === 404) {
+                throw new Error(
+                    `No se encontró el endpoint de login en la API. URL consultada: ${response.url}`
+                );
+            }
             throw new Error(data.detail);
         }
 

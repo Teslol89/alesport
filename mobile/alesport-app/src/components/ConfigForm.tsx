@@ -175,8 +175,8 @@ const buildClientUsageMap = (clients: UserProfile[], bookings: BookingItem[]): R
       return false;
     }
 
-    const bookingCreatedAt = asDate(booking.created_at);
-    return bookingCreatedAt ? isDateInsideCurrentMonth(bookingCreatedAt) : false;
+    const bookingSessionStart = asDate(booking.session_start_time || booking.created_at);
+    return bookingSessionStart ? isDateInsideCurrentMonth(bookingSessionStart) : false;
   });
 
   const usageByClientId: Record<number, number> = {};

@@ -928,21 +928,27 @@ const Calendar: React.FC = () => {
       return null;
     }
 
-    const now = new Date();
+    const selectedDateObj = new Date(selectedDate);
+    const selectedYear = selectedDateObj.getFullYear();
+    const selectedMonth = selectedDateObj.getMonth();
+
     const usedThisMonth = myBookings.reduce((count, booking) => {
       if (booking.status !== 'active') {
         return count;
       }
 
-      const bookingDate = booking.created_at ? new Date(booking.created_at) : null;
+      const bookingSessionDate = booking.session_start_time ? new Date(booking.session_start_time) : null;
+      const bookingDate = bookingSessionDate && !Number.isNaN(bookingSessionDate.getTime())
+        ? bookingSessionDate
+        : booking.created_at ? new Date(booking.created_at) : null;
       if (!bookingDate || Number.isNaN(bookingDate.getTime())) {
         return count;
       }
 
-      const isCurrentMonth =
-        bookingDate.getFullYear() === now.getFullYear() && bookingDate.getMonth() === now.getMonth();
+      const isSelectedMonth =
+        bookingDate.getFullYear() === selectedYear && bookingDate.getMonth() === selectedMonth;
 
-      return isCurrentMonth ? count + 1 : count;
+      return isSelectedMonth ? count + 1 : count;
     }, 0);
 
     const quota = user.monthly_booking_quota ?? null;
@@ -951,7 +957,7 @@ const Calendar: React.FC = () => {
       used: usedThisMonth,
       remaining: quota === null ? null : Math.max(quota - usedThisMonth, 0),
     };
-  }, [isClient, myBookings, user]);
+  }, [isClient, myBookings, selectedDate, user]);
 
   const activeBookingsCount = bookings.filter(b => b.status === 'active').length;
   const isPastSession = (session: SessionItem) => {

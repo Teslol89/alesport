@@ -133,6 +133,111 @@ def test_client_cannot_exceed_monthly_booking_quota(client, auth_headers, seed_d
     assert response.json()["detail"] == "Has alcanzado tu cupo mensual de reservas"
 
 
+def test_client_can_book_next_month_and_current_month_under_same_quota(client, auth_headers, seed_data, db_session):
+    """Una reserva en el mes siguiente no debe consumir el cupo del mes actual."""
+    from datetime import timedelta
+    from app.models.booking import Booking
+    from app.models.session import SessionModel
+
+    seed_data["client"].monthly_booking_quota = 1
+    db_session.commit()
+
+    future_session = SessionModel(
+        trainer_id=seed_data["trainer"].id,
+        start_time=seed_data["session"].start_time + timedelta(days=31),
+        end_time=seed_data["session"].end_time + timedelta(days=31),
+        capacity=8,
+        status="active",
+        class_name="Clase mes siguiente",
+    )
+    db_session.add(future_session)
+    db_session.commit()
+    db_session.refresh(future_session)
+
+    existing_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=future_session.id,
+        status="active",
+    )
+    db_session.add(existing_booking)
+    db_session.commit()
+
+    headers = auth_headers(seed_data["client"].email, "client1234")
+    response = client.post(
+        "/api/bookings/",
+        headers=headers,
+        json={"session_id": seed_data["session"].id},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "active"
+
+
+def test_admin_deactivating_membership_cancels_future_bookings_and_frees_slot(
+    client, auth_headers, seed_data, db_session
+):
+    """Si se desactiva la membresía, las reservas futuras se cancelan y se ofrece la plaza en cola."""
+    from datetime import datetime, timedelta, timezone
+    from app.models.booking import Booking
+    from app.models.session import SessionModel
+    from app.models.user import User
+
+    second_client = User(
+        name="Client Two",
+        email="client2@example.com",
+        password_hash=seed_data["client"].password_hash,
+        role="client",
+        is_active=True,
+        membership_active=True,
+        monthly_booking_quota=12,
+        is_verified=True,
+    )
+    db_session.add(second_client)
+    db_session.commit()
+    db_session.refresh(second_client)
+
+    future_session = SessionModel(
+        trainer_id=seed_data["trainer"].id,
+        start_time=datetime.now(timezone.utc) + timedelta(days=15),
+        end_time=datetime.now(timezone.utc) + timedelta(days=15, hours=1),
+        capacity=1,
+        status="active",
+    )
+    db_session.add(future_session)
+    db_session.commit()
+    db_session.refresh(future_session)
+
+    main_booking = Booking(
+        user_id=seed_data["client"].id,
+        session_id=future_session.id,
+        status="active",
+    )
+    waitlist_booking = Booking(
+        user_id=second_client.id,
+        session_id=future_session.id,
+        status="waitlist",
+    )
+    db_session.add_all([main_booking, waitlist_booking])
+    db_session.commit()
+    db_session.refresh(main_booking)
+    db_session.refresh(waitlist_booking)
+
+    headers = auth_headers(seed_data["admin"].email, "admin1234")
+    response = client.patch(
+        f"/api/users/{seed_data['client'].id}",
+        headers=headers,
+        json={"membership_active": False},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["membership_active"] is False
+
+    db_session.refresh(main_booking)
+    db_session.refresh(waitlist_booking)
+    assert main_booking.status == "cancelled"
+    assert waitlist_booking.status == "offered"
+
+
 def test_trainer_cannot_create_weekly_schedule(client, auth_headers, seed_data):
     """Test: Solo admins pueden crear horarios semanales.
     

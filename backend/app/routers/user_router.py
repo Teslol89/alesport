@@ -7,6 +7,7 @@ from app.auth.security import get_current_user
 from app.database.db import get_db
 from app.models.user import User, User as UserModel
 from app.schemas.user import AssignableTrainerResponse, FixedStudentCandidateResponse, UserAdminUpdate, UserResponse, UserProfileUpdate
+from app.services.booking_service import cancel_future_bookings_for_inactive_membership
 from app.services.realtime_events import publish_user_profile_change
 from app.services.user_service import get_all_users, get_assignable_trainers, get_eligible_fixed_students, delete_my_account
 
@@ -175,6 +176,8 @@ def patch_user_is_active(
         user.is_active = update.is_active
 
     if update.membership_active is not None:
+        if user.membership_active and update.membership_active is False:
+            cancel_future_bookings_for_inactive_membership(db, user)
         user.membership_active = update.membership_active
 
     if "monthly_booking_quota" in update.model_fields_set:
